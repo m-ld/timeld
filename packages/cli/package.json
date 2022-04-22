@@ -1,0 +1,40 @@
+{
+  "name": "timeld-cli",
+  "version": "0.1.0",
+  "description": "Live shared timesheets command interface",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "timeld": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timesheets",
+    "m-ld"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@m-ld/io-web-runtime": "^0.2.0",
+    "@m-ld/m-ld": "^0.8.2",
+    "ably": "^1.2.20",
+    "dotenv": "^16.0.0",
+    "env-paths": "^3.0.0",
+    "leveldown": "^6.1.1",
+    "parse-duration": "^1.0.2",
+    "simple-peer": "^9.11.1",
+    "yargs": "^17.4.1"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.10"
+  }
+}

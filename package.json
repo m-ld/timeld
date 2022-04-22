@@ -1,0 +1,23 @@
+{
+  "name": "timeld",
+  "version": "0.1.0",
+  "description": "Live shared timesheets",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timesheets",
+    "m-ld"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "workspaces": [
+    "packages/*"
+  ]
+}
