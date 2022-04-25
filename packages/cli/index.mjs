@@ -5,11 +5,19 @@ import dotenv from 'dotenv';
 import { TimeldSession } from './Session.mjs';
 
 dotenv.config();
-const idPattern = /[\w-]+/g;
+function checkId(id) {
+  if (!id.match(/[\w-]+/g))
+    throw `${id} should contain only alphanumerics & dashes`;
+}
 
 yargs(hideBin(process.argv))
   .option('logLevel', {
     default: process.env.LOG,
+    global: true
+  })
+  .option('dryRun', {
+    describe: 'Show request but do not execute',
+    type: 'boolean',
     global: true
   })
   .option('organisation', {
@@ -18,6 +26,7 @@ yargs(hideBin(process.argv))
     global: true
   })
   .env('CLI')
+  // TODO: config command to set/get config in env_paths, e.g. ably keys
   .command(
     '$0 <timesheet>',
     'begin a timesheet session',
@@ -40,10 +49,6 @@ yargs(hideBin(process.argv))
         type: 'boolean'
       })
       .check(argv => {
-        const checkId = id => {
-          if (!id.match(idPattern))
-            throw `${id} should contain only alphanumerics & dashes`;
-        };
         checkId(argv.organisation);
         checkId(argv.timesheet);
         return true;
