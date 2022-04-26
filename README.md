@@ -4,4 +4,4 @@ Live shared timesheets
 ---
 
 ## links
-[kanban board](https://github.com/m-ld/timeld/projects/1)
+[![project](https://github.com/primer/octicons/blob/main/icons/table-16.svg) kanban board](https://github.com/m-ld/timeld/projects/1)
