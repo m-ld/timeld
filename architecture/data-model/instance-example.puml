@@ -1,0 +1,58 @@
+@startuml
+'https://plantuml.com/object-diagram
+
+skinparam object {
+  BackgroundColor Pink
+}
+
+package timeld-data {
+
+  object "timesheet000001" as t000001 {
+    id = 000001
+    description = "Week commencing 11th April 2022"
+    purpose = "Cost Allocation"
+    status = "Draft"
+    version = "0.1"
+  }
+  note right of t000001
+    version refers to timesheet
+    revision; should be auto-
+    incremented by timesheeting tool
+  end note
+
+  object angus {
+    rdf:label = "Angus the Awesome"
+    firstName = "Angus"
+    lastName = "McAllister"
+    agentType = "Contractor"
+  }
+
+  t000001 --> angus : contributor
+
+  object "architectureWork" as aw {
+    rdf:label = "Architecture Work"
+    hourlyRate = "€65"
+    duration = 90
+    startTime = "Thu 2022-04-14 10:00 AM"
+}
+  note top of aw
+    Duration in minutes
+  end note
+
+  t000001 --> aw : activity
+
+  object "federatedTimesheetsCollaboration" as fedTimesheetsCollab {
+    rdf:label = "Federated Timesheets Collaboration"
+    description = "Federated Timesheets Collaboration"
+    startDate = "Thu 2022-03-01"
+    duration = 26
+    milestones = "To be added"
+
+  }
+  note top of fedTimesheetsCollab
+    Duration in weeks
+  end note
+
+  t000001 --> fedTimesheetsCollab : project
+}
+@enduml
