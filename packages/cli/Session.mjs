@@ -1,18 +1,23 @@
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
 import { Proc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
-import { clone, propertyValue, uuid } from '@m-ld/m-ld';
+import { clone, uuid } from '@m-ld/m-ld';
 import { join } from 'path';
 import { getInstance as ably } from '@m-ld/m-ld-cli/ext/ably.js';
 import leveldown from 'leveldown';
 import { createReadStream, createWriteStream } from 'fs';
-import { mkdir, truncate as truncateFile } from 'fs/promises';
+import { mkdir, readFile, truncate as truncateFile } from 'fs/promises';
 import { once } from 'events';
 import parseDuration from 'parse-duration';
-import parseDate from 'date.js';
-import { format as timeAgo } from 'timeago.js';
+import { parseDate } from 'chrono-node';
 import { ResultsProc } from './ResultsProc.mjs';
 import { envPaths } from './config.mjs';
+import { dateJsonLd } from './util.mjs';
+import { Entry } from './Entry.mjs';
+import { DefaultFormat, jsonLdFormat } from './Format.mjs';
+
+const timeldContext = JSON.parse(
+  await readFile(new URL('./context.json', import.meta.url), 'utf8'));
 
 export class TimeldSession extends Repl {
   /**
@@ -31,6 +36,7 @@ export class TimeldSession extends Repl {
       // TODO: specify gateway to use
       // TODO: how to prevent conflicts, if offline?
       '@domain': `${timesheet}.${organisation}.timeld.org`,
+      '@context': timeldContext,
       genesis: !!opts.create,
       ...opts
     };
@@ -64,6 +70,7 @@ export class TimeldSession extends Repl {
     const COMPLETES_TASK = '. Using this option will mark the task complete.';
     // noinspection JSCheckFunctionSignatures
     return yargs
+      .updateStrings({ 'Positionals:': 'Details:' })
       .command(fileCmd(ctx))
       .command(
         'log',
@@ -78,7 +85,7 @@ export class TimeldSession extends Repl {
         'Add a new timesheet entry',
         yargs => yargs
           .positional('task', {
-            describe: 'The task being worked on',
+            describe: 'The name of the task being worked on',
             type: 'string'
           })
           .positional('duration', {
@@ -101,14 +108,12 @@ export class TimeldSession extends Repl {
           () => this.addTaskProc(argv))
       )
       .command(
-        ['modify <entry> <field> <value>', 'mod', 'm'],
+        ['modify <selector> <field> <value..>', 'mod', 'm'],
         'Change the value of an existing entry',
         yargs => yargs
-          .positional('entry', {
-            describe: 'Entry to modify, using a number or a date/time',
-            type: 'string',
-            default: 'now',
-            coerce: arg => Number(arg) > 0 ? Number(arg) : parseDate(arg)
+          .positional('selector', {
+            // TODO: entry by [task and] date-time e.g. "work yesterday 12pm"
+            describe: 'Entry to modify, using a number or a task name'
           })
           .positional('field', {
             describe: 'The entry information field to change',
@@ -116,10 +121,10 @@ export class TimeldSession extends Repl {
           })
           .positional('value', {
             describe: 'The new value',
-            type: 'string'
+            coerce: arg => [].concat(arg).join(' ')
           }),
         argv => ctx.exec(
-          () => this.modifyTaskProc(argv))
+          () => this.modifyEntryProc(argv))
       )
       .command(
         ['list [selector]', 'ls'],
@@ -149,25 +154,66 @@ export class TimeldSession extends Repl {
    * @returns {Proc}
    */
   listTasksProc({ selector, format }) {
-    // TODO: selectors and formats
+    // TODO: selectors
     return new ResultsProc(this.meld.read({
       '@describe': '?task',
-      '@where': { '@id': '?task', '@type': 'http://timeld.org/#TimesheetEntry' }
+      '@where': { '@id': '?task', '@type': 'TimesheetEntry' }
     }), {
       'JSON-LD': jsonLdFormat,
       'json-ld': jsonLdFormat,
-      'ld': jsonLdFormat
+      ld: jsonLdFormat
     }[format] || new DefaultFormat(this));
   }
 
   /**
-   * @param {string} entry Entry to modify, using a number or a date/time
-   * @param {string} field The entry information field to change
+   * @param {string | number} selector Entry to modify, using a number or a task name
+   * @param {'start'|'end'|'duration'} field The entry information field to change
    * @param {string} value The new value
    * @returns {Proc}
    */
-  modifyTaskProc({ entry, field, value }) {
-    // TODO: If entry is not specific enough, prompt with options
+  modifyEntryProc({ selector, field, value }) {
+    // TODO: selector is not specific enough?
+    const proc = new PromiseProc(this.meld.write(async state => {
+      async function updateEntry(src) {
+        const entry = Entry.fromJSON(src);
+        switch (field) {
+          case 'start':
+            // noinspection JSCheckFunctionSignatures
+            entry.start = parseDate(value);
+            break;
+          case 'end':
+            // noinspection JSCheckFunctionSignatures
+            entry.end = parseDate(value);
+            break;
+          case 'duration':
+            entry.end = new Date(entry.start.getTime() + parseDuration(value));
+        }
+        proc.emit('message', entry.toString());
+        return state.write({
+          '@delete': src,
+          '@insert': entry.toJSON()
+        });
+      }
+      if (typeof selector == 'number') {
+        const src = await state.get(`${this.id}/${selector}`);
+        if (src != null)
+          await updateEntry(src);
+        else
+          throw 'No such task sequence number found in this session.';
+      } else {
+        for (let src of await state.read({
+          '@describe': '?id',
+          '@where': {
+            '@id': '?id',
+            '@type': 'TimesheetEntry',
+            task: selector
+          }
+        })) {
+          state = await updateEntry(src);
+        }
+      }
+    }));
+    return proc;
   }
 
   /**
@@ -179,33 +225,15 @@ export class TimeldSession extends Repl {
    */
   addTaskProc({ task, duration, start, end }) {
     // TODO: Replace use of console with proc 'message' events
-    this.console.info('Task:', task);
-    this.console.info('start:', start.toLocaleString(), `(${timeAgo(start)})`);
     if (end == null && duration != null)
       end = new Date(start.getTime() + duration);
-    if (end != null)
-      this.console.info('end:', end.toLocaleString(), `(${timeAgo(end)})`);
-    this.console.info('#:', this.nextTaskId);
+    const entry = new Entry({
+      seqNo: `${this.nextTaskId}`, sessionId: this.id, task, start, end
+    });
+    this.console.info(entry.toString());
     this.console.info('Use a "modify" command if this is wrong.');
     return new PromiseProc(this.meld.write({
-      '@id': `${this.id}/${this.nextTaskId++}`,
-      '@type': 'http://timeld.org/#TimesheetEntry',
-      'http://timeld.org/#session': {
-        '@id': `${this.id}`,
-        'http://timeld.org/#start': {
-          '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
-          '@value': this.startTime.toISOString()
-        }
-      },
-      'http://timeld.org/#task': task,
-      'http://timeld.org/#start': {
-        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
-        '@value': start.toISOString()
-      },
-      'http://timeld.org/#end': end != null ? {
-        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
-        '@value': end.toISOString()
-      } : undefined
+      '@graph': [entry.toJSON(), this.toJSON()]
     }));
   }
 
@@ -241,6 +269,14 @@ export class TimeldSession extends Repl {
     return join(orgDir, this.timesheet);
   }
 
+  toJSON() {
+    return {
+      '@id': this.id,
+      '@type': 'TimesheetSession',
+      start: dateJsonLd(this.startTime)
+    };
+  }
+
   async close() {
     await this.meld?.close();
     await super.close();
@@ -252,61 +288,5 @@ class PromiseProc extends Proc {
   constructor(promise) {
     super();
     promise.then(() => this.setDone(), this.setDone);
-  }
-}
-
-const jsonLdFormat = {
-  opening: '[', closing: ']', separator: ',\n',
-  stringify: JSON.stringify
-};
-
-/**
- * @implements Format
- */
-class DefaultFormat {
-  separator = '\n';
-  sessionStarts = /**@type {{ [id]: Date }}*/{};
-
-  /**
-   * @param {TimeldSession} session
-   */
-  constructor(session) {
-    this.session = session;
-  }
-
-  /**
-   * @param {import('@m-ld/m-ld').GraphSubject} subject
-   * @returns {Promise<string>}
-   */
-  async stringify(subject) {
-    const split = subject['@id'].lastIndexOf('/');
-    const sessionId = subject['@id'].substring(0, split);
-    const seqNo = subject['@id'].substring(split + 1);
-    try {
-      const id = `${sessionId === this.session.id ? 'This session' :
-        'Session ' + timeAgo(await this.getOldSessionStart(sessionId))} #${seqNo}`;
-      try {
-        const task = propertyValue(subject, 'http://timeld.org/#task', String);
-        const start = propertyValue(subject, 'http://timeld.org/#start', Date);
-        // TODO: Array is the only way to do Optional until m-ld-js 0.9
-        const end = propertyValue(subject, 'http://timeld.org/#end', Array, Date);
-        return `${id}: ${task} (${start.toLocaleString()}` +
-          (end.length ? ` - (${end[0].toLocaleString()}` : ``) + `)`;
-      } catch (e) {
-        return `${id}: *** Malformed task: ${e} ***`;
-      }
-    } catch (e) {
-      return `${subject['@id']}: *** Malformed session: ${e} ***`;
-    }
-  }
-
-  async getOldSessionStart(sessionId) {
-    if (!(sessionId in this.sessionStarts)) {
-      const session = await this.session.meld.get(
-        sessionId, 'http://timeld.org/#start');
-      this.sessionStarts[sessionId] =
-        propertyValue(session, 'http://timeld.org/#start', Date);
-    }
-    return this.sessionStarts[sessionId];
   }
 }

@@ -27,7 +27,7 @@
     "@m-ld/io-web-runtime": "^0.2.0",
     "@m-ld/m-ld": "^0.8.2",
     "ably": "^1.2.20",
-    "date.js": "^0.3.3",
+    "chrono-node": "^2.3.8",
     "dotenv": "^16.0.0",
     "env-paths": "^3.0.0",
     "leveldown": "^6.1.1",

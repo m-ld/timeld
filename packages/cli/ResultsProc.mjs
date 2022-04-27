@@ -1,14 +1,6 @@
 import { Readable } from 'stream';
 import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 
-/**
- * @typedef {object} Format
- * @property {string} [opening]
- * @property {string} [closing]
- * @property {string} separator
- * @property {(s: import('@m-ld/m-ld').GraphSubject) => string | Promise<string>} stringify
- */
-
 export class ResultsProc extends SyncProc {
   /**
    * @param {import('@m-ld/m-ld').ReadResult} results
