@@ -1,18 +1,20 @@
 import { Readable } from 'stream';
 import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 
+/**
+ * @typedef {object} Format
+ * @property {string} [opening]
+ * @property {string} [closing]
+ * @property {string} separator
+ * @property {(s: import('@m-ld/m-ld').GraphSubject) => string | Promise<string>} stringify
+ */
+
 export class ResultsProc extends SyncProc {
   /**
    * @param {import('@m-ld/m-ld').ReadResult} results
-   * @param {string} opening
-   * @param {string} closing
-   * @param {string} separator
-   * @param {(s: import('@m-ld/m-ld').GraphSubject) => string} stringify
+   * @param {Format} format
    */
-  constructor(
-    results,
-    { opening, closing, separator, stringify }
-  ) {
+  constructor(results, format) {
     // noinspection JSCheckFunctionSignatures
     super(new class extends Readable {
       constructor(opts) {
@@ -20,20 +22,22 @@ export class ResultsProc extends SyncProc {
         this.index = -1;
         const openIfRequired = () => {
           if (this.index === -1) {
-            this.push(Buffer.from(opening));
+            if (format.opening != null)
+              this.push(Buffer.from(format.opening));
             this.index = 0;
           }
         };
         this.subs = results.consume.subscribe({
-          next: bite => {
+          next: async bite => {
             openIfRequired();
+            const subjectStr = await format.stringify(bite.value);
+            this.push(Buffer.from(`${this.index++ ? format.separator : ''}${subjectStr}`));
             this.next = bite.next;
-            this.push(Buffer.from(
-              (this.index++ ? separator : '') + stringify(bite.value)));
           },
           complete: () => {
             openIfRequired();
-            this.push(Buffer.from(closing));
+            if (format.closing != null)
+              this.push(Buffer.from(format.closing));
             this.push(null);
           },
           error: err => {

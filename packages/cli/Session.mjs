@@ -1,7 +1,7 @@
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
 import { Proc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
-import { clone, uuid } from '@m-ld/m-ld';
+import { clone, propertyValue, uuid } from '@m-ld/m-ld';
 import { join } from 'path';
 import { getInstance as ably } from '@m-ld/m-ld-cli/ext/ably.js';
 import leveldown from 'leveldown';
@@ -24,9 +24,10 @@ export class TimeldSession extends Repl {
   constructor(opts) {
     super({ logLevel: opts.logLevel, prompt: `${opts.timesheet}>` });
     const { timesheet, organisation } = opts;
-    this.sessionId = uuid();
+    this.id = uuid();
+    this.startTime = new Date;
     this.config = {
-      '@id': this.sessionId,
+      '@id': this.id,
       // TODO: specify gateway to use
       // TODO: how to prevent conflicts, if offline?
       '@domain': `${timesheet}.${organisation}.timeld.org`,
@@ -36,7 +37,7 @@ export class TimeldSession extends Repl {
     this.timesheet = timesheet;
     this.organisation = organisation;
     this.console = console;
-    this.nextId = 1;
+    this.nextTaskId = 1;
   }
 
   async start(opts) {
@@ -131,7 +132,10 @@ export class TimeldSession extends Repl {
           })
           .option('format', {
             describe: 'Timesheet format to use',
-            choices: ['default', 'JSON-LD'],
+            choices: [
+              'default',
+              'JSON-LD', 'json-ld', 'ld'
+            ],
             default: 'default'
           }),
         argv => ctx.exec(
@@ -141,7 +145,7 @@ export class TimeldSession extends Repl {
 
   /**
    * @param {string} selector
-   * @param {string} format
+   * @param {'default'|'JSON-LD'} format
    * @returns {Proc}
    */
   listTasksProc({ selector, format }) {
@@ -150,9 +154,10 @@ export class TimeldSession extends Repl {
       '@describe': '?task',
       '@where': { '@id': '?task', '@type': 'http://timeld.org/#TimesheetEntry' }
     }), {
-      opening: '[', closing: ']', separator: ',\n',
-      stringify: JSON.stringify // TODO: beautify
-    });
+      'JSON-LD': jsonLdFormat,
+      'json-ld': jsonLdFormat,
+      'ld': jsonLdFormat
+    }[format] || new DefaultFormat(this));
   }
 
   /**
@@ -180,11 +185,19 @@ export class TimeldSession extends Repl {
       end = new Date(start.getTime() + duration);
     if (end != null)
       this.console.info('end:', end.toLocaleString(), `(${timeAgo(end)})`);
-    this.console.info('#:', this.nextId);
+    this.console.info('#:', this.nextTaskId);
     this.console.info('Use a "modify" command if this is wrong.');
-    const entry = {
-      '@id': `${this.sessionId}/${this.nextId++}`,
+    return new PromiseProc(this.meld.write({
+      '@id': `${this.id}/${this.nextTaskId++}`,
       '@type': 'http://timeld.org/#TimesheetEntry',
+      'http://timeld.org/#session': {
+        '@id': `${this.id}`,
+        'http://timeld.org/#start': {
+          '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+          '@value': this.startTime.toISOString()
+        }
+      },
+      'http://timeld.org/#task': task,
       'http://timeld.org/#start': {
         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
         '@value': start.toISOString()
@@ -193,8 +206,7 @@ export class TimeldSession extends Repl {
         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
         '@value': end.toISOString()
       } : undefined
-    };
-    return new PromiseProc(this.meld.write(entry));
+    }));
   }
 
   /**
@@ -240,5 +252,61 @@ class PromiseProc extends Proc {
   constructor(promise) {
     super();
     promise.then(() => this.setDone(), this.setDone);
+  }
+}
+
+const jsonLdFormat = {
+  opening: '[', closing: ']', separator: ',\n',
+  stringify: JSON.stringify
+};
+
+/**
+ * @implements Format
+ */
+class DefaultFormat {
+  separator = '\n';
+  sessionStarts = /**@type {{ [id]: Date }}*/{};
+
+  /**
+   * @param {TimeldSession} session
+   */
+  constructor(session) {
+    this.session = session;
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').GraphSubject} subject
+   * @returns {Promise<string>}
+   */
+  async stringify(subject) {
+    const split = subject['@id'].lastIndexOf('/');
+    const sessionId = subject['@id'].substring(0, split);
+    const seqNo = subject['@id'].substring(split + 1);
+    try {
+      const id = `${sessionId === this.session.id ? 'This session' :
+        'Session ' + timeAgo(await this.getOldSessionStart(sessionId))} #${seqNo}`;
+      try {
+        const task = propertyValue(subject, 'http://timeld.org/#task', String);
+        const start = propertyValue(subject, 'http://timeld.org/#start', Date);
+        // TODO: Array is the only way to do Optional until m-ld-js 0.9
+        const end = propertyValue(subject, 'http://timeld.org/#end', Array, Date);
+        return `${id}: ${task} (${start.toLocaleString()}` +
+          (end.length ? ` - (${end[0].toLocaleString()}` : ``) + `)`;
+      } catch (e) {
+        return `${id}: *** Malformed task: ${e} ***`;
+      }
+    } catch (e) {
+      return `${subject['@id']}: *** Malformed session: ${e} ***`;
+    }
+  }
+
+  async getOldSessionStart(sessionId) {
+    if (!(sessionId in this.sessionStarts)) {
+      const session = await this.session.meld.get(
+        sessionId, 'http://timeld.org/#start');
+      this.sessionStarts[sessionId] =
+        propertyValue(session, 'http://timeld.org/#start', Date);
+    }
+    return this.sessionStarts[sessionId];
   }
 }

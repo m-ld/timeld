@@ -24,9 +24,8 @@ baseYargs()
     yargs => yargs,
     argv => configCmd(argv)
   )
-  // TODO: config command to set/get config in env_paths, e.g. ably keys
   .command(
-    'open <timesheet>',
+    ['open <timesheet>', 'o'],
     'begin a timesheet session',
     yargs => yargs
       .positional('timesheet', {
@@ -52,6 +51,8 @@ baseYargs()
         return true;
       }),
     argv => new TimeldSession(argv).start())
+  .demandCommand()
+  .strictCommands()
   .help()
   .parse();
 
