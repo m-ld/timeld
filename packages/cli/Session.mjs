@@ -228,7 +228,7 @@ export class TimeldSession extends Repl {
     if (end == null && duration != null)
       end = new Date(start.getTime() + duration);
     const entry = new Entry({
-      seqNo: `${this.nextTaskId}`, sessionId: this.id, task, start, end
+      seqNo: `${this.nextTaskId++}`, sessionId: this.id, task, start, end
     });
     this.console.info(entry.toString());
     this.console.info('Use a "modify" command if this is wrong.');

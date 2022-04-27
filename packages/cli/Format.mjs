@@ -35,7 +35,7 @@ export class DefaultFormat {
       const entry = Entry.fromJSON(src);
       const prefix = entry.sessionId === this.session.id ? 'This session' :
         await entry.sessionLabel(this.session.meld);
-      return `${prefix} ${entry.toString()}`;
+      return `${prefix} entry ${entry.toString()}`;
     } catch (e) {
       return `${src['@id']}: *** Malformed entry: ${e} ***`;
     }
