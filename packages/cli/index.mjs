@@ -1,34 +1,32 @@
 #!/usr/bin/env node
-import yargs from 'yargs';
+import createYargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import dotenv from 'dotenv';
 import { TimeldSession } from './Session.mjs';
+import { isConfigKey, mergeConfig, readConfig, writeConfig } from './config.mjs';
 
+// Pull variables from .env file into process.env
 dotenv.config();
-function checkId(id) {
-  if (!id.match(/[\w-]+/g))
-    throw `${id} should contain only alphanumerics & dashes`;
-}
 
-yargs(hideBin(process.argv))
+baseYargs()
+  .env('TIMELD')
+  .config(readConfig())
   .option('logLevel', {
-    default: process.env.LOG,
-    global: true
-  })
-  .option('dryRun', {
-    describe: 'Show request but do not execute',
-    type: 'boolean',
-    global: true
+    default: process.env.LOG
   })
   .option('organisation', {
     alias: 'org',
-    type: 'string',
-    global: true
+    type: 'string'
   })
-  .env('CLI')
+  .command(
+    ['config', 'cfg'],
+    'Inspect or set local configuration',
+    yargs => yargs,
+    argv => configCmd(argv)
+  )
   // TODO: config command to set/get config in env_paths, e.g. ably keys
   .command(
-    '$0 <timesheet>',
+    'open <timesheet>',
     'begin a timesheet session',
     yargs => yargs
       .positional('timesheet', {
@@ -56,3 +54,32 @@ yargs(hideBin(process.argv))
     argv => new TimeldSession(argv).start())
   .help()
   .parse();
+
+function checkId(id) {
+  if (!id.match(/[\w-]+/g))
+    throw `${id} should contain only alphanumerics & dashes`;
+}
+
+function baseYargs() {
+  return createYargs(hideBin(process.argv))
+    .parserConfiguration({ 'strip-dashed': true, 'strip-aliased': true });
+}
+
+/**
+ * `config` command handler for setting or showing configuration
+ * @param {object} argv
+ */
+function configCmd(argv) {
+  // Determine what the options would be without env and config
+  const cliArgv = baseYargs().argv;
+  if (Object.keys(cliArgv).some(isConfigKey)) {
+    // Setting one or more config options
+    writeConfig(mergeConfig(readConfig(), cliArgv));
+  } else {
+    // Showing config options
+    const allArgv = { ...argv }; // yargs not happy if argv is edited
+    for (let key in cliArgv) delete allArgv[key];
+    console.log('Current configuration:', allArgv);
+  }
+}
+

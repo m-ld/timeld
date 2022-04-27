@@ -1,4 +1,3 @@
-import env_paths from 'env-paths';
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
 import { Proc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
@@ -13,8 +12,7 @@ import parseDuration from 'parse-duration';
 import parseDate from 'date.js';
 import { format as timeAgo } from 'timeago.js';
 import { ResultsProc } from './ResultsProc.mjs';
-
-const envPaths = env_paths('timeld');
+import { envPaths } from './config.mjs';
 
 export class TimeldSession extends Repl {
   /**
@@ -43,19 +41,15 @@ export class TimeldSession extends Repl {
 
   async start(opts) {
     try {
-      if (this.config.dryRun) {
-        this.console.log(this.config);
-      } else {
-        await this.setUpLogging();
-        // TODO: If no Ably, fork a socket.io server?
-        // Start the m-ld clone
-        // noinspection JSCheckFunctionSignatures
-        this.meld = await clone(
-          leveldown(await this.getUserPath('data')),
-          await ably(this.config),
-          this.config);
-        super.start({ console: this.console });
-      }
+      await this.setUpLogging();
+      // TODO: If no Ably, fork a socket.io server?
+      // Start the m-ld clone
+      // noinspection JSCheckFunctionSignatures
+      this.meld = await clone(
+        leveldown(await this.getUserPath('data')),
+        await ably(this.config),
+        this.config);
+      super.start({ console: this.console });
     } catch (e) {
       if (e.status === 5031)
         this.console.log('This timesheet does not exist. ' +
@@ -137,8 +131,8 @@ export class TimeldSession extends Repl {
           })
           .option('format', {
             describe: 'Timesheet format to use',
-            type: 'string',
-            default: 'JSON'
+            choices: ['default', 'JSON-LD'],
+            default: 'default'
           }),
         argv => ctx.exec(
           () => this.listTasksProc(argv))
