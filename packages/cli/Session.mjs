@@ -108,20 +108,32 @@ export class TimeldSession extends Repl {
           () => this.addTaskProc(argv))
       )
       .command(
-        ['modify <selector> <field> <value..>', 'mod', 'm'],
+        ['modify <selector> [duration]', 'mod', 'm'],
         'Change the value of an existing entry',
         yargs => yargs
           .positional('selector', {
             // TODO: entry by [task and] date-time e.g. "work yesterday 12pm"
             describe: 'Entry to modify, using a number or a task name'
           })
-          .positional('field', {
-            describe: 'The entry information field to change',
-            choices: ['start', 'end', 'duration']
+          .positional('duration', {
+            describe: 'The new duration of the task e.g. 1h',
+            type: 'string',
+            coerce: arg => parseDuration(arg)
           })
-          .positional('value', {
-            describe: 'The new value',
-            coerce: arg => [].concat(arg).join(' ')
+          .option('start', {
+            describe: 'The new start date & time of the task',
+            type: 'array',
+            coerce: arg => parseDate(arg.join(' '))
+          })
+          .option('end', {
+            describe: 'The new end date & time of the task',
+            type: 'array',
+            coerce: arg => parseDate(arg.join(' '))
+          })
+          .check(argv => {
+            if (argv.start == null && argv.end == null && argv.duration == null)
+              return 'Please specify something to modify: duration, --start, or --end';
+            return true;
           }),
         argv => ctx.exec(
           () => this.modifyEntryProc(argv))
@@ -167,27 +179,22 @@ export class TimeldSession extends Repl {
 
   /**
    * @param {string | number} selector Entry to modify, using a number or a task name
-   * @param {'start'|'end'|'duration'} field The entry information field to change
-   * @param {string} value The new value
+   * @param {number} [duration] in millis
+   * @param {Date} [start]
+   * @param {Date} [end]
    * @returns {Proc}
    */
-  modifyEntryProc({ selector, field, value }) {
+  modifyEntryProc({ selector, duration, start, end }) {
     // TODO: selector is not specific enough?
     const proc = new PromiseProc(this.meld.write(async state => {
       async function updateEntry(src) {
         const entry = Entry.fromJSON(src);
-        switch (field) {
-          case 'start':
-            // noinspection JSCheckFunctionSignatures
-            entry.start = parseDate(value);
-            break;
-          case 'end':
-            // noinspection JSCheckFunctionSignatures
-            entry.end = parseDate(value);
-            break;
-          case 'duration':
-            entry.end = new Date(entry.start.getTime() + parseDuration(value));
-        }
+        if (start != null)
+          entry.start = start;
+        if (end != null)
+          entry.start = end;
+        if (end == null && duration != null)
+          entry.end = new Date(entry.start.getTime() + duration);
         proc.emit('message', entry.toString());
         return state.write({
           '@delete': src,
