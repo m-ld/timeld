@@ -1,0 +1,49 @@
+@startuml
+'https://plantuml.com/object-diagram
+
+skinparam object {
+  BackgroundColor Pink
+}
+
+note top of domain
+  organisation does not
+  exist //in// the domain.
+end note
+
+note as n2
+  tm: http://timeld.org/#
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+end note
+
+package "http://mytimesheet.myorg.timeld.org" as domain {
+  object "/7vs3WfZFBiG1ej7NZ8uaF8" as session {
+    rdf:type = tm:TimesheetSession
+    tm:start = "2022-04-27T17:53:46.008Z"^^<xs:dateTime>
+  }
+  note left of session
+    a session disambiguates
+    entries when displayed
+  end note
+
+  object "/7vs3WfZFBiG1ej7NZ8uaF8/1" as entry {
+    rdf:type = tm:TimesheetEntry
+    tm:task = "Data Entry"
+    tm:start = "2022-04-28T08:00:00.000Z"^^<xs:dateTime>
+    tm:end = "2022-04-28T09:00:00.000Z"^^<xs:dateTime>
+  }
+  note top of entry
+    Entries have a sequence number
+    in a session, for easy referencing.
+    Not possible to have a global
+    sequence with eventual consistency!
+  end note
+  note left of entry::tm:end
+    No duration is stored
+    (but could be entailed).
+    If end is not specified,
+    the task is ongoing.
+  end note
+
+  entry --> session: tm:session
+}
+@enduml
