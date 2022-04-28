@@ -13,6 +13,7 @@ end note
 note as n2
   tm: http://timeld.org/#
   rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xs: http://www.w3.org/2001/XMLSchema#
 end note
 
 package "http://mytimesheet.myorg.timeld.org" as domain {
