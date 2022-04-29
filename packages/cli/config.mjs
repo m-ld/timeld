@@ -1,22 +1,25 @@
-import { join } from 'path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join, sep } from 'path';
+import {
+  existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, writeFileSync
+} from 'fs';
 import env_paths from 'env-paths';
 
 export const envPaths = env_paths('timeld');
 
-function getConfigFile() {
-  return join(envPaths['config'], 'config.json');
+function getConfigFile(name = 'config') {
+  return join(envPaths['config'], `${name}.json`);
 }
 
-export function readConfig() {
-  const configFile = getConfigFile();
+export function readConfig(name = 'config', getDefault = () => {}) {
+  const configFile = getConfigFile(name);
   return existsSync(configFile) ?
-    JSON.parse(readFileSync(configFile, 'utf8')) : {};
+    JSON.parse(readFileSync(configFile, 'utf8')) : getDefault();
 }
 
-export function writeConfig(config) {
+export function writeConfig(config, name = 'config') {
   mkdirSync(envPaths['config'], { recursive: true });
-  writeFileSync(getConfigFile(), JSON.stringify(config, null, ' '));
+  writeFileSync(getConfigFile(name), JSON.stringify(config, null, ' '));
+  return config;
 }
 
 export function isConfigKey(k) {
@@ -40,4 +43,54 @@ export function mergeConfig(current, override) {
   } else {
     return override;
   }
+}
+
+/**
+ * @param {keyof import('env-paths').Paths} key
+ * @returns {string[][]}
+ */
+export function envDirs(key) {
+  function *subDirs(dir) {
+    for (let dirEnt of readdirSync(dir, { withFileTypes: true })) {
+      if (dirEnt.isDirectory()) {
+        const dirPath = join(dir, dirEnt.name);
+        let anySubDirs = false;
+        for (let subDir of subDirs(dirPath)) {
+          yield subDir;
+          anySubDirs = true;
+        }
+        if (!anySubDirs)
+          yield dirPath;
+      }
+    }
+  }
+  const envPath = envPaths[key];
+  return [...subDirs(envPath)].map(dir => dir.slice(envPath.length + 1).split(sep));
+}
+
+/**
+ * @param {keyof import('env-paths').Paths} key
+ * @param {string[]} path
+ * @param {boolean} [force]
+ */
+export function delEnvDir(key, path, { force } = {}) {
+  const dir = join(envPaths[key], ...path);
+  if (path.length > 0 && (force || readdirSync(dir).length === 0)) {
+    if (force)
+      rmSync(dir, { recursive: true, force: true });
+    else
+      rmdirSync(dir);
+    // Tidy empty parent dirs
+    delEnvDir(key, path.slice(0, -1));
+  }
+}
+
+/**
+ * @param {keyof import('env-paths').Paths} key
+ * @param {string[]} path
+ */
+export function delEnvFile(key, path) {
+  // Delete the given path, and then any empty parent folders
+  rmSync(join(envPaths[key], ...path));
+  delEnvDir(key, path.slice(0, -1));
 }
