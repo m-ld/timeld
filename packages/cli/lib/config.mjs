@@ -4,7 +4,7 @@ import {
 } from 'fs';
 import env_paths from 'env-paths';
 
-export const envPaths = env_paths('timeld');
+const envPaths = env_paths('timeld');
 
 function getConfigFile(name = 'config') {
   return join(envPaths['config'], `${name}.json`);
@@ -43,6 +43,16 @@ export function mergeConfig(current, override) {
   } else {
     return override;
   }
+}
+
+/**
+ * @param {keyof import('env-paths').Paths} key
+ * @param {string[]} path
+ */
+export function readyEnvPath(key, path) {
+  const orgDir = join(envPaths[key], ...path.slice(0, -1));
+  mkdirSync(orgDir, { recursive: true });
+  return join(orgDir, ...path.slice(-1));
 }
 
 /**

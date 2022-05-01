@@ -20,7 +20,7 @@ export class DefaultFormat {
   separator = '\n';
 
   /**
-   * @param {TimeldSession} session
+   * @param {import('./Session').Session} session
    */
   constructor(session) {
     this.session = session;
@@ -35,7 +35,7 @@ export class DefaultFormat {
       const entry = Entry.fromJSON(src);
       const prefix = entry.sessionId === this.session.id ? 'This session' :
         await entry.sessionLabel(this.session.meld);
-      return `${prefix} entry ${entry.toString()}`;
+      return `${prefix}, entry ${entry.toString()}`;
     } catch (e) {
       return `${src['@id']}: *** Malformed entry: ${e} ***`;
     }
