@@ -1,8 +1,9 @@
 {
   "name": "timeld",
-  "version": "0.1.0",
+  "private": true,
   "description": "Live shared timesheets",
   "scripts": {
+    "prepublishOnly": "npm run test && echo 'VERSION:' && read VERSION && npm version $VERSION -ws && git push",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "repository": {
@@ -21,5 +22,9 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "jest": "^28.0.3"
+  }
 }
