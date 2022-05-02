@@ -1,4 +1,5 @@
 <pre></pre>
+<!--suppress HtmlDeprecatedAttribute -->
 <p align="center">
   <a href="https://m-ld.org/">
     <img alt="m-ld" src="https://m-ld.org/m-ld.svg" width="300em" />
@@ -23,8 +24,11 @@ The [desktop tool](https://www.npmjs.com/package/timeld-cli) can be used on MacO
 - Submit completed timesheets to other management systems
 - Import timesheets from other management systems
 
-
 ---
 
 ## links
 [![project](https://raw.githubusercontent.com/primer/octicons/main/icons/table-16.svg) kanban board](https://github.com/m-ld/timeld/projects/1)
+
+## development
+
+To publish, use `npm run publish` in the root, to ensure that workspace packages stay in sync.

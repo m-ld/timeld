@@ -3,7 +3,8 @@
   "private": true,
   "description": "Live shared timesheets",
   "scripts": {
-    "prepublishOnly": "npm run test && echo 'VERSION:' && read VERSION && npm version $VERSION -ws && git push",
+    "version": "read VERSION && npm version $VERSION -ws",
+    "publish": "npm run test && npm run version && npm publish -ws",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "repository": {
