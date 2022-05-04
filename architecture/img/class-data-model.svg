@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="739px" preserveAspectRatio="none" style="width:502px;height:739px;background:#FFFFFF;" version="1.1" viewBox="0 0 502 739" width="502px" zoomAndPan="magnify"><defs><filter height="300%" id="fo1vsclz8sbd3" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[aa9aa478b513889dc0a7f0c6069e4c16]
+cluster ts--><polygon fill="#FFFFFF" filter="url(#fo1vsclz8sbd3)" points="16,6,35,6,42,29.6094,485,29.6094,485,732,16,732,16,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="16" x2="42" y1="29.6094" y2="29.6094"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="13" x="20" y="22.5332">ts</text><!--MD5=[0c2e12f724a2bba325ddf189ef351421]
+class Timesheet--><rect codeLine="4" fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="61.8359" id="Timesheet" style="stroke:#A80036;stroke-width:1.5;" width="91" x="266.5" y="237"/><ellipse cx="281.5" cy="253" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M284.2656,248.875 Q284.4219,248.6563 284.6094,248.5469 Q284.7969,248.4375 285.0156,248.4375 Q285.3906,248.4375 285.625,248.7031 Q285.8594,248.9531 285.8594,249.5625 L285.8594,251.0156 Q285.8594,251.625 285.625,251.8906 Q285.3906,252.1563 285.0156,252.1563 Q284.6719,252.1563 284.4688,251.9531 Q284.2656,251.7656 284.1563,251.25 Q284.1094,250.8906 283.9219,250.7031 Q283.5938,250.3281 282.9844,250.1094 Q282.375,249.8906 281.75,249.8906 Q280.9844,249.8906 280.3438,250.2188 Q279.7188,250.5469 279.2188,251.2969 Q278.7344,252.0469 278.7344,253.0781 L278.7344,254.1719 Q278.7344,255.4063 279.625,256.2344 Q280.5156,257.0469 282.1094,257.0469 Q283.0469,257.0469 283.7031,256.7969 Q284.0938,256.6406 284.5156,256.2031 Q284.7813,255.9375 284.9219,255.8594 Q285.0781,255.7813 285.2813,255.7813 Q285.6094,255.7813 285.8594,256.0469 Q286.125,256.2969 286.125,256.6406 Q286.125,256.9844 285.7813,257.3906 Q285.2813,257.9688 284.4844,258.2969 Q283.4063,258.75 282.1094,258.75 Q280.5938,258.75 279.3906,258.125 Q278.4063,257.625 277.7188,256.5625 Q277.0313,255.4844 277.0313,254.2031 L277.0313,253.0469 Q277.0313,251.7188 277.6406,250.5781 Q278.2656,249.4219 279.3594,248.8125 Q280.4531,248.1875 281.6875,248.1875 Q282.4219,248.1875 283.0625,248.3594 Q283.7188,248.5156 284.2656,248.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="59" x="295.5" y="257.9102">Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="267.5" x2="356.5" y1="269" y2="269"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="56" x="272.5" y="284.4189">entry: Entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="267.5" x2="356.5" y1="290.8359" y2="290.8359"/><!--MD5=[96293e8b231702a792e4ba32419ac2da]
+class Entry--><rect codeLine="8" fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="117.1797" id="Entry" style="stroke:#A80036;stroke-width:1.5;" width="129" x="93.5" y="42"/><ellipse cx="140.25" cy="58" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M143.0156,53.875 Q143.1719,53.6563 143.3594,53.5469 Q143.5469,53.4375 143.7656,53.4375 Q144.1406,53.4375 144.375,53.7031 Q144.6094,53.9531 144.6094,54.5625 L144.6094,56.0156 Q144.6094,56.625 144.375,56.8906 Q144.1406,57.1563 143.7656,57.1563 Q143.4219,57.1563 143.2188,56.9531 Q143.0156,56.7656 142.9063,56.25 Q142.8594,55.8906 142.6719,55.7031 Q142.3438,55.3281 141.7344,55.1094 Q141.125,54.8906 140.5,54.8906 Q139.7344,54.8906 139.0938,55.2188 Q138.4688,55.5469 137.9688,56.2969 Q137.4844,57.0469 137.4844,58.0781 L137.4844,59.1719 Q137.4844,60.4063 138.375,61.2344 Q139.2656,62.0469 140.8594,62.0469 Q141.7969,62.0469 142.4531,61.7969 Q142.8438,61.6406 143.2656,61.2031 Q143.5313,60.9375 143.6719,60.8594 Q143.8281,60.7813 144.0313,60.7813 Q144.3594,60.7813 144.6094,61.0469 Q144.875,61.2969 144.875,61.6406 Q144.875,61.9844 144.5313,62.3906 Q144.0313,62.9688 143.2344,63.2969 Q142.1563,63.75 140.8594,63.75 Q139.3438,63.75 138.1406,63.125 Q137.1563,62.625 136.4688,61.5625 Q135.7813,60.4844 135.7813,59.2031 L135.7813,58.0469 Q135.7813,56.7188 136.3906,55.5781 Q137.0156,54.4219 138.1094,53.8125 Q139.2031,53.1875 140.4375,53.1875 Q141.1719,53.1875 141.8125,53.3594 Q142.4688,53.5156 143.0156,53.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="27" x="160.75" y="62.9102">Entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="94.5" x2="221.5" y1="74" y2="74"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="91" x="99.5" y="89.4189">activity : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="113" x="99.5" y="103.2549">hourlyRate : hourlyRate</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="114" x="99.5" y="117.0908">contributor : vf:Provider</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="99.5" y="130.9268">startTime : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="99.5" y="144.7627">duration: om2:Duration</text><line style="stroke:#A80036;stroke-width:1.5;" x1="94.5" x2="221.5" y1="151.1797" y2="151.1797"/><path d="M257.5,48 L257.5,65.3516 L212.5,98.7539 L257.5,73.3516 L257.5,90.7031 A0,0 0 0 0 257.5,90.7031 L371.5,90.7031 A0,0 0 0 0 371.5,90.7031 L371.5,58 L361.5,48 L257.5,48 A0,0 0 0 0 257.5,48 " fill="#FBFB77" filter="url(#fo1vsclz8sbd3)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M361.5,48 L361.5,58 L371.5,58 L361.5,48 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="86" x="263.5" y="66.4951">hourlyRate still</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="93" x="263.5" y="82.8467">to be elaborated</text><path d="M257.5,100.7031 L257.5,118.0547 L207.5,140.2617 L257.5,126.0547 L257.5,143.4063 A0,0 0 0 0 257.5,143.4063 L468.5,143.4063 A0,0 0 0 0 468.5,143.4063 L468.5,110.7031 L458.5,100.7031 L257.5,100.7031 A0,0 0 0 0 257.5,100.7031 " fill="#FBFB77" filter="url(#fo1vsclz8sbd3)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M458.5,100.7031 L458.5,110.7031 L468.5,110.7031 L458.5,100.7031 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="181" x="263.5" y="119.1982">entry's duration property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="190" x="263.5" y="135.5498">a sub-property of vf:effortQuantity</text><!--MD5=[e66c67d430336d46da75a5fc9d9d1b7c]
+class vf:Action--><rect fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="48" id="vf:Action" style="stroke:#A80036;stroke-width:1.5;" width="76" x="393" y="244"/><ellipse cx="408" cy="260" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M410.7656,255.875 Q410.9219,255.6563 411.1094,255.5469 Q411.2969,255.4375 411.5156,255.4375 Q411.8906,255.4375 412.125,255.7031 Q412.3594,255.9531 412.3594,256.5625 L412.3594,258.0156 Q412.3594,258.625 412.125,258.8906 Q411.8906,259.1563 411.5156,259.1563 Q411.1719,259.1563 410.9688,258.9531 Q410.7656,258.7656 410.6563,258.25 Q410.6094,257.8906 410.4219,257.7031 Q410.0938,257.3281 409.4844,257.1094 Q408.875,256.8906 408.25,256.8906 Q407.4844,256.8906 406.8438,257.2188 Q406.2188,257.5469 405.7188,258.2969 Q405.2344,259.0469 405.2344,260.0781 L405.2344,261.1719 Q405.2344,262.4063 406.125,263.2344 Q407.0156,264.0469 408.6094,264.0469 Q409.5469,264.0469 410.2031,263.7969 Q410.5938,263.6406 411.0156,263.2031 Q411.2813,262.9375 411.4219,262.8594 Q411.5781,262.7813 411.7813,262.7813 Q412.1094,262.7813 412.3594,263.0469 Q412.625,263.2969 412.625,263.6406 Q412.625,263.9844 412.2813,264.3906 Q411.7813,264.9688 410.9844,265.2969 Q409.9063,265.75 408.6094,265.75 Q407.0938,265.75 405.8906,265.125 Q404.9063,264.625 404.2188,263.5625 Q403.5313,262.4844 403.5313,261.2031 L403.5313,260.0469 Q403.5313,258.7188 404.1406,257.5781 Q404.7656,256.4219 405.8594,255.8125 Q406.9531,255.1875 408.1875,255.1875 Q408.9219,255.1875 409.5625,255.3594 Q410.2188,255.5156 410.7656,255.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="44" x="422" y="264.9102">vf:Action</text><line style="stroke:#A80036;stroke-width:1.5;" x1="394" x2="468" y1="276" y2="276"/><line style="stroke:#A80036;stroke-width:1.5;" x1="394" x2="468" y1="284" y2="284"/><!--MD5=[79d378210367c0c6ec62ef762ddfbd1b]
+class Project--><rect codeLine="30" fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="89.5078" id="Project" style="stroke:#A80036;stroke-width:1.5;" width="129" x="168.5" y="377"/><ellipse cx="210.05" cy="393" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M212.8156,388.875 Q212.9719,388.6563 213.1594,388.5469 Q213.3469,388.4375 213.5656,388.4375 Q213.9406,388.4375 214.175,388.7031 Q214.4094,388.9531 214.4094,389.5625 L214.4094,391.0156 Q214.4094,391.625 214.175,391.8906 Q213.9406,392.1563 213.5656,392.1563 Q213.2219,392.1563 213.0188,391.9531 Q212.8156,391.7656 212.7063,391.25 Q212.6594,390.8906 212.4719,390.7031 Q212.1438,390.3281 211.5344,390.1094 Q210.925,389.8906 210.3,389.8906 Q209.5344,389.8906 208.8938,390.2188 Q208.2688,390.5469 207.7688,391.2969 Q207.2844,392.0469 207.2844,393.0781 L207.2844,394.1719 Q207.2844,395.4063 208.175,396.2344 Q209.0656,397.0469 210.6594,397.0469 Q211.5969,397.0469 212.2531,396.7969 Q212.6438,396.6406 213.0656,396.2031 Q213.3313,395.9375 213.4719,395.8594 Q213.6281,395.7813 213.8313,395.7813 Q214.1594,395.7813 214.4094,396.0469 Q214.675,396.2969 214.675,396.6406 Q214.675,396.9844 214.3313,397.3906 Q213.8313,397.9688 213.0344,398.2969 Q211.9563,398.75 210.6594,398.75 Q209.1438,398.75 207.9406,398.125 Q206.9563,397.625 206.2688,396.5625 Q205.5813,395.4844 205.5813,394.2031 L205.5813,393.0469 Q205.5813,391.7188 206.1906,390.5781 Q206.8156,389.4219 207.9094,388.8125 Q209.0031,388.1875 210.2375,388.1875 Q210.9719,388.1875 211.6125,388.3594 Q212.2688,388.5156 212.8156,388.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="38" x="229.95" y="397.9102">Project</text><line style="stroke:#A80036;stroke-width:1.5;" x1="169.5" x2="296.5" y1="409" y2="409"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="174.5" y="424.4189">startDate : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="111" x="174.5" y="438.2549">duration : om2:Duration</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="99" x="174.5" y="452.0908">milestone: xsd:string</text><line style="stroke:#A80036;stroke-width:1.5;" x1="169.5" x2="296.5" y1="458.5078" y2="458.5078"/><!--MD5=[ed6624c6556d5e7b1bd23032162d20b7]
+class Client--><rect codeLine="38" fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="61.8359" id="Client" style="stroke:#A80036;stroke-width:1.5;" width="95" x="104.5" y="545"/><ellipse cx="133.45" cy="561" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M136.2156,556.875 Q136.3719,556.6563 136.5594,556.5469 Q136.7469,556.4375 136.9656,556.4375 Q137.3406,556.4375 137.575,556.7031 Q137.8094,556.9531 137.8094,557.5625 L137.8094,559.0156 Q137.8094,559.625 137.575,559.8906 Q137.3406,560.1563 136.9656,560.1563 Q136.6219,560.1563 136.4188,559.9531 Q136.2156,559.7656 136.1063,559.25 Q136.0594,558.8906 135.8719,558.7031 Q135.5438,558.3281 134.9344,558.1094 Q134.325,557.8906 133.7,557.8906 Q132.9344,557.8906 132.2938,558.2188 Q131.6688,558.5469 131.1688,559.2969 Q130.6844,560.0469 130.6844,561.0781 L130.6844,562.1719 Q130.6844,563.4063 131.575,564.2344 Q132.4656,565.0469 134.0594,565.0469 Q134.9969,565.0469 135.6531,564.7969 Q136.0438,564.6406 136.4656,564.2031 Q136.7313,563.9375 136.8719,563.8594 Q137.0281,563.7813 137.2313,563.7813 Q137.5594,563.7813 137.8094,564.0469 Q138.075,564.2969 138.075,564.6406 Q138.075,564.9844 137.7313,565.3906 Q137.2313,565.9688 136.4344,566.2969 Q135.3563,566.75 134.0594,566.75 Q132.5438,566.75 131.3406,566.125 Q130.3563,565.625 129.6688,564.5625 Q128.9813,563.4844 128.9813,562.2031 L128.9813,561.0469 Q128.9813,559.7188 129.5906,558.5781 Q130.2156,557.4219 131.3094,556.8125 Q132.4031,556.1875 133.6375,556.1875 Q134.3719,556.1875 135.0125,556.3594 Q135.6688,556.5156 136.2156,556.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="32" x="150.55" y="565.9102">Client</text><line style="stroke:#A80036;stroke-width:1.5;" x1="105.5" x2="198.5" y1="577" y2="577"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="83" x="110.5" y="592.4189">name : xsd:string</text><line style="stroke:#A80036;stroke-width:1.5;" x1="105.5" x2="198.5" y1="598.8359" y2="598.8359"/><path d="M32.5,246.5 L32.5,289.2031 L231.5,289.2031 L231.5,256.5 L221.5,246.5 L32.5,246.5 " fill="#FBFB77" filter="url(#fo1vsclz8sbd3)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M221.5,246.5 L221.5,256.5 L231.5,256.5 L221.5,246.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="178" x="38.5" y="264.9951">Project's client property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="157" x="38.5" y="281.3467">a sub-property of vf:receiver</text><!--MD5=[84612bed34b900519fce1dd1c39e16c2]
+class foaf:Agent--><rect fill="#FEFECE" filter="url(#fo1vsclz8sbd3)" height="48" id="foaf:Agent" style="stroke:#A80036;stroke-width:1.5;" width="86" x="109" y="668"/><ellipse cx="124" cy="684" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M126.7656,679.875 Q126.9219,679.6563 127.1094,679.5469 Q127.2969,679.4375 127.5156,679.4375 Q127.8906,679.4375 128.125,679.7031 Q128.3594,679.9531 128.3594,680.5625 L128.3594,682.0156 Q128.3594,682.625 128.125,682.8906 Q127.8906,683.1563 127.5156,683.1563 Q127.1719,683.1563 126.9688,682.9531 Q126.7656,682.7656 126.6563,682.25 Q126.6094,681.8906 126.4219,681.7031 Q126.0938,681.3281 125.4844,681.1094 Q124.875,680.8906 124.25,680.8906 Q123.4844,680.8906 122.8438,681.2188 Q122.2188,681.5469 121.7188,682.2969 Q121.2344,683.0469 121.2344,684.0781 L121.2344,685.1719 Q121.2344,686.4063 122.125,687.2344 Q123.0156,688.0469 124.6094,688.0469 Q125.5469,688.0469 126.2031,687.7969 Q126.5938,687.6406 127.0156,687.2031 Q127.2813,686.9375 127.4219,686.8594 Q127.5781,686.7813 127.7813,686.7813 Q128.1094,686.7813 128.3594,687.0469 Q128.625,687.2969 128.625,687.6406 Q128.625,687.9844 128.2813,688.3906 Q127.7813,688.9688 126.9844,689.2969 Q125.9063,689.75 124.6094,689.75 Q123.0938,689.75 121.8906,689.125 Q120.9063,688.625 120.2188,687.5625 Q119.5313,686.4844 119.5313,685.2031 L119.5313,684.0469 Q119.5313,682.7188 120.1406,681.5781 Q120.7656,680.4219 121.8594,679.8125 Q122.9531,679.1875 124.1875,679.1875 Q124.9219,679.1875 125.5625,679.3594 Q126.2188,679.5156 126.7656,679.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="54" x="138" y="688.9102">foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="110" x2="194" y1="700" y2="700"/><line style="stroke:#A80036;stroke-width:1.5;" x1="110" x2="194" y1="708" y2="708"/><!--MD5=[82bde99b90173856d1b53a5f7332f595]
+link Entry to Entry$$$RIGHT--><!--MD5=[889c94e4919196ae8d870bf39295b876]
+link Entry to vf:Action--><path codeLine="26" d="M222.86,149.16 C228.55,152.67 234.31,156 240,159 C273.59,176.71 286.42,171.27 320,189 C342.88,201.07 366.55,217.15 386.14,231.56 " fill="none" id="Entry-to-vf:Action" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="390.42,226.02,402.17,243.66,381.99,237.2,390.42,226.02" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="40" x="349" y="203.4951">activity</text><!--MD5=[f5abeaa4131c85952e7ccdbb13b61870]
+link Entry to Timesheet--><path codeLine="28" d="M220.0365,168.1632 C220.0365,168.1632 258.58,209.59 274.78,227 " fill="none" id="Entry-Timesheet" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="283.91,236.81,280.7123,227.4947,280.5058,233.1478,274.8528,232.9413,283.91,236.81" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="280.5058" x2="275.055" y1="233.1478" y2="227.3"/><polygon fill="#A80036" points="211.86,159.38,213.0205,166.4971,220.0365,168.1632,218.876,161.0461,211.86,159.38" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="254" y="203.4951">timesheet</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="7" x="270.3946" y="226.2754">1</text><!--MD5=[f916e162bce7c7efe9a8de5f08f8c74c]
+link Timesheet to Project--><path codeLine="36" d="M290.8604,309.6801 C290.8604,309.6801 271.34,347.22 261.94,365.32 " fill="none" id="Timesheet-Project" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="255.91,376.92,263.6072,370.7757,258.214,372.4825,256.5072,367.0893,255.91,376.92" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="258.214" x2="261.905" y1="372.4825" y2="365.385"/><polygon fill="#A80036" points="296.39,299.03,290.0752,302.5118,290.8604,309.6801,297.1752,306.1982,296.39,299.03" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="39" x="280" y="343.4951">project</text><!--MD5=[6d8dc9585a533a8f6e1281fffd2c5bc0]
+link Project to Client--><path codeLine="42" d="M203.7111,477.9626 C203.7111,477.9626 183.19,516.47 174.29,533.18 " fill="none" id="Project-Client" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="168.1,544.79,175.8631,538.7292,170.4518,540.3776,168.8033,534.9663,168.1,544.79" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="170.4518" x2="174.215" y1="540.3776" y2="533.31"/><polygon fill="#FFFFFF" points="209.35,467.37,202.9997,470.7867,203.7111,477.9626,210.0614,474.5459,209.35,467.37" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="31" x="193" y="511.4951">client</text><!--MD5=[75293c24f78ec3588ad0b55cf69f500f]
+link N1 to Project--><path codeLine="49" d="M145.83,289.82 C160.63,312.09 184.56,348.1 203.6,376.76 " fill="none" id="N1-Project" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><!--MD5=[f623f21713cb0a0938803cad585afbfe]
+link N1 to Client--><path codeLine="50" d="M133.34,289.55 C136.79,342.35 145.98,482.92 150.03,544.92 " fill="none" id="N1-Client" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><!--MD5=[ad42187c67222c6c63d1a8fda3a9a386]
+link Client to foaf:Agent--><path codeLine="52" d="M152,607.25 C152,619.57 152,634.04 152,647.46 " fill="none" id="Client-to-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="159,647.84,152,667.84,145,647.84,159,647.84" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[a03813fd590e43cb7aebc8223b901456]
+@startuml
+'https://plantuml.com/class-diagram
+
+package ts {
+    class Timesheet {
+        entry: Entry
+    }
+
+    class Entry {
+        activity : xsd:string
+        hourlyRate : hourlyRate
+        contributor : vf:Provider
+        startTime : xsd:dateTime
+        duration: om2:Duration
+    }
+
+    note right of Entry::hourlyRate
+        hourlyRate still
+        to be elaborated
+    end note
+
+    note right of Entry::duration
+        entry's duration property is also
+        a sub-property of vf:effortQuantity
+    end note
+
+    "Entry" - -|> "vf:Action" : activity
+
+    "Entry" *- -> "1" Timesheet : timesheet
+
+    class Project {
+        startDate : xsd:dateTime
+        duration : om2:Duration
+        milestone: xsd:string
+    }
+
+    Timesheet *- -> Project : project
+
+    class Client {
+        name : xsd:string
+    }
+
+    Project o- -> Client : client
+
+    note as N1
+    Project's client property is also
+    a sub-property of vf:receiver
+    end note
+
+    N1 .. Project
+    N1 .. Client
+
+    Client - -|> "foaf:Agent"
+
+}
+
+@enduml
+
+@startuml
+
+package ts {
+    class Timesheet {
+        entry: Entry
+    }
+
+    class Entry {
+        activity : xsd:string
+        hourlyRate : hourlyRate
+        contributor : vf:Provider
+        startTime : xsd:dateTime
+        duration: om2:Duration
+    }
+
+    note right of Entry::hourlyRate
+        hourlyRate still
+        to be elaborated
+    end note
+
+    note right of Entry::duration
+        entry's duration property is also
+        a sub-property of vf:effortQuantity
+    end note
+
+    "Entry" - -|> "vf:Action" : activity
+
+    "Entry" *- -> "1" Timesheet : timesheet
+
+    class Project {
+        startDate : xsd:dateTime
+        duration : om2:Duration
+        milestone: xsd:string
+    }
+
+    Timesheet *- -> Project : project
+
+    class Client {
+        name : xsd:string
+    }
+
+    Project o- -> Client : client
+
+    note as N1
+    Project's client property is also
+    a sub-property of vf:receiver
+    end note
+
+    N1 .. Project
+    N1 .. Client
+
+    Client - -|> "foaf:Agent"
+
+}
+
+@enduml
+
+PlantUML version 1.2022.0(Tue Jan 11 16:16:42 GMT 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>
