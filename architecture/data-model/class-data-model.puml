@@ -1,0 +1,57 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package ts {
+    class Timesheet {
+        entry: Entry
+    }
+
+    class Entry {
+        activity : xsd:string
+        hourlyRate : hourlyRate
+        contributor : vf:Provider
+        startTime : xsd:dateTime
+        duration: om2:Duration
+    }
+
+    note right of Entry::hourlyRate
+        hourlyRate still
+        to be elaborated
+    end note
+
+    note right of Entry::duration
+        entry's duration property is also
+        a sub-property of vf:effortQuantity
+    end note
+
+    "Entry" --|> "vf:Action" : activity
+
+    "Entry" *--> "1" Timesheet : timesheet
+
+    class Project {
+        startDate : xsd:dateTime
+        duration : om2:Duration
+        milestone: xsd:string
+    }
+
+    Timesheet *--> Project : project
+
+    class Client {
+        name : xsd:string
+    }
+
+    Project o--> Client : client
+
+    note as N1
+    Project's client property is also
+    a sub-property of vf:receiver
+    end note
+
+    N1 .. Project
+    N1 .. Client
+
+    Client --|> "foaf:Agent"
+
+}
+
+@enduml
