@@ -75,7 +75,8 @@ export function envDirs(key) {
     }
   }
   const envPath = envPaths[key];
-  return [...subDirs(envPath)].map(dir => dir.slice(envPath.length + 1).split(sep));
+  return !existsSync(envPath) ? [] :
+    [...subDirs(envPath)].map(dir => dir.slice(envPath.length + 1).split(sep));
 }
 
 /**

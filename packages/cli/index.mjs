@@ -13,16 +13,27 @@ import { clone } from '@m-ld/m-ld';
 import leveldown from 'leveldown';
 import { getInstance as ably } from '@m-ld/m-ld-cli/ext/ably.js';
 import { TimesheetId } from './lib/TimesheetId.mjs';
+import { Gateway } from './lib/Gateway.mjs';
 
 // Pull variables from .env file into process.env
 dotenv.config();
+
+/**
+ * @typedef {import('@m-ld/m-ld').MeldConfig} SessionConfig
+ * @property {string | false} [gateway]
+ * @property {string} account
+ * @property {import('@m-ld/m-ld').Reference} principal
+ * @property {string} timesheet
+ * @property {boolean} [create]
+ */
 
 baseYargs()
   .env('TIMELD')
   .config(readConfig())
   .option('logLevel', { default: process.env.LOG })
-  .option('organisation', { alias: 'org', type: 'string' })
+  .option('account', { alias: 'acc', type: 'string' })
   .option('gateway', { alias: 'gw' /*no type, allows --no-gateway*/ })
+  .option('principal.@id', { alias: 'user', type: 'string' })
   .command(
     ['config', 'cfg'],
     'Inspect or set local configuration',
@@ -49,30 +60,31 @@ baseYargs()
     yargs => yargs
       .positional('timesheet', {
         describe: 'Timesheet identity, can include ' +
-          'organisation as `organisation/timesheet`',
+          'account as `account/timesheet`',
         type: 'string'
       })
       .middleware(argv => {
-        const { timesheet, organisation, gateway } = TimesheetId.fromString(argv.timesheet);
+        const { timesheet, account, gateway } =
+          TimesheetId.fromString(argv.timesheet);
         if (gateway != null)
           argv.gateway = gateway;
-        if (organisation != null)
-          argv.organisation = organisation;
+        if (account != null)
+          argv.account = account;
         argv.timesheet = timesheet;
       }, true)
       .option('create', {
         type: 'boolean', describe: 'Force creation of new timesheet'
       })
-      .demandOption('organisation')
+      .demandOption('account')
       .check(argv => {
         new TimesheetId(argv).validate();
         return true;
       }),
     async argv => {
-      const config = await new DomainConfigurator(argv).load();
+      const gateway = argv.gateway ? new Gateway(argv.gateway) : null;
+      const config = await new DomainConfigurator(argv, gateway).load();
       const tsId = TimesheetId.fromDomain(config['@domain']);
-      const commandConsole = console;
-      const logFile = await setUpLogging(tsId.toPath());
+      const { logFile, commandConsole } = await setUpLogging(tsId.toPath());
       try {
         // Start the m-ld clone
         // noinspection JSCheckFunctionSignatures
@@ -80,12 +92,14 @@ baseYargs()
           leveldown(readyEnvPath('data', tsId.toPath())),
           await ably(config),
           config);
-        return new Session(
-          config['@id'],
+        return new Session({
+          id: config['@id'],
+          timesheet: config.timesheet,
+          providerId: config.principal['@id'],
           meld,
-          `${argv.timesheet}>`,
-          logFile, config.logLevel
-        ).start({ console: commandConsole });
+          logFile,
+          logLevel: config.logLevel
+        }).start({ console: commandConsole });
       } catch (e) {
         if (e.status === 5031) {
           commandConsole.info('This timesheet does not exist.');
@@ -107,15 +121,16 @@ function baseYargs() {
 
 /**
  * @param {string[]} path
- * @returns {Promise<string>} the log file being used
+ * @returns {Promise<{logFile: string, commandConsole: Console}>} the log file being used
  */
 async function setUpLogging(path) {
   // Substitute the global console so we don't get m-ld logging
   const logFile = `${readyEnvPath('log', path)}.log`;
   const logStream = createWriteStream(logFile, { flags: 'a' });
   await once(logStream, 'open');
+  const commandConsole = console;
   console = new console.Console(logStream, logStream);
-  return logFile;
+  return { logFile, commandConsole };
 }
 
 /**
@@ -142,13 +157,13 @@ function listCmd() {
 }
 
 /**
- * @param {string} argv.timesheet as tmId
+ * @param {*} argv.timesheet as tmId
  * @param {boolean} [argv.really]
  */
 function removeCmd(argv) {
-  const { timesheet, organisation, gateway } = TimesheetId.fromString(argv.timesheet);
+  const { timesheet, account, gateway } = TimesheetId.fromString(argv.timesheet);
   const pattern = new RegExp(
-    `${organisation || '[\\w-]+'}/${timesheet || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
+    `${account || '[\\w-]+'}/${timesheet || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
     'g');
   if (!argv.really)
     console.info('If you use --really, ' +
@@ -160,7 +175,7 @@ function removeCmd(argv) {
         delEnvDir('data', path, { force: true });
         delEnvFile('log', (path.join('/') + '.log').split('/'));
       } else {
-        console.log(tsId);
+        console.log(tsId.toString());
       }
     }
   }
