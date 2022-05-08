@@ -6,9 +6,9 @@ import { timeldContext } from './context.mjs';
  * configuration with an `@id`, `@domain`, `@context`, `genesis` flag and
  * `principal` reference.
  */
-export class DomainConfigurator {
+export default class DomainConfigurator {
   /**
-   * @param {Partial<SessionConfig>} argv
+   * @param {Partial<TimeldConfig>} argv
    * @param {Gateway | null} gateway
    */
   constructor(argv, gateway) {
@@ -16,7 +16,7 @@ export class DomainConfigurator {
     this.gateway = gateway;
   }
 
-  /** @returns {Promise<SessionConfig>} */
+  /** @returns {Promise<TimeldConfig>} */
   async load() {
     const config = {
       ...await this.fetchGatewayConfig(),

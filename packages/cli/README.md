@@ -20,7 +20,7 @@ In a terminal: `npm install timeld-cli -g`
 
 `timeld config --ably.key your-ably-key`
 
-You must provide a URI for yourself, as a user:
+You must provide a URI for yourself, as a user (you could use a link to your profile on your favourite social media site):
 
 `timeld config --user http://you.example.org/#profile`
 

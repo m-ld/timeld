@@ -1,4 +1,4 @@
-import { TimesheetId } from '../lib/TimesheetId.mjs';
+import TimesheetId from '../lib/TimesheetId.mjs';
 
 describe('Timesheet Id', () => {
   test('from full display string', () => {

@@ -38,6 +38,8 @@
   },
   "devDependencies": {
     "@types/yargs": "^17.0.10",
-    "memdown": "^6.1.1"
+    "memdown": "^6.1.1",
+    "rxjs": "^7.5.5",
+    "tmp": "^0.2.1"
   }
 }

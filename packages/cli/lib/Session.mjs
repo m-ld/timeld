@@ -8,7 +8,7 @@ import { dateJsonLd, parseDate, parseDuration } from './util.mjs';
 import { Entry } from './Entry.mjs';
 import { DefaultFormat, jsonLdFormat } from './Format.mjs';
 
-export class Session extends Repl {
+export default class Session extends Repl {
   /**
    * @param {string} spec.id
    * @param {string} spec.timesheet
@@ -197,7 +197,7 @@ export class Session extends Repl {
   addEntryProc({ activity, duration, start, end }) {
     // TODO: Replace use of console with proc 'message' events
     if (end != null && duration == null)
-      duration = Entry.durationFromInterval(end, start);
+      duration = Entry.durationFromInterval(start, end);
     const entry = new Entry({
       seqNo: `${this.nextEntryId++}`,
       sessionId: this.id,

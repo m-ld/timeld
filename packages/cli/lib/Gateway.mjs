@@ -1,6 +1,6 @@
 import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
 
-export class Gateway {
+export default class Gateway {
   /**
    * @param {string} domain
    */

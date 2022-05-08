@@ -7,7 +7,7 @@
  * 3. m-ld domain name `<timesheet>.<account>.<gateway>`
  *   see {@link fromDomain}.
  */
-export class TimesheetId {
+export default class TimesheetId {
   /**
    * @param {string} str
    * @returns {TimesheetId}

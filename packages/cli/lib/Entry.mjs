@@ -25,7 +25,8 @@ export class Entry {
    * @returns {number} duration in fractional minutes
    */
   static durationFromInterval(start, end) {
-    return (end.getTime() - start.getTime()) / 60000;
+    // Round to the second then convert to minutes
+    return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
   }
 
   /**
