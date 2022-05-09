@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     contentStyleType="text/css" height="540px" preserveAspectRatio="none"
+     style="width:767px;height:540px;background:#FFFFFF;" version="1.1" viewBox="0 0 767 540"
+     width="767px" zoomAndPan="magnify"><defs/><g><!--MD5=[27f772719433d509ddbc20ff768eba08]
+cluster domain--><g id="cluster_domain"><path d="M80,102 L350,102 A3.75,3.75 0 0 1 352.5,104.5 L359.5,124.4883 L758,124.4883 A2.5,2.5 0 0 1 760.5,126.9883 L760.5,530.5 A2.5,2.5 0 0 1 758,533 L80,533 A2.5,2.5 0 0 1 77.5,530.5 L77.5,104.5 A2.5,2.5 0 0 1 80,102 " style="stroke:#000000;stroke-width:1.5;fill:none;"/><line style="stroke:#000000;stroke-width:1.5;fill:none;" x1="77.5" x2="359.5" y1="124.4883" y2="124.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="269" x="81.5" y="117.5352">http://mytimesheet.myorg.timeld.org</text></g><g id="elem_session"><rect fill="#FFC0CB" height="61.4648" style="stroke:#181818;stroke-width:0.5;" width="416" x="320.5" y="448"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185" x="436" y="463.5352">/7vs3WfZFBiG1ej7NZ8uaF8</text><line style="stroke:#181818;stroke-width:0.5;" x1="321.5" x2="735.5" y1="468.4883" y2="468.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="217" x="326.5" y="486.0234">rdf:type = tm:TimesheetSession</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="404" x="326.5" y="502.5117">tm:start = "2022-04-27T17:53:46.008Z"^^&lt;xs:dateTime&gt;</text></g><g id="elem_GMN15704"><path d="M109.5,458 L109.5,498.6211 A0,0 0 0 0 109.5,498.6211 L285.5,498.6211 A0,0 0 0 0 285.5,498.6211 L285.5,482.5 L320.36,478.5 L285.5,474.5 L285.5,468 L275.5,458 L109.5,458 A0,0 0 0 0 109.5,458 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M275.5,458 L275.5,468 L285.5,468 L275.5,458 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="155" x="115.5" y="475.5684">a session disambiguates</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="144" x="115.5" y="490.8789">entries when displayed</text></g><g id="elem_entry"><rect fill="#FFC0CB" height="94.4414" style="stroke:#181818;stroke-width:0.5;" width="416" x="320.5" y="277"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="201" x="428" y="292.5352">/7vs3WfZFBiG1ej7NZ8uaF8/1</text><line style="stroke:#181818;stroke-width:0.5;" x1="321.5" x2="735.5" y1="297.4883" y2="297.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="200" x="326.5" y="315.0234">rdf:type = tm:TimesheetEntry</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="149" x="326.5" y="331.5117">tm:task = "Data Entry"</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="404" x="326.5" y="348">tm:start = "2022-04-28T08:00:00.000Z"^^&lt;xs:dateTime&gt;</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="399" x="326.5" y="364.4883">tm:end = "2022-04-28T09:00:00.000Z"^^&lt;xs:dateTime&gt;</text></g><g id="elem_GMN15708"><path d="M403,145 L403,216.2422 A0,0 0 0 0 403,216.2422 L524.5,216.2422 L528.5,276.99 L532.5,216.2422 L654,216.2422 A0,0 0 0 0 654,216.2422 L654,155 L644,145 L403,145 A0,0 0 0 0 403,145 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M644,145 L644,155 L654,155 L644,145 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="202" x="409" y="162.5684">Entries have a sequence number</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="212" x="409" y="177.8789">in a session, for easy referencing.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="184" x="409" y="193.1895">Not possible to have a global</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="230" x="409" y="208.5">sequence with eventual consistency!</text></g><path d="M119.5,283.5 L119.5,354.7422 A0,0 0 0 0 119.5,354.7422 L285.5,354.7422 A0,0 0 0 0 285.5,354.7422 L285.5,323.1211 L324.5,359.1973 L285.5,315.1211 L285.5,293.5 L275.5,283.5 L119.5,283.5 A0,0 0 0 0 119.5,283.5 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M275.5,283.5 L275.5,293.5 L285.5,293.5 L275.5,283.5 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="134" x="125.5" y="301.0684">No duration is stored</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="145" x="125.5" y="316.3789">(but could be entailed).</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="141" x="125.5" y="331.6895">If end is not specified,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="126" x="125.5" y="347">the task is ongoing.</text><g id="elem_GMN15699"><path d="M6,6 L6,46.6211 L165,46.6211 L165,16 L155,6 L6,6 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M155,6 L155,16 L165,16 L155,6 " fill="#FEFFDD" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="138" x="12" y="23.5684">organisation does not</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="31" x="12" y="38.8789">exist</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="12" x="47" y="38.8789">in</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="75" x="63" y="38.8789">the domain.</text></g><g id="elem_n2"><path d="M200.5,6 L200.5,46.6211 L560.5,46.6211 L560.5,16 L550.5,6 L200.5,6 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M550.5,6 L550.5,16 L560.5,16 L550.5,6 " fill="#FEFFDD" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="149" x="206.5" y="23.5684">tm: http://timeld.org/#</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="339" x="206.5" y="38.8789">rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#</text></g><!--MD5=[5b38f9b379c6a489ecf1b1e6194fef16]
+link GMN15699 to domain--><g id="link_GMN15699_domain"><path d="M85.5,47.06 C85.5,57.1625 85.5,70.3138 85.5,84.4013 C85.5,87.9231 85.5,91.5035 85.5,95.1094 C85.5,96.9124 85.5,98.7217 85.5,100.5333 C85.5,100.9862 85.5,101.4392 85.5,101.8923 " fill="none" id="GMN15699-domain" style="stroke:#181818;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/></g><!--MD5=[4ee5965381198eb6d1b28e20150aac49]
+link entry to session--><g id="link_entry_session"><path codeLine="46" d="M528.5,371.17 C528.5,394.12 528.5,421.4 528.5,442.59 " fill="none" id="entry-to-session" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="528.5,447.83,532.5,438.83,528.5,442.83,524.5,438.83,528.5,447.83" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="69" x="529.5" y="414.5684">tm:session</text></g><!--MD5=[c3b23a2aa78741f72bcf5185cc1ebbca]
+@startuml
+'https://plantuml.com/object-diagram
+
+skinparam object {
+  BackgroundColor Pink
+}
+
+note top of domain
+  organisation does not
+  exist //in// the domain.
+end note
+
+note as n2
+  tm: http://timeld.org/#
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+end note
+
+package "http://mytimesheet.myorg.timeld.org" as domain {
+  object "/7vs3WfZFBiG1ej7NZ8uaF8" as session {
+    rdf:type = tm:TimesheetSession
+    tm:start = "2022-04-27T17:53:46.008Z"^^<xs:dateTime>
+  }
+  note left of session
+    a session disambiguates
+    entries when displayed
+  end note
+
+  object "/7vs3WfZFBiG1ej7NZ8uaF8/1" as entry {
+    rdf:type = tm:TimesheetEntry
+    tm:task = "Data Entry"
+    tm:start = "2022-04-28T08:00:00.000Z"^^<xs:dateTime>
+    tm:end = "2022-04-28T09:00:00.000Z"^^<xs:dateTime>
+  }
+  note top of entry
+    Entries have a sequence number
+    in a session, for easy referencing.
+    Not possible to have a global
+    sequence with eventual consistency!
+  end note
+  note left of entry::tm:end
+    No duration is stored
+    (but could be entailed).
+    If end is not specified,
+    the task is ongoing.
+  end note
+
+  entry - -> session: tm:session
+}
+@enduml
+
+@startuml
+
+skinparam object {
+  BackgroundColor Pink
+}
+
+note top of domain
+  organisation does not
+  exist //in// the domain.
+end note
+
+note as n2
+  tm: http://timeld.org/#
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+end note
+
+package "http://mytimesheet.myorg.timeld.org" as domain {
+  object "/7vs3WfZFBiG1ej7NZ8uaF8" as session {
+    rdf:type = tm:TimesheetSession
+    tm:start = "2022-04-27T17:53:46.008Z"^^<xs:dateTime>
+  }
+  note left of session
+    a session disambiguates
+    entries when displayed
+  end note
+
+  object "/7vs3WfZFBiG1ej7NZ8uaF8/1" as entry {
+    rdf:type = tm:TimesheetEntry
+    tm:task = "Data Entry"
+    tm:start = "2022-04-28T08:00:00.000Z"^^<xs:dateTime>
+    tm:end = "2022-04-28T09:00:00.000Z"^^<xs:dateTime>
+  }
+  note top of entry
+    Entries have a sequence number
+    in a session, for easy referencing.
+    Not possible to have a global
+    sequence with eventual consistency!
+  end note
+  note left of entry::tm:end
+    No duration is stored
+    (but could be entailed).
+    If end is not specified,
+    the task is ongoing.
+  end note
+
+  entry - -> session: tm:session
+}
+@enduml
+
+PlantUML version 1.2022.4(Sat Apr 09 14:29:17 BST 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>
