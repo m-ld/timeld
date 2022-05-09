@@ -1,33 +1,33 @@
 /**
- * Combination of gateway, organisation and timesheet. Representations:
- * 1. Presentation string `[<organisation>/]<timesheet>[@<gateway>]`,
+ * Combination of gateway, account and timesheet. Representations:
+ * 1. Presentation string `[<account>/]<timesheet>[@<gateway>]`,
  *   see {@link toString} and {@link fromString}.
  * 2. Configuration/persistence path array
  *   see {@link toPath} and {@link fromPath}.
- * 3. m-ld domain name `<timesheet>.<organisation>.<gateway>`
+ * 3. m-ld domain name `<timesheet>.<account>.<gateway>`
  *   see {@link fromDomain}.
  */
-export class TimesheetId {
+export default class TimesheetId {
   /**
    * @param {string} str
    * @returns {TimesheetId}
    */
   static fromString(str) {
     const [orgTs, gateway] = str.split('@');
-    const [organisation, timesheet] = orgTs.split('/');
-    if (timesheet != null) // Organisation included
-      return new TimesheetId({ organisation, timesheet, gateway });
-    else // No organisation included
-      return new TimesheetId({ timesheet: organisation, gateway });
+    const [account, timesheet] = orgTs.split('/');
+    if (timesheet != null) // account included
+      return new TimesheetId({ account, timesheet, gateway });
+    else // No account included
+      return new TimesheetId({ timesheet: account, gateway });
   }
 
   /**
    * @param {string[]} dir
    */
   static fromPath(dir) {
-    const [timesheet, organisation, ...gateway] = [...dir].reverse();
+    const [timesheet, account, ...gateway] = [...dir].reverse();
     return new TimesheetId({
-      organisation,
+      account,
       timesheet,
       gateway: gateway.join('.')
     });
@@ -42,12 +42,12 @@ export class TimesheetId {
 
   /**
    * @param {string} timesheet
-   * @param {string} [organisation]
+   * @param {string} [account]
    * @param {string} [gateway] dot-separated gateway "domain name"
    */
-  constructor({ gateway, organisation, timesheet }) {
+  constructor({ gateway, account, timesheet }) {
     this.gateway = gateway;
-    this.organisation = organisation;
+    this.account = account;
     this.timesheet = timesheet;
   }
 
@@ -60,7 +60,7 @@ export class TimesheetId {
     // Gateway is allowed to be undefined or false
     if (typeof this.gateway == 'string')
       this.gateway.split('.').forEach(checkId);
-    checkId(this.organisation);
+    checkId(this.account);
     checkId(this.timesheet);
   }
 
@@ -70,13 +70,13 @@ export class TimesheetId {
   toPath() {
     return [
       ...this.gateway.split('.').reverse(),
-      this.organisation,
+      this.account,
       this.timesheet
     ];
   }
 
   toString() {
-    let rtn = this.organisation ? `${this.organisation}/` : '';
+    let rtn = this.account ? `${this.account}/` : '';
     rtn += this.timesheet;
     rtn += this.gateway ? `@${this.gateway}` : '';
     return rtn;

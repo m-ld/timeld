@@ -20,23 +20,27 @@ In a terminal: `npm install timeld-cli -g`
 
 `timeld config --ably.key your-ably-key`
 
-You can set up your default organisation name, e.g.
+You must provide a URI for yourself, as a user (you could use a link to your profile on your favourite social media site):
 
-`timeld config --organisation your-organisation-name`
+`timeld config --user http://you.example.org/#profile`
 
-You can also use a different organisation for each timesheet you create.
+When creating timesheets, their identity will have two parts: an 'account' name and a timesheet name. You can set up a default account name:
+
+`timeld config --account your-account-name`
+
+You can also use a different account for each timesheet you create.
 
 ## use
 
-`timeld open your-timesheet --create` creates a new timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default organisation (above), or you want to open a timesheet against a different organisation, include it in the name like this: `another-organisation/your-timesheet`.
+`timeld open your-timesheet --create` creates a new timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
 
-In the session, you can add new time entries like this: `add your-task`. (If your task name has spaces in it, put it in quotes e.g. `add "your task"`.) **timeld** will confirm what you have added.
+In the session, you can add new time entries like this: `add your-activity`. (If your activity name has spaces in it, put it in quotes e.g. `add "your activity"`.) **timeld** will confirm what you have added.
 
-If you want the task to have an end, you can set a duration using a time unit e.g. `add the-task 1h`.
+If you want the activity to have an end, you can set a duration using a time unit e.g. `add the-activity 1h`.
 
-You can also set the start time and/or the end time e.g. `add the-task --start 11am --end 12pm`.
+You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`.
 
-Once you've added an entry, you can always modify it e.g. `modify the-task --end now`.
+Once you've added an entry, you can always modify it e.g. `modify the-activity --end now`.
 
 To see all the entries you have added, use the `list` command.
 

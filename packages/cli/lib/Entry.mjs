@@ -1,6 +1,5 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { format as timeAgo } from 'timeago.js';
-import { dateJsonLd } from './util.mjs';
+import { dateJsonLd, formatDate, formatDuration, formatTimeAgo } from './util.mjs';
 
 export class Entry {
   /**
@@ -9,28 +8,42 @@ export class Entry {
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
     return new Entry({
-      seqNo: src['@id'].split('/').slice(-1),
-      sessionId: src['session']['@id'],
-      task: propertyValue(src, 'task', String),
+      seqNo: src['@id'].split('/').slice(-1)[0],
+      // TODO: Use Reference in m-ld-js v0.9
+      sessionId: propertyValue(src, 'session', Object)['@id'],
+      activity: propertyValue(src, 'activity', String),
+      providerId: propertyValue(src, 'vf:provider', Object)['@id'],
       start: propertyValue(src, 'start', Date),
-      // TODO: Array is the only way to do Optional until m-ld-js 0.9
-      end: propertyValue(src, 'end', Array, Date)[0]
+      // TODO: Array is the only way to do Optional fields until m-ld-js v0.9
+      duration: propertyValue(src, 'duration', Array, Number)[0]
     });
   }
 
   /**
-   * @param {string} seqNo
-   * @param {string} sessionId
-   * @param {string} task
    * @param {Date} start
-   * @param {Date} [end]
+   * @param {Date} end
+   * @returns {number} duration in fractional minutes
    */
-  constructor({ seqNo, sessionId, task, start, end }) {
-    this.seqNo = seqNo;
-    this.sessionId = sessionId;
-    this.task = task;
-    this.start = start;
-    this.end = end;
+  static durationFromInterval(start, end) {
+    // Round to the second then convert to minutes
+    return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
+  }
+
+  /**
+   * @param {string} spec.seqNo
+   * @param {string} spec.sessionId
+   * @param {string} spec.activity
+   * @param {string} spec.providerId
+   * @param {Date} spec.start
+   * @param {number} [spec.duration] entry duration in minutes
+   */
+  constructor(spec) {
+    this.seqNo = spec.seqNo;
+    this.sessionId = spec.sessionId;
+    this.activity = spec.activity;
+    this.providerId = spec.providerId;
+    this.start = spec.start;
+    this.duration = spec.duration;
   }
 
   /**
@@ -40,22 +53,23 @@ export class Entry {
   async sessionLabel(state) {
     const session = await state.get(this.sessionId, 'start');
     // noinspection JSCheckFunctionSignatures
-    return 'Session ' + timeAgo(propertyValue(session, 'start', Date));
+    return 'Session ' + formatTimeAgo(propertyValue(session, 'start', Date));
   }
 
   toJSON() {
     return {
       '@id': `${this.sessionId}/${this.seqNo}`,
-      '@type': 'TimesheetEntry',
-      session: { '@id': `${this.sessionId}` },
-      task: this.task,
-      start: dateJsonLd(this.start),
-      end: this.end != null ? dateJsonLd(this.end) : undefined
+      '@type': 'Entry',
+      'session': { '@id': `${this.sessionId}` },
+      'activity': this.activity,
+      'vf:provider': { '@id': `${this.providerId}` },
+      'start': dateJsonLd(this.start),
+      'duration': this.duration
     };
   }
 
   toString() {
-    return `#${this.seqNo}: ${this.task} (${this.start.toLocaleString()}` +
-      (this.end != null ? ` - ${this.end.toLocaleString()}` : ``) + `)`;
+    return `#${this.seqNo}: ${this.activity} (${formatDate(this.start)}` +
+      (this.duration != null ? `, ${formatDuration(this.duration)}` : '') + `)`;
   }
 }

@@ -1,33 +1,24 @@
-import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
-import { readFile } from 'fs/promises';
 import { uuid } from '@m-ld/m-ld';
-
-/**
- * @typedef {Partial<import('@m-ld/m-ld').MeldConfig>} SessionArgs
- * @property {string | false} [gateway]
- * @property {string} organisation
- * @property {string} timesheet
- * @property {boolean} [create]
- */
-
-const timeldContext = JSON.parse(
-  await readFile(new URL('./context.json', import.meta.url), 'utf8'));
+import { timeldContext } from './context.mjs';
 
 /**
  * Expands a partial set of command-line arguments into a usable m-ld
- * configuration with an `@id`, `@domain`, `@context` and `genesis` flag.
+ * configuration with an `@id`, `@domain`, `@context`, `genesis` flag and
+ * `principal` reference.
  */
-export class DomainConfigurator {
+export default class DomainConfigurator {
   /**
-   * @param {SessionArgs} argv
+   * @param {Partial<TimeldConfig>} argv
+   * @param {Gateway | null} gateway
    */
-  constructor(argv) {
+  constructor(argv, gateway) {
     this.argv = argv;
+    this.gateway = gateway;
   }
 
-  /** @returns {Promise<SessionArgs>} */
+  /** @returns {Promise<TimeldConfig>} */
   async load() {
-    return {
+    const config = {
       ...await this.fetchGatewayConfig(),
       // Command-line options override gateway config
       // TODO: sounds dangerous
@@ -36,6 +27,9 @@ export class DomainConfigurator {
       '@id': uuid(),
       '@context': timeldContext
     };
+    if (config.principal?.['@id'] == null)
+      throw 'No user ID available';
+    return config;
   }
 
   /**
@@ -51,8 +45,8 @@ export class DomainConfigurator {
    * @returns {Promise<Partial<import('@m-ld/m-ld').MeldConfig>>}
    */
   async fetchGatewayConfig() {
-    const { gateway, organisation, timesheet, create } = this.argv;
-    if (!gateway) { // could be false or undefined
+    const { account, timesheet, create } = this.argv;
+    if (this.gateway == null) { // could be false or undefined
       // see https://faqs.ably.com/how-do-i-find-my-app-id
       const appId = /**@type string*/this.argv['ably']?.key?.split('.')[0];
       if (appId == null)
@@ -64,11 +58,10 @@ export class DomainConfigurator {
     } else {
       let gatewayConfig;
       try {
-        gatewayConfig = await fetchJson(
-          `https://${gateway}/api/${organisation}/${timesheet}/config`);
+        gatewayConfig = await this.gateway.config(account, timesheet);
       } catch (e) {
-        console.info(`Gateway ${gateway} is not reachable (${e})`);
-        return this.noGatewayConfig(gateway);
+        console.info(`Gateway ${this.gateway.domain} is not reachable (${e})`);
+        return this.noGatewayConfig(this.gateway.domain);
       }
       if (create && !gatewayConfig.genesis)
         throw 'This timesheet already exists';
@@ -77,10 +70,10 @@ export class DomainConfigurator {
   }
 
   noGatewayConfig(rootDomain) {
-    const { organisation, timesheet, create } = this.argv;
+    const { account, timesheet, create } = this.argv;
     return {
-      genesis: create, // Will be ignored if true but domain exists locally
-      '@domain': `${timesheet}.${organisation}.${rootDomain}`
+      '@domain': `${timesheet}.${account}.${rootDomain}`,
+      genesis: create // Will be ignored if true but domain exists locally
     };
   }
 }

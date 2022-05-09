@@ -29,6 +29,7 @@
     "chrono-node": "^2.3.8",
     "dotenv": "^16.0.0",
     "env-paths": "^3.0.0",
+    "humanize-duration": "^3.27.1",
     "leveldown": "^6.1.1",
     "parse-duration": "^1.0.2",
     "simple-peer": "^9.11.1",
@@ -36,6 +37,9 @@
     "yargs": "^17.4.1"
   },
   "devDependencies": {
-    "@types/yargs": "^17.0.10"
+    "@types/yargs": "^17.0.10",
+    "memdown": "^6.1.1",
+    "rxjs": "^7.5.5",
+    "tmp": "^0.2.1"
   }
 }

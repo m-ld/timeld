@@ -1,35 +1,47 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="725px" preserveAspectRatio="none" style="width:511px;height:725px;background:#FFFFFF;" version="1.1" viewBox="0 0 511 725" width="511px" zoomAndPan="magnify"><defs><filter height="300%" id="f6leqoqc91yb1" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[aa9aa478b513889dc0a7f0c6069e4c16]
-cluster ts--><polygon fill="#FFFFFF" filter="url(#f6leqoqc91yb1)" points="16,6,35,6,42,29.6094,494,29.6094,494,718,16,718,16,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="16" x2="42" y1="29.6094" y2="29.6094"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="13" x="20" y="22.5332">ts</text><!--MD5=[0c2e12f724a2bba325ddf189ef351421]
-class Timesheet--><rect codeLine="4" fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="75.6719" id="Timesheet" style="stroke:#A80036;stroke-width:1.5;" width="100" x="378" y="233"/><ellipse cx="397.05" cy="249" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M399.8156,244.875 Q399.9719,244.6563 400.1594,244.5469 Q400.3469,244.4375 400.5656,244.4375 Q400.9406,244.4375 401.175,244.7031 Q401.4094,244.9531 401.4094,245.5625 L401.4094,247.0156 Q401.4094,247.625 401.175,247.8906 Q400.9406,248.1563 400.5656,248.1563 Q400.2219,248.1563 400.0188,247.9531 Q399.8156,247.7656 399.7063,247.25 Q399.6594,246.8906 399.4719,246.7031 Q399.1438,246.3281 398.5344,246.1094 Q397.925,245.8906 397.3,245.8906 Q396.5344,245.8906 395.8938,246.2188 Q395.2688,246.5469 394.7688,247.2969 Q394.2844,248.0469 394.2844,249.0781 L394.2844,250.1719 Q394.2844,251.4063 395.175,252.2344 Q396.0656,253.0469 397.6594,253.0469 Q398.5969,253.0469 399.2531,252.7969 Q399.6438,252.6406 400.0656,252.2031 Q400.3313,251.9375 400.4719,251.8594 Q400.6281,251.7813 400.8313,251.7813 Q401.1594,251.7813 401.4094,252.0469 Q401.675,252.2969 401.675,252.6406 Q401.675,252.9844 401.3313,253.3906 Q400.8313,253.9688 400.0344,254.2969 Q398.9563,254.75 397.6594,254.75 Q396.1438,254.75 394.9406,254.125 Q393.9563,253.625 393.2688,252.5625 Q392.5813,251.4844 392.5813,250.2031 L392.5813,249.0469 Q392.5813,247.7188 393.1906,246.5781 Q393.8156,245.4219 394.9094,244.8125 Q396.0031,244.1875 397.2375,244.1875 Q397.9719,244.1875 398.6125,244.3594 Q399.2688,244.5156 399.8156,244.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="59" x="411.95" y="253.9102">Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="379" x2="477" y1="265" y2="265"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="59" x="384" y="280.4189">entry : Entry</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="88" x="384" y="294.2549">project : Project [*]</text><line style="stroke:#A80036;stroke-width:1.5;" x1="379" x2="477" y1="300.6719" y2="300.6719"/><!--MD5=[96293e8b231702a792e4ba32419ac2da]
-class Entry--><rect codeLine="9" fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="131.0156" id="Entry" style="stroke:#A80036;stroke-width:1.5;" width="129" x="102.5" y="42"/><ellipse cx="149.25" cy="58" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M152.0156,53.875 Q152.1719,53.6563 152.3594,53.5469 Q152.5469,53.4375 152.7656,53.4375 Q153.1406,53.4375 153.375,53.7031 Q153.6094,53.9531 153.6094,54.5625 L153.6094,56.0156 Q153.6094,56.625 153.375,56.8906 Q153.1406,57.1563 152.7656,57.1563 Q152.4219,57.1563 152.2188,56.9531 Q152.0156,56.7656 151.9063,56.25 Q151.8594,55.8906 151.6719,55.7031 Q151.3438,55.3281 150.7344,55.1094 Q150.125,54.8906 149.5,54.8906 Q148.7344,54.8906 148.0938,55.2188 Q147.4688,55.5469 146.9688,56.2969 Q146.4844,57.0469 146.4844,58.0781 L146.4844,59.1719 Q146.4844,60.4063 147.375,61.2344 Q148.2656,62.0469 149.8594,62.0469 Q150.7969,62.0469 151.4531,61.7969 Q151.8438,61.6406 152.2656,61.2031 Q152.5313,60.9375 152.6719,60.8594 Q152.8281,60.7813 153.0313,60.7813 Q153.3594,60.7813 153.6094,61.0469 Q153.875,61.2969 153.875,61.6406 Q153.875,61.9844 153.5313,62.3906 Q153.0313,62.9688 152.2344,63.2969 Q151.1563,63.75 149.8594,63.75 Q148.3438,63.75 147.1406,63.125 Q146.1563,62.625 145.4688,61.5625 Q144.7813,60.4844 144.7813,59.2031 L144.7813,58.0469 Q144.7813,56.7188 145.3906,55.5781 Q146.0156,54.4219 147.1094,53.8125 Q148.2031,53.1875 149.4375,53.1875 Q150.1719,53.1875 150.8125,53.3594 Q151.4688,53.5156 152.0156,53.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="27" x="169.75" y="62.9102">Entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="103.5" x2="230.5" y1="74" y2="74"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="91" x="108.5" y="89.4189">activity : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="113" x="108.5" y="103.2549">hourlyRate : hourlyRate</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="114" x="108.5" y="117.0908">contributor : vf:Provider</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="108.5" y="130.9268">startTime : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="108" x="108.5" y="144.7627">duration: om2:Duration</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="104" x="108.5" y="158.5986">timesheet : Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="103.5" x2="230.5" y1="165.0156" y2="165.0156"/><path d="M266.5,55 L266.5,72.3516 L221.5,98.7539 L266.5,80.3516 L266.5,97.7031 A0,0 0 0 0 266.5,97.7031 L380.5,97.7031 A0,0 0 0 0 380.5,97.7031 L380.5,65 L370.5,55 L266.5,55 A0,0 0 0 0 266.5,55 " fill="#FBFB77" filter="url(#f6leqoqc91yb1)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M370.5,55 L370.5,65 L380.5,65 L370.5,55 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="86" x="272.5" y="73.4951">hourlyRate still</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="93" x="272.5" y="89.8467">to be elaborated</text><path d="M266.5,107.7031 L266.5,125.0547 L216.5,140.2617 L266.5,133.0547 L266.5,150.4063 A0,0 0 0 0 266.5,150.4063 L477.5,150.4063 A0,0 0 0 0 477.5,150.4063 L477.5,117.7031 L467.5,107.7031 L266.5,107.7031 A0,0 0 0 0 266.5,107.7031 " fill="#FBFB77" filter="url(#f6leqoqc91yb1)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M467.5,107.7031 L467.5,117.7031 L477.5,117.7031 L467.5,107.7031 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="181" x="272.5" y="126.1982">entry's duration property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="190" x="272.5" y="142.5498">a sub-property of vf:effortQuantity</text><!--MD5=[e66c67d430336d46da75a5fc9d9d1b7c]
-class vf:Action--><rect fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="48" id="vf:Action" style="stroke:#A80036;stroke-width:1.5;" width="76" x="267" y="247"/><ellipse cx="282" cy="263" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M284.7656,258.875 Q284.9219,258.6563 285.1094,258.5469 Q285.2969,258.4375 285.5156,258.4375 Q285.8906,258.4375 286.125,258.7031 Q286.3594,258.9531 286.3594,259.5625 L286.3594,261.0156 Q286.3594,261.625 286.125,261.8906 Q285.8906,262.1563 285.5156,262.1563 Q285.1719,262.1563 284.9688,261.9531 Q284.7656,261.7656 284.6563,261.25 Q284.6094,260.8906 284.4219,260.7031 Q284.0938,260.3281 283.4844,260.1094 Q282.875,259.8906 282.25,259.8906 Q281.4844,259.8906 280.8438,260.2188 Q280.2188,260.5469 279.7188,261.2969 Q279.2344,262.0469 279.2344,263.0781 L279.2344,264.1719 Q279.2344,265.4063 280.125,266.2344 Q281.0156,267.0469 282.6094,267.0469 Q283.5469,267.0469 284.2031,266.7969 Q284.5938,266.6406 285.0156,266.2031 Q285.2813,265.9375 285.4219,265.8594 Q285.5781,265.7813 285.7813,265.7813 Q286.1094,265.7813 286.3594,266.0469 Q286.625,266.2969 286.625,266.6406 Q286.625,266.9844 286.2813,267.3906 Q285.7813,267.9688 284.9844,268.2969 Q283.9063,268.75 282.6094,268.75 Q281.0938,268.75 279.8906,268.125 Q278.9063,267.625 278.2188,266.5625 Q277.5313,265.4844 277.5313,264.2031 L277.5313,263.0469 Q277.5313,261.7188 278.1406,260.5781 Q278.7656,259.4219 279.8594,258.8125 Q280.9531,258.1875 282.1875,258.1875 Q282.9219,258.1875 283.5625,258.3594 Q284.2188,258.5156 284.7656,258.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="44" x="296" y="267.9102">vf:Action</text><line style="stroke:#A80036;stroke-width:1.5;" x1="268" x2="342" y1="279" y2="279"/><line style="stroke:#A80036;stroke-width:1.5;" x1="268" x2="342" y1="287" y2="287"/><!--MD5=[79d378210367c0c6ec62ef762ddfbd1b]
-class Project--><rect codeLine="32" fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="103.3438" id="Project" style="stroke:#A80036;stroke-width:1.5;" width="129" x="168.5" y="369"/><ellipse cx="210.05" cy="385" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M212.8156,380.875 Q212.9719,380.6563 213.1594,380.5469 Q213.3469,380.4375 213.5656,380.4375 Q213.9406,380.4375 214.175,380.7031 Q214.4094,380.9531 214.4094,381.5625 L214.4094,383.0156 Q214.4094,383.625 214.175,383.8906 Q213.9406,384.1563 213.5656,384.1563 Q213.2219,384.1563 213.0188,383.9531 Q212.8156,383.7656 212.7063,383.25 Q212.6594,382.8906 212.4719,382.7031 Q212.1438,382.3281 211.5344,382.1094 Q210.925,381.8906 210.3,381.8906 Q209.5344,381.8906 208.8938,382.2188 Q208.2688,382.5469 207.7688,383.2969 Q207.2844,384.0469 207.2844,385.0781 L207.2844,386.1719 Q207.2844,387.4063 208.175,388.2344 Q209.0656,389.0469 210.6594,389.0469 Q211.5969,389.0469 212.2531,388.7969 Q212.6438,388.6406 213.0656,388.2031 Q213.3313,387.9375 213.4719,387.8594 Q213.6281,387.7813 213.8313,387.7813 Q214.1594,387.7813 214.4094,388.0469 Q214.675,388.2969 214.675,388.6406 Q214.675,388.9844 214.3313,389.3906 Q213.8313,389.9688 213.0344,390.2969 Q211.9563,390.75 210.6594,390.75 Q209.1438,390.75 207.9406,390.125 Q206.9563,389.625 206.2688,388.5625 Q205.5813,387.4844 205.5813,386.2031 L205.5813,385.0469 Q205.5813,383.7188 206.1906,382.5781 Q206.8156,381.4219 207.9094,380.8125 Q209.0031,380.1875 210.2375,380.1875 Q210.9719,380.1875 211.6125,380.3594 Q212.2688,380.5156 212.8156,380.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="38" x="229.95" y="389.9102">Project</text><line style="stroke:#A80036;stroke-width:1.5;" x1="169.5" x2="296.5" y1="401" y2="401"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="174.5" y="416.4189">startDate : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="111" x="174.5" y="430.2549">duration : om2:Duration</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="102" x="174.5" y="444.0908">milestone : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="87" x="174.5" y="457.9268">client : Client [0..1]</text><line style="stroke:#A80036;stroke-width:1.5;" x1="169.5" x2="296.5" y1="464.3438" y2="464.3438"/><!--MD5=[ed6624c6556d5e7b1bd23032162d20b7]
-class Client--><rect codeLine="41" fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="61.8359" id="Client" style="stroke:#A80036;stroke-width:1.5;" width="95" x="134.5" y="532"/><ellipse cx="163.45" cy="548" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M166.2156,543.875 Q166.3719,543.6563 166.5594,543.5469 Q166.7469,543.4375 166.9656,543.4375 Q167.3406,543.4375 167.575,543.7031 Q167.8094,543.9531 167.8094,544.5625 L167.8094,546.0156 Q167.8094,546.625 167.575,546.8906 Q167.3406,547.1563 166.9656,547.1563 Q166.6219,547.1563 166.4188,546.9531 Q166.2156,546.7656 166.1063,546.25 Q166.0594,545.8906 165.8719,545.7031 Q165.5438,545.3281 164.9344,545.1094 Q164.325,544.8906 163.7,544.8906 Q162.9344,544.8906 162.2938,545.2188 Q161.6688,545.5469 161.1688,546.2969 Q160.6844,547.0469 160.6844,548.0781 L160.6844,549.1719 Q160.6844,550.4063 161.575,551.2344 Q162.4656,552.0469 164.0594,552.0469 Q164.9969,552.0469 165.6531,551.7969 Q166.0438,551.6406 166.4656,551.2031 Q166.7313,550.9375 166.8719,550.8594 Q167.0281,550.7813 167.2313,550.7813 Q167.5594,550.7813 167.8094,551.0469 Q168.075,551.2969 168.075,551.6406 Q168.075,551.9844 167.7313,552.3906 Q167.2313,552.9688 166.4344,553.2969 Q165.3563,553.75 164.0594,553.75 Q162.5438,553.75 161.3406,553.125 Q160.3563,552.625 159.6688,551.5625 Q158.9813,550.4844 158.9813,549.2031 L158.9813,548.0469 Q158.9813,546.7188 159.5906,545.5781 Q160.2156,544.4219 161.3094,543.8125 Q162.4031,543.1875 163.6375,543.1875 Q164.3719,543.1875 165.0125,543.3594 Q165.6688,543.5156 166.2156,543.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="32" x="180.55" y="552.9102">Client</text><line style="stroke:#A80036;stroke-width:1.5;" x1="135.5" x2="228.5" y1="564" y2="564"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="83" x="140.5" y="579.4189">name : xsd:string</text><line style="stroke:#A80036;stroke-width:1.5;" x1="135.5" x2="228.5" y1="585.8359" y2="585.8359"/><path d="M32.5,249.5 L32.5,292.2031 L231.5,292.2031 L231.5,259.5 L221.5,249.5 L32.5,249.5 " fill="#FBFB77" filter="url(#f6leqoqc91yb1)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M221.5,249.5 L221.5,259.5 L231.5,259.5 L221.5,249.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="178" x="38.5" y="267.9951">Project's client property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="157" x="38.5" y="284.3467">a sub-property of vf:receiver</text><!--MD5=[84612bed34b900519fce1dd1c39e16c2]
-class foaf:Agent--><rect fill="#FEFECE" filter="url(#f6leqoqc91yb1)" height="48" id="foaf:Agent" style="stroke:#A80036;stroke-width:1.5;" width="86" x="139" y="654"/><ellipse cx="154" cy="670" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M156.7656,665.875 Q156.9219,665.6563 157.1094,665.5469 Q157.2969,665.4375 157.5156,665.4375 Q157.8906,665.4375 158.125,665.7031 Q158.3594,665.9531 158.3594,666.5625 L158.3594,668.0156 Q158.3594,668.625 158.125,668.8906 Q157.8906,669.1563 157.5156,669.1563 Q157.1719,669.1563 156.9688,668.9531 Q156.7656,668.7656 156.6563,668.25 Q156.6094,667.8906 156.4219,667.7031 Q156.0938,667.3281 155.4844,667.1094 Q154.875,666.8906 154.25,666.8906 Q153.4844,666.8906 152.8438,667.2188 Q152.2188,667.5469 151.7188,668.2969 Q151.2344,669.0469 151.2344,670.0781 L151.2344,671.1719 Q151.2344,672.4063 152.125,673.2344 Q153.0156,674.0469 154.6094,674.0469 Q155.5469,674.0469 156.2031,673.7969 Q156.5938,673.6406 157.0156,673.2031 Q157.2813,672.9375 157.4219,672.8594 Q157.5781,672.7813 157.7813,672.7813 Q158.1094,672.7813 158.3594,673.0469 Q158.625,673.2969 158.625,673.6406 Q158.625,673.9844 158.2813,674.3906 Q157.7813,674.9688 156.9844,675.2969 Q155.9063,675.75 154.6094,675.75 Q153.0938,675.75 151.8906,675.125 Q150.9063,674.625 150.2188,673.5625 Q149.5313,672.4844 149.5313,671.2031 L149.5313,670.0469 Q149.5313,668.7188 150.1406,667.5781 Q150.7656,666.4219 151.8594,665.8125 Q152.9531,665.1875 154.1875,665.1875 Q154.9219,665.1875 155.5625,665.3594 Q156.2188,665.5156 156.7656,665.875 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="54" x="168" y="674.9102">foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="140" x2="224" y1="686" y2="686"/><line style="stroke:#A80036;stroke-width:1.5;" x1="140" x2="224" y1="694" y2="694"/><!--MD5=[82bde99b90173856d1b53a5f7332f595]
-link Entry to Entry$$$RIGHT--><!--MD5=[889c94e4919196ae8d870bf39295b876]
-link Entry to vf:Action--><path codeLine="28" d="M222.33,173.26 C239.15,192.94 257.1,213.95 271.96,231.34 " fill="none" id="Entry-to-vf:Action" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="277.46,226.99,285.13,246.74,266.81,236.09,277.46,226.99" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f5abeaa4131c85952e7ccdbb13b61870]
-link Entry to Timesheet--><path codeLine="30" d="M231.58,160.96 C237.38,165.16 243.24,169.23 249,173 C296.26,203.91 311.39,206.02 361,233 C362.8,233.98 364.63,234.97 366.47,235.98 " fill="none" id="Entry-to-Timesheet" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="377.92,242.25,374.5753,235.8615,367.3918,236.4918,370.7365,242.8803,377.92,242.25" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="5" x="239.3361" y="163.7309">*</text><!--MD5=[f916e162bce7c7efe9a8de5f08f8c74c]
-link Timesheet to Project--><path codeLine="39" d="M379.04,309.03 C354.45,327.63 324.32,350.42 297.83,370.46 " fill="none" id="Timesheet-Project" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="5" x="365.5169" y="330.2051">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="5" x="305.615" y="361.2447">*</text><!--MD5=[6d8dc9585a533a8f6e1281fffd2c5bc0]
-link Project to Client--><path codeLine="45" d="M214.59,472.22 C207.34,492.19 199.26,514.44 192.96,531.79 " fill="none" id="Project-Client" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="5" x="206.7802" y="493.7405">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="22" x="170.9518" y="521.2512">0..1</text><!--MD5=[75293c24f78ec3588ad0b55cf69f500f]
-link N1 to Project--><path codeLine="52" d="M146.04,292.51 C159.49,312.14 180.31,342.55 198.21,368.69 " fill="none" id="N1-Project" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><!--MD5=[f623f21713cb0a0938803cad585afbfe]
-link N1 to Client--><path codeLine="53" d="M132.36,292.69 C133.34,329.26 137.05,407.57 151,472 C155.41,492.35 162.98,514.47 169.55,531.69 " fill="none" id="N1-Client" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><!--MD5=[ad42187c67222c6c63d1a8fda3a9a386]
-link Client to foaf:Agent--><path codeLine="55" d="M182,594.28 C182,606.41 182,620.6 182,633.77 " fill="none" id="Client-to-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="189,633.81,182,653.81,175,633.81,189,633.81" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[36932e770b25d477fb2ad4525f3b87a8]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     contentStyleType="text/css" height="729px" preserveAspectRatio="none"
+     style="width:631px;height:729px;background:#FFFFFF;" version="1.1" viewBox="0 0 631 729"
+     width="631px" zoomAndPan="magnify"><defs/><g><!--MD5=[aa9aa478b513889dc0a7f0c6069e4c16]
+cluster ts--><g id="cluster_ts"><path d="M8.5,6 L23.5,6 A3.75,3.75 0 0 1 26,8.5 L33,28.4883 L621.5,28.4883 A2.5,2.5 0 0 1 624,30.9883 L624,719.5 A2.5,2.5 0 0 1 621.5,722 L8.5,722 A2.5,2.5 0 0 1 6,719.5 L6,8.5 A2.5,2.5 0 0 1 8.5,6 " style="stroke:#000000;stroke-width:1.5;fill:none;"/><line style="stroke:#000000;stroke-width:1.5;fill:none;" x1="6" x2="33" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="14" x="10" y="21.5352">ts</text></g><!--MD5=[0c2e12f724a2bba325ddf189ef351421]
+class Timesheet--><g id="elem_Timesheet"><rect codeLine="6" fill="#F1F1F1" height="58.9766" id="Timesheet" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="140" x="468" y="217"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="502.5" y="235.5352">Timesheet</text><line style="stroke:#181818;stroke-width:0.5;" x1="469" x2="607" y1="243.4883" y2="243.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="128" x="474" y="261.0234">project : Project [*]</text><line style="stroke:#181818;stroke-width:0.5;" x1="469" x2="607" y1="267.9766" y2="267.9766"/></g><!--MD5=[2ca1536628238a7dc78c5d90808014f9]
+class Session--><g id="elem_Session"><rect codeLine="10" fill="#F1F1F1" height="75.4648" id="Session" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="162" x="236" y="41"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="52" x="291" y="59.5352">Session</text><line style="stroke:#181818;stroke-width:0.5;" x1="237" x2="397" y1="67.4883" y2="67.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="136" x="242" y="85.0234">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="150" x="242" y="101.5117">timesheet : Timesheet</text><line style="stroke:#181818;stroke-width:0.5;" x1="237" x2="397" y1="108.4648" y2="108.4648"/></g><!--MD5=[96293e8b231702a792e4ba32419ac2da]
+class Entry--><g id="elem_Entry"><rect codeLine="17" fill="#F1F1F1" height="141.418" id="Entry" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="172" x="22" y="176"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="35" x="90.5" y="194.5352">Entry</text><line style="stroke:#181818;stroke-width:0.5;" x1="23" x2="193" y1="202.4883" y2="202.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="115" x="28" y="220.0234">session : Session</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="128" x="28" y="236.5117">activity : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160" x="28" y="253">hourlyRate : hourlyRate</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="158" x="28" y="269.4883">vf:provider : foaf:Agent</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="136" x="28" y="285.9766">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153" x="28" y="302.4648">duration : xsd:decimal</text><line style="stroke:#181818;stroke-width:0.5;" x1="23" x2="193" y1="309.418" y2="309.418"/></g><path d="M229,188 L229,204.3105 L188,247.709 L229,212.3105 L229,228.6211 A0,0 0 0 0 229,228.6211 L352,228.6211 A0,0 0 0 0 352,228.6211 L352,198 L342,188 L229,188 A0,0 0 0 0 229,188 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M342,188 L342,198 L352,198 L342,188 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="95" x="235" y="205.5684">hourlyRate still</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="102" x="235" y="220.8789">to be elaborated</text><path d="M229,238.6211 L229,262.5869 L181,297.1738 L229,270.5869 L229,294.5527 A0,0 0 0 0 229,294.5527 L433,294.5527 A0,0 0 0 0 433,294.5527 L433,248.6211 L423,238.6211 L229,238.6211 A0,0 0 0 0 229,238.6211 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M423,238.6211 L423,248.6211 L433,248.6211 L423,238.6211 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="115" x="235" y="256.1895">fractional minutes</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="183" x="235" y="271.5">could also be a sub-property</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="235" y="286.8105">of vf:effortQuantity</text><!--MD5=[e66c67d430336d46da75a5fc9d9d1b7c]
+class vf:Action--><g id="elem_vf:Action"><rect fill="#F1F1F1" height="42.4883" id="vf:Action" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="66" x="53" y="410"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="60" x="56" y="428.5352">vf:Action</text><line style="stroke:#181818;stroke-width:0.5;" x1="54" x2="118" y1="436.4883" y2="436.4883"/><line style="stroke:#181818;stroke-width:0.5;" x1="54" x2="118" y1="444.4883" y2="444.4883"/></g><!--MD5=[84612bed34b900519fce1dd1c39e16c2]
+class foaf:Agent--><g id="elem_foaf:Agent"><rect fill="#F1F1F1" height="42.4883" id="foaf:Agent" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="78" x="174" y="664"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="72" x="177" y="682.5352">foaf:Agent</text><line style="stroke:#181818;stroke-width:0.5;" x1="175" x2="251" y1="690.4883" y2="690.4883"/><line style="stroke:#181818;stroke-width:0.5;" x1="175" x2="251" y1="698.4883" y2="698.4883"/></g><!--MD5=[79d378210367c0c6ec62ef762ddfbd1b]
+class Project--><g id="elem_Project"><rect codeLine="43" fill="#F1F1F1" height="108.4414" id="Project" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="179" x="191.5" y="377"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="47" x="257.5" y="395.5352">Project</text><line style="stroke:#181818;stroke-width:0.5;" x1="192.5" x2="369.5" y1="403.4883" y2="403.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="167" x="197.5" y="421.0234">startDate : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="166" x="197.5" y="437.5117">duration : om2:Duration</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="148" x="197.5" y="454">milestone : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="129" x="197.5" y="470.4883">client : Client [0..1]</text><line style="stroke:#181818;stroke-width:0.5;" x1="192.5" x2="369.5" y1="477.4414" y2="477.4414"/></g><!--MD5=[ed6624c6556d5e7b1bd23032162d20b7]
+class Client--><g id="elem_Client"><rect codeLine="52" fill="#F1F1F1" height="58.9766" id="Client" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="162" x="195" y="545"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40" x="256" y="563.5352">Client</text><line style="stroke:#181818;stroke-width:0.5;" x1="196" x2="356" y1="571.4883" y2="571.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="150" x="201" y="589.0234">foaf:name : xsd:string</text><line style="stroke:#181818;stroke-width:0.5;" x1="196" x2="356" y1="595.9766" y2="595.9766"/></g><path d="M406,405.5 L406,421.8105 L326.5,465.1973 L406,429.8105 L406,446.1211 A0,0 0 0 0 406,446.1211 L608,446.1211 A0,0 0 0 0 608,446.1211 L608,415.5 L598,405.5 L406,405.5 A0,0 0 0 0 406,405.5 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M598,405.5 L598,415.5 L608,415.5 L598,405.5 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="137" x="412" y="423.0684">client property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="181" x="412" y="438.3789">a sub-property of vf:receiver</text><!--MD5=[1ff2cad5b06ffeafd56335cddeccaf9d]
+reverse link Session to Entry--><g id="link_Session_Entry"><path codeLine="15" d="M260.54,124.35 C240.18,140.51 216.72,159.15 194.39,176.88 " fill="none" id="Session-backto-Entry" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="270.88,116.13,263.6941,116.7325,261.4865,123.5973,268.6723,122.9949,270.88,116.13" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="253.6391" y="137.005">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="202.072" y="167.8162">*</text></g><!--MD5=[889c94e4919196ae8d870bf39295b876]
+link Entry to vf:Action--><g id="link_Entry_vf:Action"><path codeLine="37" d="M99.62,317.02 C96.65,341.69 93.4,368.61 90.82,389.98 " fill="none" id="Entry-to-vf:Action" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="none" points="97.76,390.9,88.42,409.92,83.86,389.23,97.76,390.9" style="stroke:#181818;stroke-width:1.0;"/></g><!--MD5=[40e47b055a33d05f09d872b96785d165]
+reverse link Entry to foaf:Agent--><g id="link_Entry_foaf:Agent"><path codeLine="39" d="M127.05,330.16 C130.48,345.7 133.93,361.83 137,377 C157.32,477.49 148.14,505.92 178,604 C184.4,625.03 194.78,647.9 202.58,663.78 " fill="none" id="Entry-backto-foaf:Agent" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="none" points="124.19,317.28,121.5844,324.0039,126.789,328.9952,129.3945,322.2713,124.19,317.28" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="190.5244" y="653.2459">1</text></g><!--MD5=[addc1e9e0750174350b69c33eadbb040]
+link Session to Timesheet--><g id="link_Session_Timesheet"><path codeLine="41" d="M368.98,116.02 C393.99,133.83 424.28,155.73 451,176 C464.61,186.33 479.19,197.81 492.45,208.41 " fill="none" id="Session-to-Timesheet" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="502.76,216.69,500.5854,209.8146,493.4024,209.1776,495.5771,216.053,502.76,216.69" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="372.3168" y="137.1556">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="486.1763" y="206.1333">1</text></g><!--MD5=[f916e162bce7c7efe9a8de5f08f8c74c]
+link Timesheet to Project--><g id="link_Timesheet_Project"><path codeLine="50" d="M503.41,276.28 C487.67,289.07 468.65,304.12 451,317 C423.23,337.26 392.1,358.39 364.14,376.82 " fill="none" id="Timesheet-Project" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="489.6571" y="296.5718">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="368.9088" y="366.0913">*</text></g><!--MD5=[6d8dc9585a533a8f6e1281fffd2c5bc0]
+link Project to Client--><g id="link_Project_Client"><path codeLine="56" d="M279.12,485.09 C278.41,505.32 277.62,527.62 277.02,544.75 " fill="none" id="Project-Client" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="272.4643" y="505.9257">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="24" x="250.6181" y="534.2065">0..1</text></g><!--MD5=[ad42187c67222c6c63d1a8fda3a9a386]
+link Client to foaf:Agent--><g id="link_Client_foaf:Agent"><path codeLine="63" d="M259.45,604.01 C251.93,616.96 242.93,632.45 234.86,646.35 " fill="none" id="Client-to-foaf:Agent" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="none" points="240.77,650.12,224.67,663.9,228.66,643.09,240.77,650.12" style="stroke:#181818;stroke-width:1.0;"/></g><!--MD5=[aed86abc1506c907ea30e3105abe97ae]
 @startuml
 'https://plantuml.com/class-diagram
 
+hide circle
+
 package ts {
     class Timesheet {
-        entry : Entry
         project : Project [*]
     }
 
+    class Session {
+        start : xsd:dateTime
+        timesheet : Timesheet
+    }
+
+    Session "1" *- - "*" Entry
+
     class Entry {
+        session : Session
         activity : xsd:string
         hourlyRate : hourlyRate
-        contributor : vf:Provider
-        startTime : xsd:dateTime
-        duration: om2:Duration
-        timesheet : Timesheet
+        vf:provider : foaf:Agent
+        start : xsd:dateTime
+        duration : xsd:decimal
     }
 
     note right of Entry::hourlyRate
@@ -38,13 +50,16 @@ package ts {
     end note
 
     note right of Entry::duration
-        entry's duration property is also
-        a sub-property of vf:effortQuantity
+        fractional minutes
+        could also be a sub-property
+        of vf:effortQuantity
     end note
 
     Entry - -|> "vf:Action"
 
-        "Entry" "*" - -* Timesheet
+    Entry o- - "1" "foaf:Agent"
+
+    Session "*" - -* "1" Timesheet
 
     class Project {
         startDate : xsd:dateTime
@@ -56,18 +71,15 @@ package ts {
     Timesheet "*" - - "*" Project
 
     class Client {
-        name : xsd:string
+        foaf:name : xsd:string
     }
 
     Project "*" - - "0..1" Client
 
-    note as N1
-    Project's client property is also
+    note right of Project::client
+    client property is also
     a sub-property of vf:receiver
     end note
-
-    N1 .. Project
-    N1 .. Client
 
     Client - -|> "foaf:Agent"
 
@@ -77,19 +89,27 @@ package ts {
 
 @startuml
 
+hide circle
+
 package ts {
     class Timesheet {
-        entry : Entry
         project : Project [*]
     }
 
+    class Session {
+        start : xsd:dateTime
+        timesheet : Timesheet
+    }
+
+    Session "1" *- - "*" Entry
+
     class Entry {
+        session : Session
         activity : xsd:string
         hourlyRate : hourlyRate
-        contributor : vf:Provider
-        startTime : xsd:dateTime
-        duration: om2:Duration
-        timesheet : Timesheet
+        vf:provider : foaf:Agent
+        start : xsd:dateTime
+        duration : xsd:decimal
     }
 
     note right of Entry::hourlyRate
@@ -98,13 +118,16 @@ package ts {
     end note
 
     note right of Entry::duration
-        entry's duration property is also
-        a sub-property of vf:effortQuantity
+        fractional minutes
+        could also be a sub-property
+        of vf:effortQuantity
     end note
 
     Entry - -|> "vf:Action"
 
-        "Entry" "*" - -* Timesheet
+    Entry o- - "1" "foaf:Agent"
+
+    Session "*" - -* "1" Timesheet
 
     class Project {
         startDate : xsd:dateTime
@@ -116,18 +139,15 @@ package ts {
     Timesheet "*" - - "*" Project
 
     class Client {
-        name : xsd:string
+        foaf:name : xsd:string
     }
 
     Project "*" - - "0..1" Client
 
-    note as N1
-    Project's client property is also
+    note right of Project::client
+    client property is also
     a sub-property of vf:receiver
     end note
-
-    N1 .. Project
-    N1 .. Client
 
     Client - -|> "foaf:Agent"
 
@@ -135,7 +155,7 @@ package ts {
 
 @enduml
 
-PlantUML version 1.2022.0(Tue Jan 11 16:16:42 GMT 2022)
+PlantUML version 1.2022.4(Sat Apr 09 14:29:17 BST 2022)
 (GPL source distribution)
 Java Runtime: OpenJDK Runtime Environment
 JVM: OpenJDK 64-Bit Server VM

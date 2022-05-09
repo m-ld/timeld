@@ -1,0 +1,11 @@
+[ {
+  "@id" : "http://timeld.org/",
+  "@type" : [ "http://www.w3.org/2002/07/owl#Ontology" ],
+  "http://www.w3.org/2002/07/owl#imports" : [ {
+    "@id" : "http://www.ontology-of-units-of-measure.org/resource/om-2"
+  }, {
+    "@id" : "http://xmlns.com/foaf/0.1/"
+  }, {
+    "@id" : "https://w3id.org/0.5/"
+  } ]
+} ]

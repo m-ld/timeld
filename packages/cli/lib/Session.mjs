@@ -3,32 +3,33 @@ import { Proc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
 import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
-import parseDuration from 'parse-duration';
-import { parseDate } from 'chrono-node';
 import { ResultsProc } from './ResultsProc.mjs';
-import { dateJsonLd } from './util.mjs';
+import { dateJsonLd, parseDate, parseDuration } from './util.mjs';
 import { Entry } from './Entry.mjs';
 import { DefaultFormat, jsonLdFormat } from './Format.mjs';
 
-export class Session extends Repl {
+export default class Session extends Repl {
   /**
-   * @param {string} id unique session Id
-   * @param {import('@m-ld/m-ld').MeldClone} meld
-   * @param {string} prompt
-   * @param {string} logFile
-   * @param {string|number} logLevel
+   * @param {string} spec.id
+   * @param {string} spec.timesheet
+   * @param {string} spec.providerId
+   * @param {import('@m-ld/m-ld').MeldClone} spec.meld
+   * @param {string} spec.logFile
+   * @param {string|number} spec.logLevel
    */
-  constructor(id, meld, prompt, logFile, logLevel) {
-    super({ logLevel, prompt });
-    this.id = id;
-    this.meld = meld;
-    this.logFile = logFile;
+  constructor(spec) {
+    super({ logLevel: spec.logLevel, prompt: `${(spec.timesheet)}>` });
+    this.id = spec.id;
+    this.timesheet = spec.timesheet;
+    this.providerId = spec.providerId;
+    this.meld = spec.meld;
+    this.logFile = spec.logFile;
     this.startTime = new Date;
-    this.nextTaskId = 1;
+    this.nextEntryId = 1;
   }
 
   buildCommands(yargs, ctx) {
-    const COMPLETES_TASK = '. Using this option will mark the task complete.';
+    const COMPLETES_ENTRY = '. Using this option will mark the entry complete.';
     // noinspection JSCheckFunctionSignatures
     return yargs
       .updateStrings({ 'Positionals:': 'Details:' })
@@ -44,54 +45,54 @@ export class Session extends Repl {
           () => this.logProc(argv))
       )
       .command(
-        ['add <task> [duration]', 'a', '+'],
+        ['add <activity> [duration]', 'a', '+'],
         'Add a new timesheet entry',
         yargs => yargs
-          .positional('task', {
-            describe: 'The name of the task being worked on',
+          .positional('activity', {
+            describe: 'The name of the activity being worked on',
             type: 'string'
           })
           .positional('duration', {
-            describe: 'The duration of the task e.g. 1h' + COMPLETES_TASK,
+            describe: 'The duration of the activity e.g. 1h' + COMPLETES_ENTRY,
             type: 'string',
-            coerce: arg => parseDuration(arg)
+            coerce: parseDuration
           })
           .option('start', {
-            describe: 'The start date/time of the task',
+            describe: 'The start date/time of the activity',
             type: 'array',
             default: ['now'],
-            coerce: arg => parseDate(arg.join(' '))
+            coerce: parseDate
           })
           .option('end', {
-            describe: 'The end date & time of the task' + COMPLETES_TASK,
+            describe: 'The end date & time of the activity' + COMPLETES_ENTRY,
             type: 'array',
-            coerce: arg => parseDate(arg.join(' '))
+            coerce: parseDate
           }),
         argv => ctx.exec(
-          () => this.addTaskProc(argv))
+          () => this.addEntryProc(argv))
       )
       .command(
         ['modify <selector> [duration]', 'mod', 'm'],
         'Change the value of an existing entry',
         yargs => yargs
           .positional('selector', {
-            // TODO: entry by [task and] date-time e.g. "work yesterday 12pm"
-            describe: 'Entry to modify, using a number or a task name'
+            // TODO: entry by [activity and] date-time e.g. "work yesterday 12pm"
+            describe: 'Entry to modify, using a number or a activity name'
           })
           .positional('duration', {
-            describe: 'The new duration of the task e.g. 1h',
+            describe: 'The new duration of the activity e.g. 1h',
             type: 'string',
-            coerce: arg => parseDuration(arg)
+            coerce: parseDuration
           })
           .option('start', {
-            describe: 'The new start date & time of the task',
+            describe: 'The new start date & time of the activity',
             type: 'array',
-            coerce: arg => parseDate(arg.join(' '))
+            coerce: parseDate
           })
           .option('end', {
-            describe: 'The new end date & time of the task',
+            describe: 'The new end date & time of the activity',
             type: 'array',
-            coerce: arg => parseDate(arg.join(' '))
+            coerce: parseDate
           })
           .check(argv => {
             if (argv.start == null && argv.end == null && argv.duration == null)
@@ -119,7 +120,7 @@ export class Session extends Repl {
             default: 'default'
           }),
         argv => ctx.exec(
-          () => this.listTasksProc(argv))
+          () => this.listEntriesProc(argv))
       );
   }
 
@@ -128,11 +129,11 @@ export class Session extends Repl {
    * @param {'default'|'JSON-LD'} format
    * @returns {Proc}
    */
-  listTasksProc({ selector, format }) {
+  listEntriesProc({ selector, format }) {
     // TODO: selectors
     return new ResultsProc(this.meld.read({
-      '@describe': '?task',
-      '@where': { '@id': '?task', '@type': 'TimesheetEntry' }
+      '@describe': '?activity',
+      '@where': { '@id': '?activity', '@type': 'Entry' }
     }), {
       'JSON-LD': jsonLdFormat,
       'json-ld': jsonLdFormat,
@@ -141,8 +142,8 @@ export class Session extends Repl {
   }
 
   /**
-   * @param {string | number} selector Entry to modify, using a number or a task name
-   * @param {number} [duration] in millis
+   * @param {string | number} selector Entry to modify, using a number or a activity name
+   * @param {number} [duration] in minutes
    * @param {Date} [start]
    * @param {Date} [end]
    * @returns {Proc}
@@ -154,10 +155,10 @@ export class Session extends Repl {
         const entry = Entry.fromJSON(src);
         if (start != null)
           entry.start = start;
-        if (end != null)
-          entry.end = end;
-        if (end == null && duration != null)
-          entry.end = new Date(entry.start.getTime() + duration);
+        if (end != null && duration == null)
+          entry.duration = Entry.durationFromInterval(entry.start, end);
+        if (duration != null)
+          entry.duration = duration;
         proc.emit('message', entry.toString());
         return state.write({
           '@delete': src,
@@ -169,14 +170,14 @@ export class Session extends Repl {
         if (src != null)
           await updateEntry(src);
         else
-          throw 'No such task sequence number found in this session.';
+          throw 'No such activity sequence number found in this session.';
       } else {
         for (let src of await state.read({
           '@describe': '?id',
           '@where': {
             '@id': '?id',
-            '@type': 'TimesheetEntry',
-            task: selector
+            '@type': 'Entry',
+            activity: selector
           }
         })) {
           state = await updateEntry(src);
@@ -187,18 +188,23 @@ export class Session extends Repl {
   }
 
   /**
-   * @param {string} task
-   * @param {number} [duration] in millis
+   * @param {string} activity
+   * @param {number} [duration] in minutes
    * @param {Date} start
    * @param {Date} [end]
    * @returns {Proc}
    */
-  addTaskProc({ task, duration, start, end }) {
+  addEntryProc({ activity, duration, start, end }) {
     // TODO: Replace use of console with proc 'message' events
-    if (end == null && duration != null)
-      end = new Date(start.getTime() + duration);
+    if (end != null && duration == null)
+      duration = Entry.durationFromInterval(start, end);
     const entry = new Entry({
-      seqNo: `${this.nextTaskId++}`, sessionId: this.id, task, start, end
+      seqNo: `${this.nextEntryId++}`,
+      sessionId: this.id,
+      activity,
+      providerId: this.providerId,
+      start,
+      duration
     });
     const proc = new PromiseProc(this.meld.write({
       '@graph': [entry.toJSON(), this.toJSON()]
@@ -230,7 +236,7 @@ export class Session extends Repl {
   toJSON() {
     return {
       '@id': this.id,
-      '@type': 'TimesheetSession',
+      '@type': 'Session',
       start: dateJsonLd(this.startTime)
     };
   }
