@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+hide footbox
+
+note across
+Variant of ""register-cli"" with clickable email link.
+No need to copy & paste a token!
+However, requires sharing of ""cliAppKey"" between GW sessions.
+end note
+
+User -> CLI ++: open
+note over CLI: No cliAppKey\nor expired
+CLI --> User --: "pls enter email"
+User -> CLI ++: email
+CLI -> Gateway ++: machine-id\n& email
+Gateway -> Gateway: create account\nif required
+Gateway --> User: activation link by email
+User -> Gateway ++: click link
+Gateway <-> Ably: create key &\ncapabilities
+Gateway -> Gateway --: store key ID\nin account
+note left #pink: requires GW session-session comm
+Gateway --> CLI --: ""cliAppKey""
+CLI -> Ably --: connect to timesheet channels
+note over User, CLI: Proceed with session
+
+@enduml

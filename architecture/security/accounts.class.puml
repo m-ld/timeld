@@ -1,0 +1,51 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+hide circle
+allowmixing
+
+class Gateway <<ably app>> {
+  appMasterKey <<secret>>
+}
+
+Gateway *-- "*" Account
+
+class Account <<domain>> <<subject>> {
+  email: string [*]
+  appKeyId: string [*]
+}
+note right of Account::appKeyId
+  Matches ""appKey"";
+  Can be revoked
+end note
+
+Account *--> "*" Timesheet: owns
+
+Account *--> "*" Project: owns
+
+class Timesheet <<domain>> <<subject>> {
+}
+
+class Project <<subject>> {
+}
+
+Project o-- "*" Account: contributors
+
+Project "*" -- "*" Timesheet
+
+component CLI [
+  CLI
+  //installed on a device//
+  //under an OS account//
+
+  ---
+  appKey <<secret>>
+  timesheets: domain [*]
+  account: domain
+]
+
+Account .. "*" CLI: CLI instance\nregistered to account
+
+CLI ..> "*" Timesheet: entailed access
+
+@enduml

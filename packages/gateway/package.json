@@ -1,0 +1,28 @@
+{
+  "name": "timeld-gateway",
+  "version": "0.1.0",
+  "description": "Timeld Gateway server",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "m-ld",
+    "timesheets"
+  ],
+  "author": "m-ld.io Ltd.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@m-ld/io-web-runtime": "^0.2.2-1",
+    "restify": "^8.6.1"
+  }
+}

@@ -1,0 +1,22 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+hide footbox
+
+User -> CLI ++: open
+note over CLI: No cliAppKey\nor expired
+CLI --> User --: "pls enter email"
+User -> CLI ++: email
+CLI -> Gateway ++: register\nfor account
+CLI --> User --: "pls enter emailed token"
+Gateway --> User --: activation token (JWT) by email
+User -> CLI ++: token
+CLI -> Gateway ++: request key\nusing token
+Gateway -> Gateway: create Account\nif required
+Gateway <-> Ably: create key &\ncapabilities
+Gateway -> Gateway: store key ID\nin Account
+return ""cliAppKey""
+CLI -> Ably --: connect to timesheet channels
+note over User, CLI: Proceed with session
+
+@enduml
