@@ -75,6 +75,14 @@ export default class TimesheetId {
     ];
   }
 
+  toDomain() {
+    return `${this.timesheet}.${this.account}.${this.gateway}`;
+  }
+
+  toUrl() {
+    return `https://${this.gateway}/${this.account}/${this.timesheet}`;
+  }
+
   toString() {
     let rtn = this.account ? `${this.account}/` : '';
     rtn += this.timesheet;

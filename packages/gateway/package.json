@@ -22,7 +22,20 @@
   },
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
-    "@m-ld/io-web-runtime": "^0.2.2-1",
-    "restify": "^8.6.1"
+    "@m-ld/io-web-runtime": "^0.2.2-2",
+    "@trycourier/courier": "^3.12.0",
+    "cryptr": "^6.0.3",
+    "jsonwebtoken": "^8.5.1",
+    "restify": "^8.6.1",
+    "timeld-common": "^0.1.0",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "@types/cryptr": "^4.0.1",
+    "@types/restify": "^8.5.4",
+    "@types/validator": "^13.7.2",
+    "memdown": "^6.1.1",
+    "rxjs": "^7.5.5",
+    "tmp": "^0.2.1"
   }
 }

@@ -3,6 +3,7 @@
   "private": true,
   "description": "Live shared timesheets",
   "scripts": {
+    "deploy": "flyctl deploy ./packages/gateway",
     "version": "read VERSION && npm version $VERSION -ws",
     "publish": "npm run test && npm run version && npm publish -ws",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"

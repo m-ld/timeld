@@ -4,18 +4,18 @@
 hide circle
 allowmixing
 
-class Gateway <<ably app>> {
+class Gateway <<domain>> <<ably app>> {
   appMasterKey <<secret>>
 }
 
 Gateway *-- "*" Account
 
-class Account <<domain>> <<subject>> {
+class Account <<subject>> {
   email: string [*]
-  appKeyId: string [*]
+  keyid: string [*]
 }
-note right of Account::appKeyId
-  Matches ""appKey"";
+note right of Account::keyid
+  Matches ""ably.key""
   Can be revoked
 end note
 
@@ -23,8 +23,12 @@ Account *--> "*" Timesheet: owns
 
 Account *--> "*" Project: owns
 
-class Timesheet <<domain>> <<subject>> {
+class Timesheet <<domain>> {
 }
+note right of Timesheet
+  not actually a subject
+  in the Gateway domain
+end note
 
 class Project <<subject>> {
 }
@@ -35,16 +39,17 @@ Project "*" -- "*" Timesheet
 
 component CLI [
   CLI
-  //installed on a device//
-  //under an OS account//
 
   ---
-  appKey <<secret>>
+  ably.key <<secret>>
   timesheets: domain [*]
-  account: domain
 ]
+note top of CLI
+  installed on a device
+  under an OS account
+end note
 
-Account .. "*" CLI: CLI instance\nregistered to account
+Account .. "*" CLI: CLI instance\nregistered to\naccount
 
 CLI ..> "*" Timesheet: entailed access
 

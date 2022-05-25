@@ -1,4 +1,4 @@
-import TimesheetId from '../lib/TimesheetId.mjs';
+import { TimesheetId } from '..';
 
 describe('Timesheet Id', () => {
   test('from full display string', () => {
@@ -9,6 +9,8 @@ describe('Timesheet Id', () => {
     expect(tsId.toString()).toBe('org/ts@gw.net');
     expect(() => tsId.validate()).not.toThrow();
     expect(tsId.toPath()).toEqual(['net', 'gw', 'org', 'ts']);
+    expect(tsId.toDomain()).toEqual('ts.org.gw.net');
+    expect(tsId.toUrl()).toEqual('https://gw.net/org/ts');
   });
 
   test('from only timesheet', () => {
