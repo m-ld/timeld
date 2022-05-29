@@ -8,6 +8,7 @@ import { join } from 'path';
 import Account from '../lib/Account.mjs';
 import Cryptr from 'cryptr';
 import DeadRemotes from './DeadRemotes.mjs';
+import { existsSync } from 'fs';
 
 describe('Gateway', () => {
   let env;
@@ -55,7 +56,7 @@ describe('Gateway', () => {
       gateway = new Gateway(env, {
         '@domain': 'ex.org',
         genesis: true,
-        ably: { key: 'id:secret' }
+        ably: { key: 'app.id:secret' }
       }, clone, ablyApi);
       await gateway.initialise();
     });
@@ -71,7 +72,7 @@ describe('Gateway', () => {
           '@domain': 'ex.org',
           '@context': timeldContext,
           genesis: true, // has to be true because dead remotes
-          ably: { key: 'id:secret' }
+          ably: { key: 'app.id:secret' }
         },
         join(tmpDir.name, 'data', 'gw')
       ]]);
@@ -147,13 +148,45 @@ describe('Gateway', () => {
           '@domain': 'ts1.test.ex.org',
           '@context': timeldContext,
           genesis: true,
-          ably: { key: 'id:secret' }
+          ably: { key: 'app.id:secret' }
         },
         join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'));
       await expect(gateway.domain.get('test')).resolves.toEqual({
         '@id': 'test',
-        timesheet: 'https://ex.org/test/ts1'
+        timesheet: { '@id': 'https://ex.org/test/ts1' }
       });
+      expect(existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
+    });
+
+    test('clones a new timesheet', async () => {
+      // noinspection JSCheckFunctionSignatures
+      await gateway.domain.write({
+        '@id': 'test', timesheet: { '@id': 'https://ex.org/test/ts1' }
+      });
+      // Doing another write awaits all follow handlers
+      await gateway.domain.write({});
+      // The gateway should attempt to clone the timesheet.
+      // (It will fail due to dead remotes, but we don't care.)
+      expect(clone).lastCalledWith(
+        {
+          '@id': expect.stringMatching(/\w+/),
+          '@domain': 'ts1.test.ex.org',
+          '@context': timeldContext,
+          genesis: false,
+          ably: { key: 'app.id:secret' }
+        },
+        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'));
+    });
+
+    test('removes a timesheet', async () => {
+      await gateway.timesheetConfig('test', 'ts1');
+      await gateway.domain.write({
+        '@delete': { '@id': 'test', timesheet: { '@id': 'https://ex.org/test/ts1' } }
+      });
+      // Doing another write awaits all follow handlers
+      await gateway.domain.write({});
+      expect(!existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
+      expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
     });
   });
 });

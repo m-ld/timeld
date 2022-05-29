@@ -1,10 +1,12 @@
 import restify from 'restify';
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { clone, Env } from 'timeld-common';
-import { HttpError } from '@m-ld/io-web-runtime/dist/server/fetch';
+import { clone, Env, TimesheetId } from 'timeld-common';
 import Account from './lib/Account.mjs';
 import AblyApi from './lib/AblyApi.mjs';
+import LOG from 'loglevel';
+import validator from 'validator';
+import errors from 'restify-errors';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -25,40 +27,77 @@ const env = new Env({
 });
 // Parse command line, environment variables & configuration
 const config = /**@type {*}*/(await env.yargs()).parse();
+LOG.setLevel(config.logLevel || 'INFO');
+LOG.trace('Loaded configuration', config);
 const ablyApi = new AblyApi(config.ably);
 const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
 const notifier = new Notifier(config.courier);
 const server = restify.createServer();
-server.use(restify.plugins.queryParser());
+server.use(restify.plugins.queryParser({ mapParams: true }));
 
-server.get('/:account/jwe',
+server.get('/api/:account/jwe',
   async (req, res, next) => {
     const { account, email } = req.params;
-    const { jwe, code } = gateway.activation(account, email);
-    await notifier.sendActivationCode(email, code);
-    res.json({ jwe });
+    if (!account || !TimesheetId.isComponentId(account))
+      return next(new errors.BadRequestError('Bad account %s', account));
+    if (!email || !validator.isEmail(email))
+      return next(new errors.BadRequestError('Bad email %s', email));
+    try {
+      const { jwe, code } = await gateway.activation(account, email);
+      await notifier.sendActivationCode(email, code);
+      res.json({ jwe });
+    } catch (e) {
+      LOG.warn(e);
+      next(e);
+    }
     next();
   });
 
-server.get('/:account/key',
+server.get('/api/:account/key',
   async (req, res, next) => {
     const { account, jwt, timesheet } = req.params;
-    const { email } = gateway.verify(jwt);
-    const acc = (await gateway.account(account)) ||
-      new Account(gateway, { name: account });
-    const key = await acc.activate(email, timesheet);
-    res.json({ key });
+    if (!account || !TimesheetId.isComponentId(account))
+      return next(new errors.BadRequestError('Bad account %s', account));
+    if (!timesheet || !TimesheetId.isComponentId(timesheet))
+      return next(new errors.BadRequestError('Bad timesheet %s', timesheet));
+    try {
+      const { email } = gateway.verify(jwt);
+      if (!email || !validator.isEmail(email))
+        return next(new errors.BadRequestError('Bad email %s', email));
+      const acc = (await gateway.account(account)) ||
+        new Account(gateway, { name: account });
+      const key = await acc.activate(email, timesheet);
+      res.json({ key });
+    } catch (e) {
+      LOG.warn(e);
+      next(e);
+    }
     next();
   });
 
-server.get('/:account/tsh/:timesheet/cfg',
+server.get('/api/:account/tsh/:timesheet/cfg',
   async (req, res, next) => {
     const { account, timesheet, jwt } = req.params;
-    const acc = await gateway.account(account);
-    if (acc == null)
-      throw new HttpError(404, 'Not Found');
-    await acc.verify(jwt);
-    res.json(await gateway.timesheetConfig(account, timesheet));
+    if (!account || !TimesheetId.isComponentId(account))
+      return next(new errors.BadRequestError('Bad account %s', account));
+    if (!timesheet || !TimesheetId.isComponentId(timesheet))
+      return next(new errors.BadRequestError('Bad timesheet %s', timesheet));
+    if (!jwt || !validator.isJWT(jwt))
+      return next(new errors.BadRequestError('Bad JWT'));
+    try {
+      const acc = await gateway.account(account);
+      if (acc == null)
+        return next(new errors.NotFoundError('Not found: %s', account));
+      try {
+        await acc.verify(jwt);
+      } catch (e) {
+        return next(new errors.ForbiddenError(e));
+      }
+      res.json(await gateway.timesheetConfig(account, timesheet));
+    } catch (e) {
+      LOG.warn(e);
+      next(e);
+    }
     next();
   });
 

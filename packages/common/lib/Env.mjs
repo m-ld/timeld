@@ -9,6 +9,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default class Env {
+  /**
+   * The parameter provides paths for local data, config, logs etc. The
+   * additional `env` key provides the prefix into yargs.env
+   *
+   * @param {Partial<import('env-paths').Paths & { env: string | false }>} envPaths
+   * @see https://github.com/sindresorhus/env-paths#api
+   * @see https://yargs.js.org/docs/#api-reference-envprefix
+   */
   constructor(envPaths = {}) {
     this.envPaths = { ...env_paths('timeld'), ...envPaths };
   }
@@ -26,9 +34,9 @@ export default class Env {
    */
   async yargs(args = hideBin(process.argv)) {
     return this.baseYargs(args)
-      .env('TIMELD')
+      .env(this.envPaths.env ?? 'TIMELD')
       .config(await this.readConfig())
-      .option('logLevel', { default: process.env.LOG });
+      .option('logLevel', { default: process.env.LOG_LEVEL });
   }
 
   /**
@@ -120,7 +128,7 @@ export default class Env {
         if (dirEnt.isDirectory()) {
           const dirPath = join(dir, dirEnt.name);
           let anySubDirs = false;
-          for (let subDir of await subDirs(dirPath)) {
+          for await (let subDir of subDirs(dirPath)) {
             yield subDir;
             anySubDirs = true;
           }
@@ -131,8 +139,10 @@ export default class Env {
     }
     try {
       const envPath = this.envPaths[key];
-      return [...await subDirs(envPath)]
-        .map(dir => dir.slice(envPath.length + 1).split(sep));
+      const envDirs = [];
+      for await (let dir of subDirs(envPath))
+        envDirs.push(dir.slice(envPath.length + 1).split(sep));
+      return envDirs;
     } catch (err) {
       return this.defaultIfNotExists(err, []);
     }

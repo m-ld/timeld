@@ -41,6 +41,17 @@ export default class TimesheetId {
   }
 
   /**
+   * @param {string | URL} url
+   */
+  static fromUrl(url) {
+    if (typeof url == 'string')
+      url = new URL(url);
+    const gateway = url.hostname;
+    const [, account, timesheet] = url.pathname.split('/');
+    return new TimesheetId({ gateway, account, timesheet });
+  }
+
+  /**
    * @param {string} timesheet
    * @param {string} [account]
    * @param {string} [gateway] dot-separated gateway "domain name"
@@ -53,15 +64,20 @@ export default class TimesheetId {
 
   /** Validates this timesheet Id */
   validate() {
-    function checkId(id) {
-      if (!id.match(/[\w-]+/g))
-        throw `${id} should contain only alphanumerics & dashes`;
-    }
     // Gateway is allowed to be undefined or false
     if (typeof this.gateway == 'string')
-      this.gateway.split('.').forEach(checkId);
-    checkId(this.account);
-    checkId(this.timesheet);
+      this.gateway.split('.').forEach(TimesheetId.checkComponentId);
+    TimesheetId.checkComponentId(this.account);
+    TimesheetId.checkComponentId(this.timesheet);
+  }
+
+  static checkComponentId(id) {
+    if (!TimesheetId.isComponentId(id))
+      throw `${id} should contain only alphanumerics & dashes`;
+  }
+
+  static isComponentId(id) {
+    return !!id.match(/[\w-]+/g);
   }
 
   /**

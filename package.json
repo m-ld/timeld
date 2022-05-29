@@ -6,6 +6,7 @@
     "deploy": "flyctl deploy ./packages/gateway",
     "version": "read VERSION && npm version $VERSION -ws",
     "publish": "npm run test && npm run version && npm publish -ws",
+    "local": "node ./packages/gateway/server.mjs",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "repository": {

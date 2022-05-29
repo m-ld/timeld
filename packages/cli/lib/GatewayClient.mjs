@@ -2,15 +2,43 @@ import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
 import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
 import validator from 'validator';
 import Cryptr from 'cryptr';
+import dns from 'dns';
+import { AblyKey } from 'timeld-common';
 
 export default class GatewayClient {
   /**
-   * @param {string} domain
+   * @param {string} address
    */
-  constructor(domain) {
+  constructor(address) {
+    const { apiRoot, domain } = this.resolveApiRoot(address);
     this.domain = domain;
-    this.fetchJson = /**@type {typeof fetchJson}*/((path, params, options) =>
-      fetchJson(`https://${domain}/api/${path}`, params, options));
+    this.fetchJson = /**@type {typeof fetchJson}*/(async (path, params, options) =>
+      fetchJson(`${await apiRoot}/${path}`, params, options));
+  }
+
+  /**
+   * @param {string} address
+   * @returns {{ apiRoot: string | Promise<string>, domain: string }}
+   * @private
+   */
+  resolveApiRoot(address) {
+    if (validator.isFQDN(address)) {
+      return { apiRoot: `https://${address}/api`, domain: address };
+    } else {
+      const url = new URL('/api', address);
+      const domain = url.hostname;
+      if (domain.endsWith('.local')) {
+        return {
+          apiRoot: dns.promises.lookup(domain).then(a => {
+            url.hostname = a.address;
+            return url.toString();
+          }),
+          domain
+        };
+      } else {
+        return { apiRoot: url.toString(), domain };
+      }
+    }
   }
 
   /**
@@ -18,7 +46,7 @@ export default class GatewayClient {
    * @param {string} timesheet initial timesheet requested
    * @param {string} email account email address
    * @param {() => Promise<string>} getCode callback to get activation code
-   * @returns {string} JWT, encrypted with an activation code
+   * @returns {AblyKey} Ably key
    */
   async activate(account, timesheet, email, getCode) {
     if (!validator.isEmail(email))
@@ -31,19 +59,19 @@ export default class GatewayClient {
     if (!validator.isJWT(jwt))
       throw 'Something has gone wrong, sorry.';
     const { key } = await this.fetchJson(`${account}/key`, { jwt, timesheet });
-    return key;
+    return new AblyKey(key);
   }
 
   /**
    * @param {string} account
    * @param {string} timesheet
-   * @param {string} ablyKey
+   * @param {AblyKey} ablyKey
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>} configuration for
    * timesheet domain
    */
   async config(account, timesheet, ablyKey) {
-    const [keyid, secret] = ablyKey.split(':');
-    const jwt = await signJwt({}, secret, { expiresIn: '1m', keyid });
+    const { secret, keyid } = ablyKey;
+    const jwt = await signJwt({}, secret, { keyid, expiresIn: '1m' });
     return /**@type {Promise<import('@m-ld/m-ld').MeldConfig>}*/this.fetchJson(
       `${account}/tsh/${timesheet}/cfg`, { jwt });
   }

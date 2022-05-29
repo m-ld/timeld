@@ -44,4 +44,15 @@ describe('Timesheet Id', () => {
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
   });
+
+  test('from URL', () => {
+    let tsId = TimesheetId.fromUrl('https://gw.net/org/ts');
+    expect(tsId.timesheet).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBe('gw.net');
+    tsId = TimesheetId.fromUrl('http://gw.net:8080/org/ts/what');
+    expect(tsId.timesheet).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBe('gw.net');
+  });
 });

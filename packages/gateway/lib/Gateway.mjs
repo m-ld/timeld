@@ -1,32 +1,26 @@
-import Account from './Account';
+import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
-import { uuid } from '@m-ld/m-ld';
-import { Env, timeldContext, TimesheetId } from 'timeld-common';
+import { propertyValue, uuid } from '@m-ld/m-ld';
+import { AblyKey, Env, timeldContext, TimesheetId } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
+import LOG from 'loglevel';
 
 export default class Gateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
-   * @param {import('timeld-common').clone} clone
-   * @param {import('./AblyApi.mjs').AblyApi} ablyApi
+   * @param {import('timeld-common').clone} clone m-ld clone creation function
+   * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
-  constructor(
-    env,
-    config,
-    clone,
-    ablyApi
-  ) {
+  constructor(env, config, clone, ablyApi) {
     this.env = env;
     this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
       ...config,
       '@id': uuid(),
       '@context': timeldContext
     };
-    const [keyid, secret] = config.ably.key.split(':') ?? [];
-    this.ablyKeyid = keyid;
-    this.ablySecret = secret;
+    this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
     this.ablyApi = ablyApi;
     this.timesheetDomains =
@@ -38,8 +32,45 @@ export default class Gateway {
     const dataDir = await this.env.readyPath('data', 'gw');
     this.domain = await this.clone(this.config, dataDir);
     await this.domain.status.becomes({ outdated: false });
-    // TODO: Listen for timesheets being deleted from accounts
+    // Enliven all timesheets already in the domain
+    await this.domain.read(state => {
+      // Timesheets are the range of the 'timesheet' Account property
+      state.read({
+        '@select': '?tsh', '@where': { timesheet: '?tsh' }
+      }).consume.subscribe(({ value, next }) => {
+        this.timesheetAdded(TimesheetId.fromUrl(value['?tsh']['@id'])).finally(next);
+      });
+    }, update => {
+      // And watch for timesheets appearing and disappearing
+      // noinspection JSCheckFunctionSignatures
+      return Promise.all([
+        ...update['@delete'].map(subject => Promise.all(
+          propertyValue(subject, 'timesheet', Array, Object).map(tsRef =>
+            this.timesheetRemoved(TimesheetId.fromUrl(tsRef['@id']))))),
+        ...update['@insert'].map(subject => Promise.all(
+          propertyValue(subject, 'timesheet', Array, Object).map(tsRef =>
+            this.timesheetAdded(TimesheetId.fromUrl(tsRef['@id'])))))
+      ]);
+    });
     return this;
+  }
+
+  async timesheetAdded(tsId) {
+    if (!(tsId.toDomain() in this.timesheetDomains)) {
+      try {
+        await this.cloneTimesheet(tsId);
+      } catch (e) {
+        // If the clone fails that's fine, we'll try again if it's asked for
+        LOG.warn(`Declared timesheet ${tsId} failed to load with`, e);
+      }
+    }
+  }
+
+  async timesheetRemoved(tsId) {
+    await this.timesheetDomains[tsId.toDomain()]?.close();
+    await this.env.delEnvDir('data',
+      ['tsh', tsId.account, tsId.timesheet], { force: true });
+    delete this.timesheetDomains[tsId.toDomain()];
   }
 
   /**
@@ -63,9 +94,9 @@ export default class Gateway {
     if (acc != null && !acc.emails.has(email))
       throw 'Email not registered to account';
     // Construct a JWT with the email, using our Ably key
-    const jwt = jsonwebtoken.sign({ email }, this.ablySecret, {
-      keyid: this.ablyKeyid,
-      expiresIn: '10m'
+    const { secret, keyid } = this.ablyKey;
+    const jwt = jsonwebtoken.sign({ email }, secret, {
+      keyid, expiresIn: '10m'
     });
     // Encrypt the JWT with the activation code
     const code = randomInt(111111, 1000000).toString(10);
@@ -79,7 +110,7 @@ export default class Gateway {
    */
   verify(jwt) {
     // Verify the JWT was created by us
-    return jsonwebtoken.verify(jwt, this.ablySecret);
+    return jsonwebtoken.verify(jwt, this.ablyKey.secret);
   }
 
   /**
@@ -99,18 +130,13 @@ export default class Gateway {
       await this.domain.write(async state => {
         // Genesis if the timesheet is not already in the account
         // TODO: Use `ask` in m-ld-js v0.9
-        const accountHasTimesheet = { '@id': account, timesheet: tsId.toUrl() };
+        const accountHasTimesheet = {
+          '@id': account, timesheet: { '@id': tsId.toUrl() }
+        };
         const genesis = !(await state.read({
           '@select': '?', '@where': accountHasTimesheet
         })).length;
-        const config = Env.mergeConfig(this.config, {
-          '@id': uuid(), // New identity
-          '@domain': tsId.toDomain(),
-          genesis
-        });
-        const dataDir = await this.env.readyPath(
-          'data', 'tsh', account, timesheet);
-        this.timesheetDomains[tsId.toDomain()] = await this.clone(config, dataDir);
+        await this.cloneTimesheet(tsId, genesis);
         // Ensure the timesheet is in the domain
         await state.write(accountHasTimesheet);
       });
@@ -121,6 +147,20 @@ export default class Gateway {
       '@domain': tsId.toDomain(),
       ably: { key: false } // Remove our secret
     }), { genesis: false }); // Definitely not genesis
+  }
+
+  /**
+   * @param tsId timesheet to clone
+   * @param genesis whether timesheet is expected to be new
+   * @returns {Promise<void>}
+   */
+  async cloneTimesheet(tsId, genesis = false) {
+    this.timesheetDomains[tsId.toDomain()] = await this.clone(
+      Object.assign(Env.mergeConfig(this.config, {
+        '@id': uuid(), '@domain': tsId.toDomain()
+      }), { genesis }),
+      await this.env.readyPath(
+        'data', 'tsh', tsId.account, tsId.timesheet));
   }
 
   close() {

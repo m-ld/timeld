@@ -1,5 +1,5 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { TimesheetId } from 'timeld-common';
+import { AblyKey, TimesheetId } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import { promisify } from 'util';
 
@@ -28,10 +28,10 @@ export default class Account {
 
   /**
    * @param {Gateway} gateway
-   * @param {string} name
-   * @param {Set<string>} emails
-   * @param {Set<string>} keyids
-   * @param {Set<import('@m-ld/m-ld').Reference>} timesheets
+   * @param {string} name plain account name
+   * @param {Set<string>} emails verifiable account identities
+   * @param {Set<string>} keyids per-device keys
+   * @param {Set<import('@m-ld/m-ld').Reference>} timesheets timesheet Id URLs
    */
   constructor(
     gateway,
@@ -62,7 +62,7 @@ export default class Account {
     });
     // Every activation creates a new Ably key (assumes new device)
     const keyDetails = await this.gateway.ablyApi.createAppKey(email, {
-      [tsId.toDomain()]: ['publish', 'subscribe', 'presence']
+      [`${tsId.toDomain()}:*`]: ['publish', 'subscribe', 'presence']
     });
     // Store the keyid and the email
     this.emails.add(email);
@@ -87,13 +87,13 @@ export default class Account {
    */
   getJwtKey = async (header, cb) => {
     if (!this.keyids.has(header.kid))
-      return cb('Key not present');
+      return cb(new Error(`Key ${header.kid} not present`));
     // TODO: Listen for new keys in the account and cache this response
     const keyDetails = await this.gateway.ablyApi.listAppKeys();
     const keyDetail = keyDetails.find(keyDetail => keyDetail.id === header.kid);
     if (!keyDetail)
-      return cb('No matching key');
-    return cb(null, keyDetail.key);
+      return cb(new Error(`Key ${header.kid} not registered`));
+    return cb(null, new AblyKey(keyDetail.key).secret);
   };
 
   toJSON() {

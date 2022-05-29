@@ -1,5 +1,5 @@
 import { uuid } from '@m-ld/m-ld';
-import { Env, timeldContext } from 'timeld-common';
+import { AblyKey, Env, timeldContext } from 'timeld-common';
 
 /**
  * Expands a partial set of command-line arguments into a usable m-ld
@@ -20,9 +20,9 @@ export default class DomainConfigurator {
 
   /** @returns {Promise<TimeldConfig>} */
   async load() {
-    const config = Env.mergeConfig(
+    const config = Env.mergeConfig(this.argv,
       // Gateway config overrides command-line options
-      this.argv, await this.fetchConfig(), {
+      await this.fetchConfig(), {
         // These items cannot be overridden
         '@id': uuid(),
         '@context': timeldContext
@@ -46,9 +46,9 @@ export default class DomainConfigurator {
    * @private
    */
   async fetchConfig() {
-    if (this.gateway == null) { // could be false or undefined
+    if (this.gateway == null) { // could be null
       // see https://faqs.ably.com/how-do-i-find-my-app-id
-      const appId = /**@type string*/this.ablyKey?.split('.')[0];
+      const appId = this.ablyKey?.appId;
       if (appId == null)
         throw 'Gateway-less use requires an Ably API key.\n' +
         'See https://faqs.ably.com/what-is-an-app-api-key';
@@ -58,18 +58,27 @@ export default class DomainConfigurator {
     } else {
       const ablyKey = this.ablyKey || await this.activate();
       const config = await this.fetchGatewayConfig(ablyKey);
-      return Env.mergeConfig(config, { ably: { key: ablyKey } });
+      return Env.mergeConfig(config, { ably: { key: ablyKey.toString() } });
     }
   }
 
+  /**
+   * @param {AblyKey} ablyKey
+   * @returns {Promise<{genesis}|{genesis: boolean, '@domain': string}>}
+   */
   async fetchGatewayConfig(ablyKey) {
     const { account, timesheet, create } = this.argv;
     let gatewayConfig;
     try {
       gatewayConfig = await this.gateway.config(account, timesheet, ablyKey);
     } catch (e) {
-      console.info(`Gateway ${this.gateway.domain} is not reachable (${e})`);
-      return this.noGatewayConfig(this.gateway.domain);
+      // Gateway client returns Strings for HTTP error responses!
+      if (e instanceof Error) {
+        console.info(`Gateway ${this.gateway.domain} is not reachable (${e})`);
+        return this.noGatewayConfig(this.gateway.domain);
+      } else {
+        throw e;
+      }
     }
     if (create && !gatewayConfig.genesis)
       throw 'This timesheet already exists';
@@ -77,7 +86,7 @@ export default class DomainConfigurator {
   }
 
   /**
-   * @returns {Promise<string>} new Ably key
+   * @returns {Promise<AblyKey>} new Ably key
    * @private
    */
   async activate() {
@@ -95,6 +104,7 @@ export default class DomainConfigurator {
   }
 
   get ablyKey() {
-    return this.argv['ably']?.key;
+    const keyStr = this.argv['ably']?.key;
+    return keyStr != null ? new AblyKey(keyStr) : null;
   }
 }

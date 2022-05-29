@@ -10,7 +10,8 @@ import { promisify } from 'util';
 export default class Cli {
   constructor({
     args = undefined,
-    env = new Env(),
+    // By default, do not read environment variables into config
+    env = new Env({ env: false }),
     input = process.stdin,
     output = process.stdout,
     console = global.console
@@ -183,8 +184,8 @@ export default class Cli {
     }
   }
 
-  listCmd() {
-    for (let dir of this.env.envDirs('data'))
+  async listCmd() {
+    for (let dir of await this.env.envDirs('data'))
       this.console.log(TimesheetId.fromPath(dir).toString());
   }
 

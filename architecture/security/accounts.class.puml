@@ -13,6 +13,8 @@ Gateway *-- "*" Account
 class Account <<subject>> {
   email: string [*]
   keyid: string [*]
+  timesheet: IRI [*]
+  project: IRI [*]
 }
 note right of Account::keyid
   Matches ""ably.key""

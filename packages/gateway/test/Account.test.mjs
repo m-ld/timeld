@@ -2,7 +2,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import DeadRemotes from './DeadRemotes.mjs';
-import { timeldContext } from 'timeld-common';
+import { AblyKey, timeldContext } from 'timeld-common';
 import Account from '../lib/Account.mjs';
 import jsonwebtoken from 'jsonwebtoken';
 
@@ -31,18 +31,18 @@ describe('Gateway account', () => {
     const acc = new Account(gateway, {
       name: 'test',
       emails: new Set(['test@ex.org']),
-      keyids: new Set(['key1']),
+      keyids: new Set(['keyid']),
       timesheets: new Set([{ '@id': 'https://ex.org/test/ts1' }])
     });
     expect(acc.name).toBe('test');
     expect(acc.emails).toEqual(new Set(['test@ex.org']));
-    expect(acc.keyids).toEqual(new Set(['key1']));
+    expect(acc.keyids).toEqual(new Set(['keyid']));
     expect(acc.timesheets).toEqual(new Set([{ '@id': 'https://ex.org/test/ts1' }]));
     expect(acc.toJSON()).toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: ['test@ex.org'],
-      keyid: ['key1'],
+      keyid: ['keyid'],
       timesheet: [{ '@id': 'https://ex.org/test/ts1' }]
     });
   });
@@ -51,17 +51,20 @@ describe('Gateway account', () => {
     const acc = new Account(gateway, { name: 'test' });
     gateway.ablyApi.createAppKey.mockImplementation(
       (name, capability) => Promise.resolve({
-        id: 'key1', key: 'keyKeyKey', name, capability
+        id: 'keyid', key: 'appid.keyid:secret', name, capability
       }));
     const key = await acc.activate('test@ex.org', 'ts1');
+    expect(gateway.ablyApi.createAppKey).toBeCalledWith('test@ex.org', {
+      'ts1.test.ex.org:*': ['publish', 'subscribe', 'presence']
+    });
     expect(acc.emails).toEqual(new Set(['test@ex.org']));
-    expect(acc.keyids).toEqual(new Set(['key1']));
-    expect(key).toBe('keyKeyKey');
+    expect(acc.keyids).toEqual(new Set(['keyid']));
+    expect(key).toBe('appid.keyid:secret');
     await expect(gateway.domain.get('test')).resolves.toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: 'test@ex.org',
-      keyid: 'key1'
+      keyid: 'keyid'
     });
   });
 
@@ -69,11 +72,11 @@ describe('Gateway account', () => {
     const acc = new Account(gateway, { name: 'test' });
     gateway.ablyApi.createAppKey.mockImplementation(
       (name, capability) => Promise.resolve({
-        id: 'key1', key: 'keyKeyKey', name, capability
+        id: 'keyid', key: 'appid.keyid:secret', name, capability
       }));
-    const key = await acc.activate('test@ex.org', 'ts1');
-    const jwt = jsonwebtoken.sign({}, key, {
-      expiresIn: '1m', keyid: 'key1'
+    const key = new AblyKey(await acc.activate('test@ex.org', 'ts1'));
+    const jwt = jsonwebtoken.sign({}, key.secret, {
+      expiresIn: '1m', keyid: 'keyid'
     });
     const keyDetail = await gateway.ablyApi.createAppKey.mock.results[0].value;
     gateway.ablyApi.listAppKeys.mockImplementation(() => Promise.resolve([keyDetail]));
