@@ -20,6 +20,7 @@ describe('Config utilities', () => {
       expect(Env.mergeConfig({ a: 1 }, { a: 2 })).toEqual({ a: 2 });
       expect(Env.mergeConfig({ a: 1 }, { b: 2 })).toEqual({ a: 1, b: 2 });
       expect(Env.mergeConfig({ a: 1 }, { a: false })).toEqual({});
+      expect(Env.mergeConfig({ a: 1 }, { a: undefined })).toEqual({ a: 1 });
       expect(Env.mergeConfig({ '@id': 'uuid' }, { '@id': false })).toEqual({});
       expect(Env.mergeConfig({ a: { b: 1 } }, { a: false })).toEqual({});
       expect(Env.mergeConfig({ a: { b: 1 } }, { a: { b: false } })).toEqual({ a: {} });

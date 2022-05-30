@@ -11,6 +11,11 @@ processes = []
 
 [env]
   PORT = "8080"
+  TIMELD_GATEWAY = "timeld.org"
+
+[mounts]
+  source="timeld_data"
+  destination="/data"
 
 [experimental]
   allowed_public_ports = []

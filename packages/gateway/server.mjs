@@ -10,10 +10,9 @@ import errors from 'restify-errors';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
- * @property {string} [DATA_PATH] should point to a volume
- * @property {string} [CONFIG_PATH] should point to a volume
- * @property {string} [LOG_PATH] should point to a volume
- * @property {string} [LOG] defaults to "INFO"
+ * @property {string} [DATA_PATH] should point to a volume, default `/data`
+ * @property {string} [LOG_LEVEL] defaults to "INFO"
+ * @property {string} TIMELD_GATEWAY domain name or URL of gateway
  * @property {string} TIMELD_GENESIS "true" iff the gateway is new
  * @property {string} TIMELD_ABLY__KEY gateway Ably app key
  * @property {string} TIMELD_ABLY__API_KEY gateway Ably api key
@@ -21,14 +20,22 @@ import errors from 'restify-errors';
  */
 
 const env = new Env({
-  data: process.env.DATA_PATH || '/data',
-  config: process.env.CONFIG_PATH || '/config',
-  log: process.env.LOG_PATH || '/log'
+  data: process.env.DATA_PATH || '/data', // Default is a volume mount, see fly.toml
+  config: process.env.CONFIG_PATH, // Currently unused
+  log: process.env.LOG_PATH // Unused; logging is managed by fly.io
 });
 // Parse command line, environment variables & configuration
 const config = /**@type {*}*/(await env.yargs()).parse();
 LOG.setLevel(config.logLevel || 'INFO');
 LOG.trace('Loaded configuration', config);
+
+// Set the m-ld domain from the declared gateway
+if (config['@domain'] == null) {
+  config['@domain'] = validator.isFQDN(config.gateway) ?
+    config.gateway : new URL(config.gateway).hostname;
+  LOG.debug(`Gateway domain is ${config['@domain']}`);
+}
+
 const ablyApi = new AblyApi(config.ably);
 const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
 const notifier = new Notifier(config.courier);

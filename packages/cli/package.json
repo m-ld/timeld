@@ -1,9 +1,8 @@
 {
   "name": "timeld-cli",
-  "version": "0.1.0-1",
+  "version": "0.1.0-3",
   "description": "Live shared timesheets command interface",
   "main": "index.mjs",
-  "scripts": {},
   "bin": {
     "timeld": "./index.mjs"
   },
@@ -30,7 +29,7 @@
     "parse-duration": "^1.0.2",
     "simple-peer": "^9.11.1",
     "timeago.js": "^4.0.2",
-    "timeld-common": "^0.1.0",
+    "timeld-common": "^0.1.0-3",
     "validator": "^13.7.0"
   },
   "devDependencies": {

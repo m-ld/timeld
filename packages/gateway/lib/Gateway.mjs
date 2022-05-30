@@ -14,6 +14,8 @@ export default class Gateway {
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
+    if (config['@domain'] == null)
+      throw new RangeError('No domain specified for Gateway');
     this.env = env;
     this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
       ...config,
