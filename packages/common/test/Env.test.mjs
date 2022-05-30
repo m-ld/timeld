@@ -5,7 +5,69 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { mkdir } from 'fs/promises';
 
-describe('Config utilities', () => {
+describe('Environment', () => {
+  describe('arguments', () => {
+    test('constructs with default env', () => {
+      expect(new Env().envPaths.env).toBe('TIMELD');
+    });
+
+    test('constructs with no env', () => {
+      expect(new Env({ env: false }).envPaths.env).toBeUndefined();
+    });
+
+    test('grabs a variable from process env', async () => {
+      process.env.TIMELD_TEST = 'Test';
+      const args = (await new Env().yargs()).parse();
+      expect(args['test']).toBe('Test');
+    });
+  });
+
+  describe('config files', () => {
+    let tmpDir;
+
+    beforeEach(() => {
+      // noinspection JSCheckFunctionSignatures
+      tmpDir = dirSync({ unsafeCleanup: true });
+    });
+
+    afterEach(async () => {
+      tmpDir.removeCallback();
+    });
+
+    test('default config dir from env-paths module', async () => {
+      const env = new Env();
+      expect(env.envPaths.config).toMatch(/\/timeld-nodejs/);
+    });
+
+    test('undefined does not override config dir', async () => {
+      const env = new Env({ config: undefined });
+      expect(env.envPaths.config).toMatch(/\/timeld-nodejs/);
+    });
+
+    test('override config dir', async () => {
+      const env = new Env({ config: tmpDir.name });
+      expect(env.envPaths.config).toBe(tmpDir.name);
+    });
+
+    test('read missing config as empty', async () => {
+      const env = new Env({ config: tmpDir.name });
+      await expect(env.readConfig()).resolves.toEqual({});
+    });
+
+    test('can write config', async () => {
+      const env = new Env({ config: tmpDir.name });
+      await env.writeConfig({ foo: true });
+      await expect(env.readConfig()).resolves.toEqual({ foo: true });
+    });
+
+    test('can update config', async () => {
+      const env = new Env({ config: tmpDir.name });
+      await env.writeConfig({ foo: true });
+      await env.updateConfig({ foo: 'bar' });
+      await expect(env.readConfig()).resolves.toEqual({ foo: 'bar' });
+    });
+  });
+
   describe('config merging', () => {
     test('atoms', () => {
       expect(Env.mergeConfig({}, {})).toEqual({});

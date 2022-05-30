@@ -18,7 +18,8 @@ export default class Env {
    * @see https://yargs.js.org/docs/#api-reference-envprefix
    */
   constructor(envPaths = {}) {
-    this.envPaths = { ...env_paths('timeld'), ...envPaths };
+    this.envPaths = Env.mergeConfig(
+      { env: 'TIMELD' }, env_paths('timeld'), envPaths);
   }
 
   /**
@@ -34,7 +35,7 @@ export default class Env {
    */
   async yargs(args = hideBin(process.argv)) {
     return this.baseYargs(args)
-      .env(this.envPaths.env ?? 'TIMELD')
+      .env(this.envPaths.env || false)
       .config(await this.readConfig())
       .option('logLevel', { default: process.env.LOG_LEVEL });
   }

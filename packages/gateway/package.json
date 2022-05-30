@@ -33,7 +33,7 @@
     "restify": "^8.6.1",
     "restify-errors": "^8.0.2",
     "simple-peer": "^9.11.1",
-    "timeld-common": "^0.1.0-3",
+    "timeld-common": "^0.1.0-5",
     "validator": "^13.7.0"
   },
   "devDependencies": {

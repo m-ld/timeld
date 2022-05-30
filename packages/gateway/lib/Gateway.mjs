@@ -138,7 +138,9 @@ export default class Gateway {
         const genesis = !(await state.read({
           '@select': '?', '@where': accountHasTimesheet
         })).length;
-        await this.cloneTimesheet(tsId, genesis);
+        const ts = await this.cloneTimesheet(tsId, genesis);
+        // Ensure that the clone is online to avoid race with the client
+        await ts.status.becomes({ online: true });
         // Ensure the timesheet is in the domain
         await state.write(accountHasTimesheet);
       });
@@ -152,12 +154,11 @@ export default class Gateway {
   }
 
   /**
-   * @param tsId timesheet to clone
-   * @param genesis whether timesheet is expected to be new
-   * @returns {Promise<void>}
+   * @param {TimesheetId} tsId timesheet to clone
+   * @param {boolean} genesis whether timesheet is expected to be new
    */
   async cloneTimesheet(tsId, genesis = false) {
-    this.timesheetDomains[tsId.toDomain()] = await this.clone(
+    return this.timesheetDomains[tsId.toDomain()] = await this.clone(
       Object.assign(Env.mergeConfig(this.config, {
         '@id': uuid(), '@domain': tsId.toDomain()
       }), { genesis }),

@@ -10,7 +10,6 @@ processes = []
   builder = "heroku/buildpacks:20"
 
 [env]
-  PORT = "8080"
   TIMELD_GATEWAY = "timeld.org"
 
 [mounts]

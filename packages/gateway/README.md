@@ -37,10 +37,10 @@ npm run publish
 ```
 (It will ask for a version, per `npm version`.)
 
-The first deployment of a new Gateway must be started with the `genesis` flag.
+The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 
 ```
-npm run deploy -- --env TIMELD_GENESIS=true
+npm run deploy -- --env TIMELD_GENESIS=true --env TIMELD_GATEWAY=timeld.org
 ```
 
 ### random
