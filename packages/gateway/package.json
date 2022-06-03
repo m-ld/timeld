@@ -1,0 +1,48 @@
+{
+  "name": "timeld-gateway",
+  "version": "0.1.1-1",
+  "description": "Timeld Gateway server",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": "16.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "m-ld",
+    "timesheets"
+  ],
+  "author": "m-ld.io Ltd.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@m-ld/io-web-runtime": "^0.2.2-2",
+    "@trycourier/courier": "^3.12.0",
+    "cryptr": "^6.0.3",
+    "jsonwebtoken": "^8.5.1",
+    "loglevel": "^1.8.0",
+    "restify": "^8.6.1",
+    "restify-errors": "^8.0.2",
+    "simple-peer": "^9.11.1",
+    "timeld-common": "^0.1.0-8",
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "@types/cryptr": "^4.0.1",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/restify": "^8.5.4",
+    "@types/restify-errors": "^4.3.4",
+    "@types/validator": "^13.7.2",
+    "memdown": "^6.1.1",
+    "rxjs": "^7.5.5",
+    "tmp": "^0.2.1"
+  }
+}

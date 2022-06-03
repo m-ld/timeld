@@ -1,17 +1,20 @@
 #!/usr/bin/env node
-import dotenv from 'dotenv';
 import Cli from './lib/Cli.mjs';
-
-// Pull variables from .env file into process.env
-dotenv.config();
+import { Env } from 'timeld-common';
 
 /**
- * @typedef {import('@m-ld/m-ld').MeldConfig} TimeldConfig
- * @property {string | false} [gateway]
+ * @typedef {import('@m-ld/m-ld/dist/ably').MeldAblyConfig} TimeldConfig
+ * @property {string | URL | false} [gateway]
  * @property {string} account
  * @property {import('@m-ld/m-ld').Reference} principal
  * @property {string} timesheet
  * @property {boolean} [create]
  */
 
-await new Cli().start();
+// By default, do not read environment variables into config,
+// and support override of config path (for testing)
+const env = new Env({
+  env: false,
+  config: process.env.TIMELD_CLI_CONFIG_PATH
+});
+await new Cli(env).start();

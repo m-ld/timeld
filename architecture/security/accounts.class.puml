@@ -1,0 +1,79 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+hide circle
+allowmixing
+
+class Gateway <<domain>> <<ably app>> {
+  appMasterKey <<secret>>
+}
+
+Gateway *-- "*" Account
+
+class Account <<subject>> {
+  vf:primaryAccountable : foaf:Agent
+  email : string [*]
+  keyid : string [*]
+  timesheet : IRI [*]
+  project : IRI [*]
+}
+note right of Account::vf:primaryAccountable
+  TODO
+end note
+note right of Account::keyid
+  Matches ""ably.key""
+  Can be revoked
+end note
+
+Account *--> "*" Timesheet: owns
+
+Account *--> "*" Project: owns
+
+class Timesheet <<domain>> {
+}
+note right of Timesheet
+  not actually a subject
+  in the Gateway domain
+end note
+
+class Project <<subject>> {
+}
+note right
+  TODO
+end note
+
+Project o-- "*" Account: contributors
+
+Project "*" -- "*" Timesheet
+
+component CLI [
+  CLI
+
+  ---
+  ably.key <<secret>>
+  timesheets : domain [*]
+]
+note top of CLI
+  installed on a device
+  under an OS account
+end note
+
+Account .. "*" CLI: CLI instance\nregistered to\naccount
+
+CLI ..> "*" Timesheet: entailed access
+
+package Ably <<service>> {
+  class AblyKey {
+    keyid
+    secret
+    capabilities : string
+  }
+  note right of AblyKey::capabilities
+    Defines domain access
+    thus, timesheet access
+  end note
+
+  Account "1" -- "*" AblyKey
+}
+
+@enduml

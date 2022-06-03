@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+hide footbox
+
+User -> CLI ++: open
+note over CLI: No appKey\nor expired
+CLI --> User --: "pls enter email"
+User -> CLI ++: email
+CLI -> Gateway ++: jwe(account, email)
+note over Gateway: if account exists,\nemail must match
+Gateway --> CLI: jwt encrypted with code
+CLI --> User --: "pls enter emailed code"
+Gateway --> User --: activation code by email
+User -> CLI ++: code
+' TODO: brute force attack (look for a parseable JWT)
+CLI -> CLI: Unencrypt jwt
+' TODO: replay attack within JWT validity period
+CLI -> Gateway ++: key(account, jwt)
+Gateway -> Gateway: create Account\nif required
+Gateway <-> Ably: create key &\ncapabilities
+Gateway -> Gateway: store key ID\nin Account
+return ""ably.key""
+CLI -> Ably --: connect to timesheet channels via m-ld
+note over User, CLI: Proceed with session
+
+@enduml

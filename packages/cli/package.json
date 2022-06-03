@@ -1,9 +1,8 @@
 {
   "name": "timeld-cli",
-  "version": "0.1.0-1",
+  "version": "0.1.0-4",
   "description": "Live shared timesheets command interface",
   "main": "index.mjs",
-  "scripts": {},
   "bin": {
     "timeld": "./index.mjs"
   },
@@ -22,22 +21,20 @@
   },
   "homepage": "https://github.com/m-ld/timeld/tree/main/packages/cli#readme",
   "dependencies": {
-    "@m-ld/io-web-runtime": "^0.2.1",
-    "@m-ld/m-ld": "^0.8.2",
+    "@m-ld/io-web-runtime": "^0.2.2-2",
     "@m-ld/m-ld-cli": "^0.1.0-0",
-    "ably": "^1.2.20",
     "chrono-node": "^2.3.8",
-    "dotenv": "^16.0.0",
-    "env-paths": "^3.0.0",
+    "cryptr": "^6.0.3",
     "humanize-duration": "^3.27.1",
-    "leveldown": "^6.1.1",
     "parse-duration": "^1.0.2",
     "simple-peer": "^9.11.1",
     "timeago.js": "^4.0.2",
-    "yargs": "^17.4.1"
+    "timeld-common": "^0.1.0-8",
+    "validator": "^13.7.0"
   },
   "devDependencies": {
-    "@types/yargs": "^17.0.10",
+    "@types/cryptr": "^4.0.1",
+    "@types/validator": "^13.7.2",
     "memdown": "^6.1.1",
     "rxjs": "^7.5.5",
     "tmp": "^0.2.1"

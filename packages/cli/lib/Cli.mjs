@@ -1,32 +1,35 @@
-import { hideBin } from 'yargs/helpers';
-import createYargs from 'yargs';
-import Config from './Config.mjs';
+import { clone, Env, TimesheetId } from 'timeld-common';
 import { createWriteStream } from 'fs';
 import { once } from 'events';
-import TimesheetId from './TimesheetId.mjs';
-import Gateway from './Gateway.mjs';
+import GatewayClient from './GatewayClient.mjs';
 import DomainConfigurator from './DomainConfigurator.mjs';
-import { clone } from '@m-ld/m-ld';
-import leveldown from 'leveldown';
-import { getInstance as ably } from '@m-ld/m-ld-cli/ext/ably.js';
 import Session from './Session.mjs';
+import readline from 'readline';
+import { promisify } from 'util';
 
 export default class Cli {
-  constructor(
-    args = hideBin(process.argv),
-    config = new Config(),
+  /**
+   * @param {Env} env
+   * @param {string[]} [args]
+   * @param input
+   * @param output
+   * @param console
+   */
+  constructor(env, {
+    args = undefined,
+    input = process.stdin,
+    output = process.stdout,
     console = global.console
-  ) {
+  } = {}) {
     this.args = args;
-    this.config = config;
+    this.env = env;
+    this.input = input;
+    this.output = output;
     this.console = console;
   }
 
-  start() {
-    return this.baseYargs()
-      .env('TIMELD')
-      .config(this.config.read())
-      .option('logLevel', { default: process.env.LOG })
+  async start() {
+    return (await this.env.yargs(this.args))
       .option('account', { alias: 'acc', type: 'string' })
       .option('gateway', { alias: 'gw' /*no type, allows --no-gateway*/ })
       .option('principal.@id', { alias: 'user', type: 'string' })
@@ -89,7 +92,7 @@ export default class Cli {
    */
   async openCmd(argv) {
     try {
-      const gateway = argv.gateway ? new Gateway(argv.gateway) : null;
+      const gateway = argv.gateway ? new GatewayClient(argv.gateway) : null;
       const config = await this.loadMeldConfig(argv, gateway);
       // Start the m-ld clone
       const { meld, logFile } = await this.createMeldClone(config);
@@ -104,6 +107,26 @@ export default class Cli {
     }
   }
 
+  async loadMeldConfig(argv, gateway) {
+    const { input, output } = this;
+    const rl = readline.createInterface({ input, output });
+    try {
+      const ask = promisify(rl.question).bind(rl);
+      const config = await new DomainConfigurator(argv, gateway, ask).load();
+      // Save any new globally-applicable config
+      await this.env.updateConfig(...Cli.globalConfigs(config));
+      return config;
+    } finally {
+      rl.close();
+    }
+  }
+
+  /** Picks out configuration that makes sense to store as global defaults */
+  static *globalConfigs(config) {
+    yield { ably: { key: config['ably']?.key } };
+    yield { principal: { '@id': config['principal']?.['@id'] } };
+  }
+
   /**
    * @param {TimeldConfig} config
    * @returns {Promise<{meld: import('@m-ld/m-ld').MeldClone, logFile: string}>}
@@ -111,14 +134,9 @@ export default class Cli {
   async createMeldClone(config) {
     const tsId = TimesheetId.fromDomain(config['@domain']);
     const logFile = await this.setUpLogging(tsId.toPath());
+    const dataDir = await this.env.readyPath('data', ...tsId.toPath());
     // noinspection JSCheckFunctionSignatures
-    return {
-      meld: await clone(
-        leveldown(this.config.readyEnvPath('data', tsId.toPath())),
-        await ably(config),
-        config),
-      logFile
-    };
+    return { meld: await clone(config, dataDir), logFile };
   }
 
   /**
@@ -138,17 +156,14 @@ export default class Cli {
     });
   }
 
-  loadMeldConfig(argv, gateway) {
-    return new DomainConfigurator(argv, gateway).load();
-  }
-
   /**
    * @param {string[]} path
    * @returns {Promise<string>} the log file being used
+   * @private
    */
   async setUpLogging(path) {
     // Substitute the global console so we don't get m-ld logging
-    const logFile = `${this.config.readyEnvPath('log', path)}.log`;
+    const logFile = `${await this.env.readyPath('log', ...path)}.log`;
     const logStream = createWriteStream(logFile, { flags: 'a' });
     await once(logStream, 'open');
     global.console = new console.Console(logStream, logStream);
@@ -159,12 +174,12 @@ export default class Cli {
    * `config` command handler for setting or showing configuration
    * @param {object} argv
    */
-  configCmd(argv) {
+  async configCmd(argv) {
     // Determine what the options would be without env and config
-    const cliArgv = this.baseYargs().argv;
-    if (Object.keys(cliArgv).some(Config.isConfigKey)) {
+    const cliArgv = this.env.baseYargs(this.args).argv;
+    if (Object.keys(cliArgv).some(Env.isConfigKey)) {
       // Setting one or more config options
-      this.config.write(this.config.merge(this.config.read(), cliArgv));
+      await this.env.updateConfig(cliArgv);
     } else {
       // Showing config options
       const allArgv = { ...argv }; // yargs not happy if argv is edited
@@ -174,8 +189,8 @@ export default class Cli {
     }
   }
 
-  listCmd() {
-    for (let dir of this.config.envDirs('data'))
+  async listCmd() {
+    for (let dir of await this.env.envDirs('data'))
       this.console.log(TimesheetId.fromPath(dir).toString());
   }
 
@@ -183,7 +198,7 @@ export default class Cli {
    * @param {*} argv.timesheet as tmId
    * @param {boolean} [argv.really]
    */
-  removeCmd(argv) {
+  async removeCmd(argv) {
     const { timesheet, account, gateway } = TimesheetId.fromString(argv.timesheet);
     const pattern = new RegExp(
       `${account || '[\\w-]+'}/${timesheet || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
@@ -191,25 +206,16 @@ export default class Cli {
     if (!argv.really)
       this.console.info('If you use --really, ' +
         'these local timesheets will be deleted:');
-    for (let path of this.config.envDirs('data')) {
+    for (let path of await this.env.envDirs('data')) {
       const tsId = TimesheetId.fromPath(path);
       if (tsId.toString().match(pattern)) {
         if (argv.really) {
-          this.config.delEnvDir('data', path, { force: true });
-          this.config.delEnvFile('log', (path.join('/') + '.log').split('/'));
+          await this.env.delEnvDir('data', path, { force: true });
+          await this.env.delEnvFile('log', (path.join('/') + '.log').split('/'));
         } else {
           this.console.log(tsId.toString());
         }
       }
     }
-  }
-
-  /**
-   * @private
-   * @returns {yargs.Argv<{}>}
-   */
-  baseYargs() {
-    return createYargs(this.args)
-      .parserConfiguration({ 'strip-dashed': true, 'strip-aliased': true });
   }
 }

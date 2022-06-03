@@ -1,5 +1,5 @@
 import { uuid } from '@m-ld/m-ld';
-import { timeldContext } from './context.mjs';
+import { AblyKey, Env, timeldContext } from 'timeld-common';
 
 /**
  * Expands a partial set of command-line arguments into a usable m-ld
@@ -9,24 +9,24 @@ import { timeldContext } from './context.mjs';
 export default class DomainConfigurator {
   /**
    * @param {Partial<TimeldConfig>} argv
-   * @param {Gateway | null} gateway
+   * @param {GatewayClient | null} gateway
+   * @param {(question: string) => Promise<string>} ask
    */
-  constructor(argv, gateway) {
+  constructor(argv, gateway, ask) {
     this.argv = argv;
     this.gateway = gateway;
+    this.ask = ask;
   }
 
   /** @returns {Promise<TimeldConfig>} */
   async load() {
-    const config = {
-      ...await this.fetchGatewayConfig(),
-      // Command-line options override gateway config
-      // TODO: sounds dangerous
-      ...this.argv,
-      // These items cannot be overridden
-      '@id': uuid(),
-      '@context': timeldContext
-    };
+    const config = Env.mergeConfig(this.argv,
+      // Gateway config overrides command-line options
+      await this.fetchConfig(), {
+        // These items cannot be overridden
+        '@id': uuid(),
+        '@context': timeldContext
+      });
     if (config.principal?.['@id'] == null)
       throw 'No user ID available';
     return config;
@@ -43,12 +43,12 @@ export default class DomainConfigurator {
    * domain
    *
    * @returns {Promise<Partial<import('@m-ld/m-ld').MeldConfig>>}
+   * @private
    */
-  async fetchGatewayConfig() {
-    const { account, timesheet, create } = this.argv;
-    if (this.gateway == null) { // could be false or undefined
+  async fetchConfig() {
+    if (this.gateway == null) { // could be null
       // see https://faqs.ably.com/how-do-i-find-my-app-id
-      const appId = /**@type string*/this.argv['ably']?.key?.split('.')[0];
+      const appId = this.ablyKey?.appId;
       if (appId == null)
         throw 'Gateway-less use requires an Ably API key.\n' +
         'See https://faqs.ably.com/what-is-an-app-api-key';
@@ -56,17 +56,43 @@ export default class DomainConfigurator {
       // just in case there are other real apps running in the same Ably App.
       return this.noGatewayConfig(`timeld.${appId.toLowerCase()}`);
     } else {
-      let gatewayConfig;
-      try {
-        gatewayConfig = await this.gateway.config(account, timesheet);
-      } catch (e) {
+      const ablyKey = this.ablyKey || await this.activate();
+      const config = await this.fetchGatewayConfig(ablyKey);
+      return Env.mergeConfig(config, { ably: { key: ablyKey.toString() } });
+    }
+  }
+
+  /**
+   * @param {AblyKey} ablyKey
+   * @returns {Promise<{genesis}|{genesis: boolean, '@domain': string}>}
+   */
+  async fetchGatewayConfig(ablyKey) {
+    const { account, timesheet, create } = this.argv;
+    let gatewayConfig;
+    try {
+      gatewayConfig = await this.gateway.config(account, timesheet, ablyKey);
+    } catch (e) {
+      // Gateway client returns Strings for HTTP error responses!
+      if (e instanceof Error) {
         console.info(`Gateway ${this.gateway.domain} is not reachable (${e})`);
         return this.noGatewayConfig(this.gateway.domain);
+      } else {
+        throw e;
       }
-      if (create && !gatewayConfig.genesis)
-        throw 'This timesheet already exists';
-      return gatewayConfig;
     }
+    if (create && !gatewayConfig.genesis)
+      throw 'This timesheet already exists';
+    return gatewayConfig;
+  }
+
+  /**
+   * @returns {Promise<AblyKey>} new Ably key
+   * @private
+   */
+  async activate() {
+    return this.gateway.activate(this.argv.account, this.argv.timesheet,
+      await this.ask('Please enter your email address to register this device:'),
+      () => this.ask('Please enter the activation code we sent you:'));
   }
 
   noGatewayConfig(rootDomain) {
@@ -75,5 +101,10 @@ export default class DomainConfigurator {
       '@domain': `${timesheet}.${account}.${rootDomain}`,
       genesis: create // Will be ignored if true but domain exists locally
     };
+  }
+
+  get ablyKey() {
+    const keyStr = this.argv['ably']?.key;
+    return keyStr != null ? new AblyKey(keyStr) : null;
   }
 }

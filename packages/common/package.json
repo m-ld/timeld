@@ -1,0 +1,37 @@
+{
+  "name": "timeld-common",
+  "version": "0.1.0-8",
+  "description": "timeld library",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "ver": "echo $npm_package_version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "m-ld",
+    "timesheets"
+  ],
+  "author": "m-ld.io Ltd.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@m-ld/io-web-runtime": "^0.2.2-2",
+    "@m-ld/m-ld": "^0.8.2",
+    "ably": "^1.2.20",
+    "dotenv": "^16.0.1",
+    "env-paths": "^3.0.0",
+    "leveldown": "^6.1.1",
+    "yargs": "^17.4.1"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.10",
+    "tmp": "^0.2.1"
+  }
+}

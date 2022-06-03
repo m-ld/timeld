@@ -1,4 +1,4 @@
-import TimesheetId from '../lib/TimesheetId.mjs';
+import { TimesheetId } from '..';
 
 describe('Timesheet Id', () => {
   test('from full display string', () => {
@@ -9,6 +9,8 @@ describe('Timesheet Id', () => {
     expect(tsId.toString()).toBe('org/ts@gw.net');
     expect(() => tsId.validate()).not.toThrow();
     expect(tsId.toPath()).toEqual(['net', 'gw', 'org', 'ts']);
+    expect(tsId.toDomain()).toEqual('ts.org.gw.net');
+    expect(tsId.toUrl()).toEqual('http://gw.net/org/ts');
   });
 
   test('from only timesheet', () => {
@@ -38,6 +40,17 @@ describe('Timesheet Id', () => {
 
   test('from domain', () => {
     const tsId = TimesheetId.fromDomain('ts.org.gw.net');
+    expect(tsId.timesheet).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBe('gw.net');
+  });
+
+  test('from URL', () => {
+    let tsId = TimesheetId.fromUrl('https://gw.net/org/ts');
+    expect(tsId.timesheet).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBe('gw.net');
+    tsId = TimesheetId.fromUrl('http://gw.net:8080/org/ts/what');
     expect(tsId.timesheet).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
