@@ -96,7 +96,7 @@ export default class TimesheetId {
   }
 
   toUrl() {
-    return `https://${this.gateway}/${this.account}/${this.timesheet}`;
+    return `http://${this.gateway}/${this.account}/${this.timesheet}`;
   }
 
   toString() {

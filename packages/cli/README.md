@@ -1,12 +1,12 @@
+![stability-wip](https://img.shields.io/badge/stability-work_in_progress-lightgrey.svg)
+
 # timeld CLI
 
 ## requirements
 
 You need an Apple Mac, Windows PC or a Linux device.
 
-The manager of your timesheets (maybe just you) needs an account with the global messaging provider Ably. Whoever led you here may have an Ably "key" for you; otherwise sign up for a [free Ably account here](https://ably.com/signup).
-
-![coming soon](https://img.shields.io/badge/-coming%20soon-red) With the [**timeld gateway**](https://github.com/m-ld/timeld#gateway), having an Ably account & key will not be necessary.
+If not using a [**timeld gateway**](https://github.com/m-ld/timeld#gateway), the manager of your timesheets (maybe just you) needs an account with the global messaging provider Ably. Whoever led you here may have an Ably "key" for you; otherwise sign up for a [free Ably account here](https://ably.com/signup).
 
 ## install
 
@@ -18,9 +18,17 @@ In a terminal: `npm install timeld-cli -g`
 
 ## configure
 
+If using a Gateway:
+
+`timeld config --gateway gateway-domain-or-url`
+
+The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`.
+
+If not using a Gateway:
+
 `timeld config --ably.key your-ably-key`
 
-You must provide a URI for yourself, as a user (you could use a link to your profile on your favourite social media site):
+In either case, you must provide a URI for yourself, as a user (you could use a link to your profile on your favourite social media site):
 
 `timeld config --user http://you.example.org/#profile`
 
@@ -32,7 +40,7 @@ You can also use a different account for each timesheet you create.
 
 ## use
 
-`timeld open your-timesheet --create` creates a new timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
+`timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
 
 In the session, you can add new time entries like this: `add your-activity`. (If your activity name has spaces in it, put it in quotes e.g. `add "your activity"`.) **timeld** will confirm what you have added.
 
@@ -60,6 +68,8 @@ In a timesheet session you can just press `<Enter>` to see the available command
 
 ## switching devices
 
-A timesheet is not stored on the cloud or on any servers, only on your devices.
+If using a Gateway, your timesheets are stored on the gateway and are accessible from any device with a network connection to it. Each new device will be registered the first time you use it.
+
+If not using a Gateway, your timesheets are not stored on the cloud or on any servers, only on your devices.
 
 Still, you can open and modify a timesheet that you've created on one device, on a different device. Just use `timeld open your-timesheet` on the new device _while you have a session open on the first device._ After that, you can use your devices independently, and they will synchronise whenever they both have a session open.

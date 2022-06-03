@@ -7,6 +7,10 @@
 </p>
 <pre></pre>
 
+[![stability-wip](https://img.shields.io/badge/stability-work_in_progress-lightgrey.svg)](https://github.com/m-ld/timeld/projects/1)
+[![actions](https://github.com/m-ld/timeld/actions/workflows/node.js.yml/badge.svg)](https://github.com/m-ld/timeld/actions)
+[![Gitter](https://img.shields.io/gitter/room/federatedbookkeeping/timesheets)](https://gitter.im/federatedbookkeeping/timesheets)
+
 # live shared timesheets
 
 **timeld** is a tool for managing your time.
@@ -18,11 +22,11 @@ The [desktop tool](https://www.npmjs.com/package/timeld-cli) can be used on MacO
 
 ## gateway
 
-![coming soon](https://img.shields.io/badge/-coming%20soon-red)
+The [Gateway](https://www.npmjs.com/package/timeld-gateway) manages accounts and persists timesheets somewhere safe.
 
-- Register accounts and users
-- Submit completed timesheets to other management systems
-- Import timesheets from other management systems
+- Register accounts
+- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Submit completed timesheets to other management systems
+- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Import timesheets from other management systems
 
 ---
 
@@ -30,4 +34,4 @@ The [desktop tool](https://www.npmjs.com/package/timeld-cli) can be used on MacO
 
 [![project](https://raw.githubusercontent.com/primer/octicons/main/icons/table-16.svg) kanban board](https://github.com/m-ld/timeld/projects/1)
 
-To publish, use `npm run publish` in the root, to ensure that workspace packages stay in sync.
+To publish, use e.g. `$VERSION=patch npm run publish` in the root, to ensure that workspace packages stay in sync.

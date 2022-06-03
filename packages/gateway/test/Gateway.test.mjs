@@ -24,8 +24,8 @@ describe('Gateway', () => {
     clone = jest.fn(config =>
       meldClone(new MeldMemDown(), DeadRemotes, config));
     ablyApi = {
-      listAppKeys: jest.fn(),
-      createAppKey: jest.fn()
+      createAppKey: jest.fn(),
+      updateAppKey: jest.fn()
     };
   });
 
@@ -153,7 +153,7 @@ describe('Gateway', () => {
         join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'));
       await expect(gateway.domain.get('test')).resolves.toEqual({
         '@id': 'test',
-        timesheet: { '@id': 'https://ex.org/test/ts1' }
+        timesheet: { '@id': 'test/ts1' }
       });
       expect(existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
     });
@@ -161,7 +161,7 @@ describe('Gateway', () => {
     test('clones a new timesheet', async () => {
       // noinspection JSCheckFunctionSignatures
       await gateway.domain.write({
-        '@id': 'test', timesheet: { '@id': 'https://ex.org/test/ts1' }
+        '@id': 'test', timesheet: { '@id': 'test/ts1' }
       });
       // Doing another write awaits all follow handlers
       await gateway.domain.write({});
@@ -181,12 +181,15 @@ describe('Gateway', () => {
     test('removes a timesheet', async () => {
       await gateway.timesheetConfig('test', 'ts1');
       await gateway.domain.write({
-        '@delete': { '@id': 'test', timesheet: { '@id': 'https://ex.org/test/ts1' } }
+        '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } }
       });
       // Doing another write awaits all follow handlers
       await gateway.domain.write({});
       expect(!existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
       expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
+      // Cannot re-use a timesheet name
+      await expect(gateway.timesheetConfig('test', 'ts1'))
+        .rejects.toThrowError();
     });
   });
 });

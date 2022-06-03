@@ -10,7 +10,7 @@ describe('Timesheet Id', () => {
     expect(() => tsId.validate()).not.toThrow();
     expect(tsId.toPath()).toEqual(['net', 'gw', 'org', 'ts']);
     expect(tsId.toDomain()).toEqual('ts.org.gw.net');
-    expect(tsId.toUrl()).toEqual('https://gw.net/org/ts');
+    expect(tsId.toUrl()).toEqual('http://gw.net/org/ts');
   });
 
   test('from only timesheet', () => {

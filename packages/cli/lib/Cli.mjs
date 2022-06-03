@@ -8,10 +8,15 @@ import readline from 'readline';
 import { promisify } from 'util';
 
 export default class Cli {
-  constructor({
+  /**
+   * @param {Env} env
+   * @param {string[]} [args]
+   * @param input
+   * @param output
+   * @param console
+   */
+  constructor(env, {
     args = undefined,
-    // By default, do not read environment variables into config
-    env = new Env({ env: false }),
     input = process.stdin,
     output = process.stdout,
     console = global.console

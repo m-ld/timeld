@@ -1,9 +1,12 @@
 {
   "name": "timeld-common",
-  "version": "0.1.0-5",
+  "version": "0.1.0-8",
   "description": "timeld library",
   "type": "module",
   "main": "index.mjs",
+  "scripts": {
+    "ver": "echo $npm_package_version"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/m-ld/timeld.git"

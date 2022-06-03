@@ -10,7 +10,7 @@ import errors from 'restify-errors';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
- * @property {string} [DATA_PATH] should point to a volume, default `/data`
+ * @property {string} [TIMELD_GATEWAY_DATA_PATH] should point to a volume, default `/data`
  * @property {string} [LOG_LEVEL] defaults to "INFO"
  * @property {string} TIMELD_GATEWAY domain name or URL of gateway
  * @property {string} TIMELD_GENESIS "true" iff the gateway is new
@@ -20,20 +20,18 @@ import errors from 'restify-errors';
  */
 
 const env = new Env({
-  data: process.env.DATA_PATH || '/data', // Default is a volume mount, see fly.toml
-  config: process.env.CONFIG_PATH, // Currently unused
-  log: process.env.LOG_PATH // Unused; logging is managed by fly.io
+  // Default is a volume mount, see fly.toml
+  data: process.env.TIMELD_GATEWAY_DATA_PATH || '/data'
 });
 // Parse command line, environment variables & configuration
 const config = /**@type {*}*/(await env.yargs()).parse();
 LOG.setLevel(config.logLevel || 'INFO');
-LOG.trace('Loaded configuration', config);
+LOG.debug('Loaded configuration', config);
 
 // Set the m-ld domain from the declared gateway
 if (config['@domain'] == null) {
   config['@domain'] = validator.isFQDN(config.gateway) ?
     config.gateway : new URL(config.gateway).hostname;
-  LOG.debug(`Gateway domain is ${config['@domain']}`);
 }
 
 const ablyApi = new AblyApi(config.ably);
@@ -96,7 +94,7 @@ server.get('/api/:account/tsh/:timesheet/cfg',
       if (acc == null)
         return next(new errors.NotFoundError('Not found: %s', account));
       try {
-        await acc.verify(jwt);
+        await acc.verify(jwt, timesheet);
       } catch (e) {
         return next(new errors.ForbiddenError(e));
       }

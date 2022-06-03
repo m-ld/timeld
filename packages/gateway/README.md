@@ -1,3 +1,9 @@
+![stability-wip](https://img.shields.io/badge/stability-work_in_progress-lightgrey.svg)
+
+# timeld Gateway
+
+The timeld Gateway is a service to manage timeld accounts and persist timesheets safely. It can be deployed and scaled easily on a cloud platform.
+
 ## Fly.io Deployment Notes
 
 ### volumes
@@ -16,31 +22,27 @@ Each _instance_ of an app must have dedicated storage. So we can either:
 
 ### secrets
 
-https://fly.io/docs/flyctl/secrets-set/
-
 ```bash
 flyctl secrets import < .env
 ```
 
-.env file must contain:
+Where the .env file contains:
 - `TIMELD_ABLY__KEY`
 - `TIMELD_ABLY__API_KEY`
 - `TIMELD_COURIER__AUTHORIZATION_TOKEN`
 
-
 ### deploy
 
-If `timeld-common` has changed, it must be published. In the timeld root:
-
 ```bash
-npm run publish
+flyctl deploy
 ```
-(It will ask for a version, per `npm version`.)
+
+(For development, use `flyctl deploy ./packages/gateway` in the monorepo root, to pick up the local `.env`.)
 
 The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 
-```
-npm run deploy -- --env TIMELD_GENESIS=true --env TIMELD_GATEWAY=timeld.org
+```bash
+flyctl deploy --env TIMELD_GENESIS=true --env TIMELD_GATEWAY=timeld.org
 ```
 
 ### random

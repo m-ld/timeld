@@ -5,6 +5,8 @@ import { propertyValue, uuid } from '@m-ld/m-ld';
 import { AblyKey, Env, timeldContext, TimesheetId } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
+import { access, rm, writeFile } from 'fs/promises';
+import errors from 'restify-errors';
 
 export default class Gateway {
   /**
@@ -22,6 +24,8 @@ export default class Gateway {
       '@id': uuid(),
       '@context': timeldContext
     };
+    LOG.info('Gateway ID is', this.config['@id']);
+    LOG.debug('Gateway domain is', this.config['@domain']);
     this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
     this.ablyApi = ablyApi;
@@ -40,39 +44,80 @@ export default class Gateway {
       state.read({
         '@select': '?tsh', '@where': { timesheet: '?tsh' }
       }).consume.subscribe(({ value, next }) => {
-        this.timesheetAdded(TimesheetId.fromUrl(value['?tsh']['@id'])).finally(next);
+        this.timesheetAdded(this.tsId(value['?tsh'])).finally(next);
       });
     }, update => {
       // And watch for timesheets appearing and disappearing
       // noinspection JSCheckFunctionSignatures
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
-          propertyValue(subject, 'timesheet', Array, Object).map(tsRef =>
-            this.timesheetRemoved(TimesheetId.fromUrl(tsRef['@id']))))),
+          safeTimesheetRefsIn(subject).map(tsRef =>
+            this.timesheetRemoved(this.tsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
-          propertyValue(subject, 'timesheet', Array, Object).map(tsRef =>
-            this.timesheetAdded(TimesheetId.fromUrl(tsRef['@id'])))))
+          safeTimesheetRefsIn(subject).map(tsRef =>
+            this.timesheetAdded(this.tsId(tsRef)))))
       ]);
     });
     return this;
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').Reference} tsRef
+   * @returns {TimesheetId}
+   */
+  tsId(tsRef) {
+    // A timesheet reference may be relative to the domain base
+    return TimesheetId.fromUrl(new URL(tsRef['@id'], `http://${this.config['@domain']}`));
+  }
+
+  /**
+   * @param {TimesheetId} tsId timesheet to clone
+   * @param {boolean} genesis whether timesheet is expected to be new
+   */
+  async cloneTimesheet(tsId, genesis = false) {
+    const config = Object.assign(Env.mergeConfig(this.config, {
+      '@id': uuid(), '@domain': tsId.toDomain()
+    }), { genesis });
+    LOG.info(tsId, 'ID is', config['@id']);
+    return this.timesheetDomains[tsId.toDomain()] =
+      await this.clone(config, await this.getDataPath(tsId));
+  }
+
+  getDataPath(tsId) {
+    return this.env.readyPath('data', 'tsh', tsId.account, tsId.timesheet);
   }
 
   async timesheetAdded(tsId) {
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       try {
         await this.cloneTimesheet(tsId);
+        LOG.info('Loaded declared timesheet', tsId);
       } catch (e) {
         // If the clone fails that's fine, we'll try again if it's asked for
-        LOG.warn(`Declared timesheet ${tsId} failed to load with`, e);
+        LOG.warn('Failed to load declared timesheet', tsId, e);
       }
     }
   }
 
   async timesheetRemoved(tsId) {
-    await this.timesheetDomains[tsId.toDomain()]?.close();
-    await this.env.delEnvDir('data',
-      ['tsh', tsId.account, tsId.timesheet], { force: true });
-    delete this.timesheetDomains[tsId.toDomain()];
+    try {
+      await this.timesheetDomains[tsId.toDomain()]?.close();
+      const path = await this.getDataPath(tsId);
+      // Remove the persistent data
+      await rm(path, { recursive: true, force: true });
+      // Write the tombstone file to prevent re-creation
+      await writeFile(`${path}.rip`, '');
+      // TODO: Remove all channel permissions
+      delete this.timesheetDomains[tsId.toDomain()];
+      LOG.info('Removed declared timesheet', tsId);
+    } catch (e) {
+      LOG.warn('Error removing declared timesheet', tsId, e);
+    }
+  }
+
+  async tsTombstoneExists(tsId) {
+    const path = await this.getDataPath(tsId);
+    return access(`${path}.rip`).then(() => true, () => false);
   }
 
   /**
@@ -138,6 +183,9 @@ export default class Gateway {
         const genesis = !(await state.read({
           '@select': '?', '@where': accountHasTimesheet
         })).length;
+        // If genesis, check that this timesheet has not existed before
+        if (genesis && await this.tsTombstoneExists(tsId))
+          throw new errors.ConflictError();
         const ts = await this.cloneTimesheet(tsId, genesis);
         // Ensure that the clone is online to avoid race with the client
         await ts.status.becomes({ online: true });
@@ -153,24 +201,25 @@ export default class Gateway {
     }), { genesis: false }); // Definitely not genesis
   }
 
-  /**
-   * @param {TimesheetId} tsId timesheet to clone
-   * @param {boolean} genesis whether timesheet is expected to be new
-   */
-  async cloneTimesheet(tsId, genesis = false) {
-    return this.timesheetDomains[tsId.toDomain()] = await this.clone(
-      Object.assign(Env.mergeConfig(this.config, {
-        '@id': uuid(), '@domain': tsId.toDomain()
-      }), { genesis }),
-      await this.env.readyPath(
-        'data', 'tsh', tsId.account, tsId.timesheet));
-  }
-
   close() {
     // Close the gateway domain
     return Promise.all([
       this.domain?.close(),
       ...Object.values(this.timesheetDomains).map(d => d.close())
     ]);
+  }
+}
+
+/**
+ * @param subject may contain `timesheet` property
+ * @returns {import('@m-ld/m-ld').Reference[]}
+ */
+function safeTimesheetRefsIn(subject) {
+  try {
+    // TODO: Use Array of Reference in m-ld-js v0.9
+    return propertyValue(subject, 'timesheet', Array, Object)
+      .filter(ref => ref['@id'] != null);
+  } catch (e) {
+    return [];
   }
 }

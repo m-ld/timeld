@@ -1,5 +1,13 @@
 import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
 
+/**
+ * @typedef {object} AblyKeyDetail
+ * @property {string} id
+ * @property {string} name
+ * @property {string} key
+ * @property {object} capability
+ */
+
 export default class AblyApi {
   /**
    * @param {string} key Ably key for the app
@@ -16,22 +24,27 @@ export default class AblyApi {
   }
 
   /**
-   * @returns {Promise<[{ id: string, name: string, key: string }]>}
-   * @see https://ably.com/docs/api/control-api#tag/keys/paths/~1apps~1{app_id}~1keys/get
+   * @param {string} name
+   * @param {object} capability
+   * @returns {Promise<AblyKeyDetail>}
+   * @see https://ably.com/docs/api/control-api#tag/keys/paths/~1apps~1{app_id}~1keys/post
    */
-  listAppKeys() {
-    return this.fetchJson('keys');
+  createAppKey({ name, capability }) {
+    return this.fetchJson('keys', {}, {
+      method: 'POST', body: { name, capability }
+    });
   }
 
   /**
-   * @param {string} name
-   * @param {object} capability
-   * @returns {Promise<{ id: string, key: string }>}
+   * @param {string} keyid
+   * @param {string} [name]
+   * @param {object} [capability]
+   * @returns {Promise<AblyKeyDetail>}
    * @see https://ably.com/docs/api/control-api#tag/keys/paths/~1apps~1{app_id}~1keys/post
    */
-  createAppKey(name, capability) {
-    return this.fetchJson('keys', {}, {
-      method: 'POST', body: { name, capability }
+  updateAppKey(keyid, { name, capability }) {
+    return this.fetchJson(`keys/${keyid}`, {}, {
+      method: 'PATCH', body: { name, capability }
     });
   }
 }
