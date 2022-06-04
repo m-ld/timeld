@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="293px" preserveAspectRatio="none" style="width:486px;height:293px;background:#FFFFFF;" version="1.1" viewBox="0 0 486 293" width="486px" zoomAndPan="magnify"><defs><filter height="300%" id="flnsz6jfci1xs" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[c7a9e7692e6cc013072a5513b1c4ae58]
+cluster Timesheet session--><polygon fill="#FFFFFF" filter="url(#flnsz6jfci1xs)" points="300,6,442,6,449,28.4883,469,28.4883,469,286,300,286,300,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="300" x2="449" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="136" x="304" y="21.5352">Timesheet session</text><ellipse cx="384.4115" cy="55.7584" fill="#FEFECE" filter="url(#flnsz6jfci1xs)" rx="57.9115" ry="14.7584" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="65" x="348.9115" y="59.776">add entry</text><ellipse cx="384.7483" cy="121.8497" fill="#FEFECE" filter="url(#flnsz6jfci1xs)" rx="67.2483" ry="15.8497" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86" x="338.7483" y="125.8672">modify entry</text><ellipse cx="384.6987" cy="189.1397" fill="#FEFECE" filter="url(#flnsz6jfci1xs)" rx="68.6987" ry="16.1397" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="90" x="337.171" y="193.0562">remove entry</text><ellipse cx="384.6108" cy="254.8222" fill="#FEFECE" filter="url(#flnsz6jfci1xs)" rx="62.1108" ry="14.8222" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="346.1108" y="258.8397">list entries</text><path d="M6,240.5 L6,281.1211 L256,281.1211 L256,250.5 L246,240.5 L6,240.5 " fill="#FBFB77" filter="url(#flnsz6jfci1xs)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M246,240.5 L246,250.5 L256,250.5 L246,240.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="229" x="12" y="258.0684">TODO: Fine-grained access controls</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="189" x="12" y="273.3789">to restrict entry modifications</text><!--MD5=[8fc3522a43f8c7199df5e09e5bb0188e]
+entity user--><ellipse cx="131" cy="116.5" fill="#FEFECE" filter="url(#flnsz6jfci1xs)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><path d="M131,124.5 L131,151.5 M118,132.5 L144,132.5 M131,151.5 L118,166.5 M131,151.5 L144,166.5 " fill="none" filter="url(#flnsz6jfci1xs)" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="118" x="72" y="185.5352">Timesheet owner</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77" x="72" y="202.0234">or provider</text><!--MD5=[33606254bab922aec7e151beff2c4592]
+link user to add entry--><path d="M190.14,130.21 C220.33,117.09 257.94,101.18 292,88 C308.64,81.56 327.19,74.97 343.22,69.45 " fill="none" id="user-to-add entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="348.11,67.77,338.298,66.9188,343.3825,69.3982,340.9031,74.4827,348.11,67.77" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[86bfa739c28f6bcedfb7eabd8139dd15]
+link user to modify entry--><path d="M190.01,148.16 C229.03,142.88 280.44,135.93 320.46,130.52 " fill="none" id="user-to-modify entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="325.78,129.8,316.3246,127.0442,320.8252,130.4711,317.3983,134.9718,325.78,129.8" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c1ad0ff7cb1d563801e1aecbb12b9a7d]
+link user to remove entry--><path d="M190.01,163.61 C228.61,168.68 279.34,175.33 319.17,180.56 " fill="none" id="user-to-remove entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="324.47,181.25,316.0737,176.102,319.5134,180.5929,315.0224,184.0326,324.47,181.25" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[58a9e18b4699adf884bbe628a482e08a]
+link user to list entries--><path d="M190.26,180.77 C220.49,193.44 258.08,208.9 292,222 C308.7,228.45 327.27,235.22 343.28,240.94 " fill="none" id="user-to-list entries" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="348.17,242.68,341.024,235.9025,343.4574,241.0092,338.3507,243.4426,348.17,242.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[feef493229fb7f9dc45f320abd4b8c61]
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+
+note as TODO
+  TODO: Fine-grained access controls
+  to restrict entry modifications
+end note
+
+actor "Timesheet owner\nor provider" as user
+package "Timesheet session" {
+  user - -> (add entry)
+  user - -> (modify entry)
+  user - -> (remove entry)
+  user - -> (list entries)
+}
+
+@enduml
+
+@startuml
+left to right direction
+
+note as TODO
+  TODO: Fine-grained access controls
+  to restrict entry modifications
+end note
+
+actor "Timesheet owner\nor provider" as user
+package "Timesheet session" {
+  user - -> (add entry)
+  user - -> (modify entry)
+  user - -> (remove entry)
+  user - -> (list entries)
+}
+
+@enduml
+
+PlantUML version 1.2021.10(Mon Aug 30 14:43:48 BST 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>

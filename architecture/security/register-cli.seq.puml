@@ -1,27 +1,55 @@
 @startuml
 'https://plantuml.com/sequence-diagram
-
 hide footbox
 
-User -> CLI ++: open
-note over CLI: No appKey\nor expired
-CLI --> User --: "pls enter email"
-User -> CLI ++: email
-CLI -> Gateway ++: jwe(account, email)
-note over Gateway: if account exists,\nemail must match
-Gateway --> CLI: jwt encrypted with code
-CLI --> User --: "pls enter emailed code"
-Gateway --> User --: activation code by email
-User -> CLI ++: code
-' TODO: brute force attack (look for a parseable JWT)
-CLI -> CLI: Unencrypt jwt
-' TODO: replay attack within JWT validity period
-CLI -> Gateway ++: key(account, jwt)
-Gateway -> Gateway: create Account\nif required
-Gateway <-> Ably: create key &\ncapabilities
-Gateway -> Gateway: store key ID\nin Account
-return ""ably.key""
-CLI -> Ably --: connect to timesheet channels via m-ld
+User -> CLI ++: open account/timesheet
+alt No ""ably.key"" or expired
+  alt No principal.@id configured
+    note over CLI
+      configured principal.@id is the
+      user account, account<sub>u</sub>.
+      Not always the same as requested
+      timesheet account<sub>t</sub>, but use as default.
+    end note
+    CLI -> User: "your account?"
+    User --> CLI: account<sub>u</sub>
+  end
+  CLI -> User: "pls enter email"
+  User --> CLI: email
+  CLI -> Gateway ++: jwe(account<sub>u</sub>, email)
+  Gateway -> Gateway: If account<sub>u</sub> exists, check\naccount<sub>u</sub> and email match
+  Gateway --> CLI: jwt<sub>a</sub> encrypted with code
+  note left
+    jwt<sub>a</sub> (activation jwt)
+    has ⦉ account<sub>u</sub>, email ⦊
+    signed with Gateway secret
+  end note
+  CLI -> User: "pls enter emailed code"
+  Gateway --> User --: activation code by email
+
+  User --> CLI: code
+  ' TODO: brute force attack (look for a parseable JWT)
+  CLI -> CLI: decrypt jwt<sub>a</sub>
+  ' TODO: replay attack within JWT validity period
+  CLI -> Gateway ++: key(jwt<sub>a</sub>)
+  Gateway -> Gateway: create Account\nif required
+  Gateway <-> Ably: create/update key\n& capabilities
+  Gateway -> Gateway: store keyid\nin Account
+  return ""ably.key""
+end
+
+CLI -> Gateway ++: config(account/timesheet, jwt<sub>u</sub>)
+note left
+  jwt<sub>u</sub> (user jwt)
+  is ⦉ account<sub>u</sub>, keyid ⦊
+  signed with ""ably.key""
+end note
+Gateway -> Gateway: check account<sub>u</sub>\ncorresponds to keyid
+Gateway -> Gateway: check account<sub>u</sub> has\naccess to timesheet
+Gateway -> Gateway: update key capability
+return config
+
+CLI -> Ably: connect to timesheet channels via m-ld
 note over User, CLI: Proceed with session
 
 @enduml

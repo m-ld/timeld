@@ -4,32 +4,48 @@
 hide circle
 allowmixing
 
-class Gateway <<domain>> <<ably app>> {
+class Gateway <<domain>> <<ably app>> <<service>> {
   appMasterKey <<secret>>
 }
 
 Gateway *-- "*" Account
 
-class Account <<subject>> {
-  vf:primaryAccountable : foaf:Agent
-  email : string [*]
-  keyid : string [*]
+class Account <<abstract>> <<subject>> {
+  vf:primaryAccountable : IRI [1..*]
   timesheet : IRI [*]
-  project : IRI [*]
+  project : Project [*]
 }
-note right of Account::vf:primaryAccountable
-  TODO
-end note
-note right of Account::keyid
-  Matches ""ably.key""
-  Can be revoked
-end note
 
 Account *--> "*" Timesheet: owns
 
 Account *--> "*" Project: owns
 
+class UserAccount {
+  email : string [*]
+  keyid : string [*]
+}
+note left of UserAccount::email
+  Registered email, used
+  for account activation
+end note
+note left of UserAccount::keyid
+  Matches ""ably.key""
+  Can be revoked
+end note
+UserAccount --|> Account
+
+class OrganisationAccount {
+  foaf:member : UserAccount [*]
+}
+note left of OrganisationAccount::foaf:member
+  Only user accounts:
+  no org hierarchy
+end note
+OrganisationAccount --|> Account
+OrganisationAccount o-- "1..*" UserAccount
+
 class Timesheet <<domain>> {
+  account<sub>t</sub> : Account
 }
 note right of Timesheet
   not actually a subject
@@ -37,12 +53,9 @@ note right of Timesheet
 end note
 
 class Project <<subject>> {
+  vf:provider : IRI [*]
+  timesheet : Timesheet [*]
 }
-note right
-  TODO
-end note
-
-Project o-- "*" Account: contributors
 
 Project "*" -- "*" Timesheet
 
@@ -51,29 +64,49 @@ component CLI [
 
   ---
   ably.key <<secret>>
+  account<sub>u</sub> (aka principal.@id)
   timesheets : domain [*]
 ]
 note top of CLI
-  installed on a device
-  under an OS account
+  Installed on a device
+  under an OS account.
+  Registered to user account
+  via ably.key.
 end note
 
-Account .. "*" CLI: CLI instance\nregistered to\naccount
+UserAccount .. "*" CLI
 
-CLI ..> "*" Timesheet: entailed access
+CLI ..> "*" Timesheet: entailed write access to timesheets
+note bottom on link
+  account<sub>u</sub> = account<sub>t</sub>
+  ∨
+  ∃project:Project ⦁
+    timesheet ∈ project.timesheet
+    ∧ (
+      account<sub>u</sub> ∈ project.vf:provider
+      ∨
+      ∃org:OrganisationAccount ⦁
+        org ∈ project.vf:provider ∧
+        account<sub>u</sub> ∈ org.foaf:member
+    )
+end note
 
 package Ably <<service>> {
   class AblyKey {
     keyid
+    name
     secret
     capabilities : string
   }
-  note right of AblyKey::capabilities
-    Defines domain access
+  note left of AblyKey::name
+    account<sub>u</sub>
+  end note
+  note left of AblyKey::capabilities
+    Defines channel access
     thus, timesheet access
   end note
 
-  Account "1" -- "*" AblyKey
+  UserAccount "1" -- "*" AblyKey
 }
 
 @enduml

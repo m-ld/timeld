@@ -1,0 +1,27 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+
+user --> (configure CLI)
+
+usecase command as "
+CLI session command"
+
+(register CLI on device) <-. command: may include
+(create user account) <-. command: may include
+
+user --> (open timesheet)
+note top
+  see ./use-case/timesheet
+end note
+(open timesheet) --|> command
+
+user --> (administer account)
+note top
+  see ./use-case/administration
+end note
+(administer account) --|> command
+(admin user account) --|> (administer account)
+(admin org account) --|> (administer account)
+
+@enduml
