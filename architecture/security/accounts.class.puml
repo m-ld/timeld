@@ -12,22 +12,27 @@ Gateway *-- "*" Account
 
 class Account <<abstract>> <<subject>> {
   vf:primaryAccountable : UserAccount [1..*]
-  timesheet : IRI [*]
+  timesheet : Timesheet [*]
   project : Project [*]
 }
 note left of Account::vf:primaryAccountable
-  The account "owner".
+  The account "admin".
   For user accounts, a
-    redundant self-reference.
-  For org accounts,
-    "admin" user accounts.
-  Not necessarily redundant
-    with foaf:member
+    redundant self-reference
+    (user admins their own account).
+end note
+note left of Account::timesheet
+  inverse injection: a Timesheet
+  can only appear in one Account
+end note
+note left of Account::project
+  inverse injection: a Project
+  can only appear in one Account
 end note
 
-Account *--> "*" Timesheet: owns
+Account "provider" *--> "*" Timesheet
 
-Account "client" *--> "*" Project: owns
+Account "client" *--> "*" Project
 
 class UserAccount {
   email : string [*]
@@ -44,19 +49,12 @@ end note
 UserAccount --|> Account
 
 class OrganisationAccount {
-  foaf:member : UserAccount [*]
 }
-note left of OrganisationAccount::foaf:member
-  Only user accounts:
-  no org hierarchy.
-  Used for project-based
-  authorisation.
-end note
 OrganisationAccount --|> Account
 OrganisationAccount o-- "1..*" UserAccount
 
 class Timesheet <<domain>> <<subject>> {
-  //account<sub>t</sub> : Account//
+  //account<sub>p</sub> : Account//
   project : Project [*]
 }
 note left of Timesheet
@@ -71,18 +69,28 @@ note right of Timesheet::account
 end note
 note right of Timesheet::project
   Can only be set by
-  account owner/admin
+  account admin
 end note
 
 class Project <<subject>> {
-  vf:provider : IRI [*]
-  client : IRI [0..1]
 }
-note left of Project::vf:provider
-  Typically singular.
-  A provider has access
-  to all timesheets in
-  the project.
+note right of Project
+  **entailed __read__ access to a timesheet**
+  (via Gateway export/publish)
+
+  the user account must be the timesheet provider
+  //or// the client of a project containing the timesheet
+
+  account<sub>u</sub> ∈
+    account<sub>p</sub>.vf:primaryAccountable
+  ∨
+  ∃account<sub>c</sub>:Account ⦁
+    account<sub>u</sub> ∈
+      account<sub>c</sub>.vf:primaryAccountable
+    ∧
+    ∃project:Project ⦁
+      project ∈ account<sub>c</sub>.project ∧
+      project ∈ timesheet.project
 end note
 
 Project "*" -- "*" Timesheet
@@ -104,19 +112,15 @@ end note
 
 UserAccount .. "*" CLI
 
-CLI ..> "*" Timesheet: entailed access to timesheet
+CLI ..> "*" Timesheet
 note bottom on link
-  let projectAccessors ==
-    λp:Project ⦁ p.vf:provider ∪ p.client;
+  **entailed __read and write__ access**
+  (via the CLI)
+
+  the user account must be the timesheet provider
+
   account<sub>u</sub> ∈
-    account<sub>t</sub>.vf:primaryAccountable
-  ∨
-  ∃p:timesheet.project ⦁
-    account<sub>u</sub> ∈ projectAccessors(p)
-    ∨
-    ∃org:OrganisationAccount ⦁
-      account<sub>u</sub> ∈ org.foaf:member ∧
-      org ∈ projectAccessors(p)
+    account<sub>p</sub>.vf:primaryAccountable
 end note
 
 package Ably <<service>> {
@@ -130,8 +134,9 @@ package Ably <<service>> {
     account<sub>u</sub>
   end note
   note left of AblyKey::capabilities
-    Defines channel access
-    thus, timesheet access
+    Defines channel
+    access and thus,
+    timesheet access
   end note
 
   UserAccount "1" -- "*" AblyKey

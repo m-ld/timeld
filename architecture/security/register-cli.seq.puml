@@ -7,8 +7,8 @@ alt No ""ably.key"" or expired
   alt No user configured
     note over CLI
       configured user is account<sub>u</sub>.
-      Not always the same as requested
-      timesheet account<sub>t</sub>, but use as default.
+      Not always the same as requested timesheet
+      account<sub>p</sub> (which may be an organisation).
     end note
     CLI -> User: "your account?"
     User --> CLI: account<sub>u</sub>

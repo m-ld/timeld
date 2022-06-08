@@ -5,14 +5,14 @@ left to right direction
 actor "User account owner or\nOrganisation acc admin" as user
 package "Account administration session" {
   user --> (view organisation)
-  user --> (add member)
-  user --> (rm member)
-  user --> (create project)
+  user --> (add [admin | member])
+  user --> (rm [admin | member])
   user --> (list [projects | timesheets])
   user --> (view [project | timesheet])
   user --> (rm [project | timesheet])
-  user --> (add project provider)
-  user --> (rm project provider)
+  user --> (create project)
+  user --> (add timesheet to project)
+  user --> (rm timesheet from project)
 }
 
 @enduml
