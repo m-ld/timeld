@@ -4,10 +4,9 @@ hide footbox
 
 User -> CLI ++: open account/timesheet
 alt No ""ably.key"" or expired
-  alt No principal.@id configured
+  alt No user configured
     note over CLI
-      configured principal.@id is the
-      user account, account<sub>u</sub>.
+      configured user is account<sub>u</sub>.
       Not always the same as requested
       timesheet account<sub>t</sub>, but use as default.
     end note

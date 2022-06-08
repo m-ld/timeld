@@ -45,7 +45,7 @@ package ts {
         startDate : xsd:dateTime
         duration : om2:Duration
         milestone : xsd:string
-        client : Client [0..1]
+        client : foaf:Agent [0..1]
         vf:provider : foaf:Agent
     }
 

@@ -11,14 +11,23 @@ class Gateway <<domain>> <<ably app>> <<service>> {
 Gateway *-- "*" Account
 
 class Account <<abstract>> <<subject>> {
-  vf:primaryAccountable : IRI [1..*]
+  vf:primaryAccountable : UserAccount [1..*]
   timesheet : IRI [*]
   project : Project [*]
 }
+note left of Account::vf:primaryAccountable
+  The account "owner".
+  For user accounts, a
+    redundant self-reference.
+  For org accounts,
+    "admin" user accounts.
+  Not necessarily redundant
+    with foaf:member
+end note
 
 Account *--> "*" Timesheet: owns
 
-Account *--> "*" Project: owns
+Account "client" *--> "*" Project: owns
 
 class UserAccount {
   email : string [*]
@@ -39,23 +48,42 @@ class OrganisationAccount {
 }
 note left of OrganisationAccount::foaf:member
   Only user accounts:
-  no org hierarchy
+  no org hierarchy.
+  Used for project-based
+  authorisation.
 end note
 OrganisationAccount --|> Account
 OrganisationAccount o-- "1..*" UserAccount
 
-class Timesheet <<domain>> {
-  account<sub>t</sub> : Account
+class Timesheet <<domain>> <<subject>> {
+  //account<sub>t</sub> : Account//
+  project : Project [*]
 }
-note right of Timesheet
-  not actually a subject
-  in the Gateway domain
+note left of Timesheet
+  a subject in the
+  Gateway domain;
+  also a domain shared to
+  authorised CLI clients
+end note
+note right of Timesheet::account
+  entailed from
+  Account.timesheet
+end note
+note right of Timesheet::project
+  Can only be set by
+  account owner/admin
 end note
 
 class Project <<subject>> {
   vf:provider : IRI [*]
-  timesheet : Timesheet [*]
+  client : IRI [0..1]
 }
+note left of Project::vf:provider
+  Typically singular.
+  A provider has access
+  to all timesheets in
+  the project.
+end note
 
 Project "*" -- "*" Timesheet
 
@@ -64,7 +92,7 @@ component CLI [
 
   ---
   ably.key <<secret>>
-  account<sub>u</sub> (aka principal.@id)
+  account<sub>u</sub> (aka user)
   timesheets : domain [*]
 ]
 note top of CLI
@@ -76,19 +104,19 @@ end note
 
 UserAccount .. "*" CLI
 
-CLI ..> "*" Timesheet: entailed write access to timesheets
+CLI ..> "*" Timesheet: entailed access to timesheet
 note bottom on link
-  account<sub>u</sub> = account<sub>t</sub>
+  let projectAccessors ==
+    λp:Project ⦁ p.vf:provider ∪ p.client;
+  account<sub>u</sub> ∈
+    account<sub>t</sub>.vf:primaryAccountable
   ∨
-  ∃project:Project ⦁
-    timesheet ∈ project.timesheet
-    ∧ (
-      account<sub>u</sub> ∈ project.vf:provider
-      ∨
-      ∃org:OrganisationAccount ⦁
-        org ∈ project.vf:provider ∧
-        account<sub>u</sub> ∈ org.foaf:member
-    )
+  ∃p:timesheet.project ⦁
+    account<sub>u</sub> ∈ projectAccessors(p)
+    ∨
+    ∃org:OrganisationAccount ⦁
+      account<sub>u</sub> ∈ org.foaf:member ∧
+      org ∈ projectAccessors(p)
 end note
 
 package Ably <<service>> {
