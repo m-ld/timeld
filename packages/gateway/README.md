@@ -27,9 +27,9 @@ flyctl secrets import < .env
 ```
 
 Where the .env file contains:
-- `TIMELD_ABLY__KEY`
-- `TIMELD_ABLY__API_KEY`
-- `TIMELD_COURIER__AUTHORIZATION_TOKEN`
+- `TIMELD_GATEWAY_ABLY__KEY=<your root ably key>`
+- `TIMELD_GATEWAY_ABLY__API_KEY=<your ably control API key>`
+- `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=<your courier auth token>`
 
 ### deploy
 
@@ -42,7 +42,7 @@ flyctl deploy
 The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 
 ```bash
-flyctl deploy --env TIMELD_GENESIS=true --env TIMELD_GATEWAY=timeld.org
+flyctl deploy --env TIMELD_GATEWAY_GENESIS=true --env TIMELD_GATEWAY_GATEWAY=timeld.org
 ```
 
 ### random

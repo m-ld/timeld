@@ -45,24 +45,23 @@ package ts {
         startDate : xsd:dateTime
         duration : om2:Duration
         milestone : xsd:string
-        client : Client [0..1]
+        client : foaf:Agent [0..1]
+        vf:provider : foaf:Agent
     }
 
     Timesheet "*" -- "*" Project
 
-    class Client {
+    class foaf:Agent {
         foaf:name : xsd:string
     }
 
-    Project "*" -- "0..1" Client
+    Project "*" -- "0..1" "foaf:Agent": client
+    Project "*" -- "*" "foaf:Agent": vf:provider
 
     note right of Project::client
     client property is also
     a sub-property of vf:receiver
     end note
-
-    Client --|> "foaf:Agent"
-
 }
 
 @enduml

@@ -36,6 +36,9 @@ export default class AblyApi {
   }
 
   /**
+   * Note: this call works even if both name and capability are missing; and can
+   * therefore be used to check if a keyid exists
+   *
    * @param {string} keyid
    * @param {string} [name]
    * @param {object} [capability]

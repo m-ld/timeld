@@ -1,8 +1,11 @@
 import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
 import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
-import validator from 'validator';
+import isFQDN from 'validator/lib/isFQDN.js';
+import isEmail from 'validator/lib/isEmail.js';
+import isInt from 'validator/lib/isInt.js';
+import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
-import dns from 'dns';
+import dns from 'dns/promises';
 import { AblyKey } from 'timeld-common';
 
 export default class GatewayClient {
@@ -12,7 +15,7 @@ export default class GatewayClient {
   constructor(address) {
     const { apiRoot, domain } = this.resolveApiRoot(address);
     this.domain = domain;
-    this.fetchJson = /**@type {typeof fetchJson}*/(async (path, params, options) =>
+    this.fetchApiJson = /**@type {typeof fetchJson}*/(async (path, params, options) =>
       fetchJson(`${await apiRoot}/${path}`, params, options));
   }
 
@@ -22,14 +25,14 @@ export default class GatewayClient {
    * @private
    */
   resolveApiRoot(address) {
-    if (validator.isFQDN(address)) {
+    if (isFQDN(address)) {
       return { apiRoot: `https://${address}/api`, domain: address };
     } else {
       const url = new URL('/api', address);
       const domain = url.hostname;
       if (domain.endsWith('.local')) {
         return {
-          apiRoot: dns.promises.lookup(domain).then(a => {
+          apiRoot: dns.lookup(domain).then(a => {
             url.hostname = a.address;
             return url.toString();
           }),
@@ -42,37 +45,60 @@ export default class GatewayClient {
   }
 
   /**
-   * @param {string} account
-   * @param {string} timesheet initial timesheet requested
+   * Resolve the user name against the gateway to get the canonical user URI.
+   * Gateway-based URIs use HTTP by default (see also {@link TimesheetId}).
+   * @param {string} user
+   * @returns {string}
+   */
+  principalId(user) {
+    // This leaves an absolute URI alone
+    return new URL(user, `http://${this.domain}`).toString();
+  }
+
+  /**
+   * @param {string} user user account name
    * @param {string} email account email address
    * @param {() => Promise<string>} getCode callback to get activation code
    * @returns {AblyKey} Ably key
    */
-  async activate(account, timesheet, email, getCode) {
-    if (!validator.isEmail(email))
+  async activate(user, email, getCode) {
+    if (!isEmail(email))
       throw `"${email}" is not a valid email address`;
-    const { jwe } = await this.fetchJson(`${account}/jwe`, { email });
+    const { jwe } = await this.fetchApiJson(`${user}/jwe`, { email });
     const code = await getCode();
-    if (!validator.isInt(code, { min: 111111, max: 999999 }))
+    if (!isInt(code, { min: 111111, max: 999999 }))
       throw `"${code}" is not a valid activation code`;
     const jwt = new Cryptr(code).decrypt(jwe);
-    if (!validator.isJWT(jwt))
+    if (!isJWT(jwt))
       throw 'Something has gone wrong, sorry.';
-    const { key } = await this.fetchJson(`${account}/key`, { jwt, timesheet });
+    const { key } = await this.fetchApiJson(`${user}/key`, { jwt });
     return new AblyKey(key);
   }
 
   /**
-   * @param {string} account
-   * @param {string} timesheet
+   * @param {string} user account associated with given Ably key
+   * @param {string} account to which the timesheet belongs
+   * @param {string} timesheet the timesheet name
    * @param {AblyKey} ablyKey
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>} configuration for
    * timesheet domain
    */
-  async config(account, timesheet, ablyKey) {
+  async config(user, account, timesheet, ablyKey) {
+    const jwt = await this.userJwt(user, ablyKey);
+    return /**@type {Promise<import('@m-ld/m-ld').MeldConfig>}*/this.fetchApiJson(
+      `${account}/tsh/${timesheet}/cfg`, { user, jwt });
+  }
+
+  /**
+   * User JWT suitable for authenticating to the gateway
+   * @param {string} user account associated with given Ably key
+   * @param {AblyKey} ablyKey
+   * @returns {Promise<string>} JWT
+   */
+  async userJwt(user, ablyKey) {
     const { secret, keyid } = ablyKey;
-    const jwt = await signJwt({}, secret, { keyid, expiresIn: '1m' });
-    return /**@type {Promise<import('@m-ld/m-ld').MeldConfig>}*/this.fetchJson(
-      `${account}/tsh/${timesheet}/cfg`, { jwt });
+    return await signJwt({}, secret, {
+      subject: user, keyid, expiresIn: '1m'
+    });
   }
 }

@@ -1,0 +1,21 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+
+actor "User account owner or\nOrganisation acc admin" as user
+package "Account administration session" {
+  user --> (view account)
+  user --> ([add | rm] email)
+  user --> ([add | rm] device)
+  user --> (view organisation)
+  user --> (add [admin | member])
+  user --> (rm [admin | member])
+  user --> (list [projects | timesheets])
+  user --> (view [project | timesheet])
+  user --> (rm [project | timesheet])
+  user --> (create project)
+  user --> (add timesheet to project)
+  user --> (rm timesheet from project)
+}
+
+@enduml

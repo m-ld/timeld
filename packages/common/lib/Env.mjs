@@ -10,16 +10,26 @@ dotenv.config();
 
 export default class Env {
   /**
-   * The parameter provides paths for local data, config, logs etc. The
-   * additional `env` key provides the prefix into yargs.env
+   * The optional `envPath` parameter provides paths for local data, config,
+   * logs etc. The additional `env` key provides the prefix into yargs.env – if
+   * `false`, no environment variables will be read.
    *
-   * @param {Partial<import('env-paths').Paths & { env: string | false }>} envPaths
+   * The optional `appName` parameter drives the default paths determination,
+   * according to the `env-paths` module; and also the default prefix for
+   * environment variables.
+   *
+   * @param {Partial<import('env-paths').Paths & { env: string | false }>} [envPaths]
+   * @param {string} [appName]
    * @see https://github.com/sindresorhus/env-paths#api
    * @see https://yargs.js.org/docs/#api-reference-envprefix
    */
-  constructor(envPaths = {}) {
+  constructor(envPaths = {}, appName = 'timeld') {
     this.envPaths = Env.mergeConfig(
-      { env: 'TIMELD' }, env_paths('timeld'), envPaths);
+      { env: Env.toEnvVar(appName) }, env_paths(appName), envPaths);
+  }
+
+  static toEnvVar(name) {
+    return name.toUpperCase().replace(/\W+/g, '_');
   }
 
   /**

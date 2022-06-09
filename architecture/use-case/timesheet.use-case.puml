@@ -1,0 +1,18 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+left to right direction
+
+note as TODO
+  TODO: Fine-grained access controls
+  to restrict entry modifications
+end note
+
+actor "Timesheet owner\nor provider" as user
+package "Timesheet session" {
+  user --> (add entry)
+  user --> (modify entry)
+  user --> (remove entry)
+  user --> (list entries)
+}
+
+@enduml

@@ -65,7 +65,17 @@ describe('Gateway', () => {
       await gateway?.close();
     });
 
-    test('initialises against data dir', () => {
+    test('has expected properties', () => {
+      expect(gateway.domainName).toBe('ex.org');
+      expect(gateway.tsId('test', 'ts1')).toMatchObject({
+        gateway: 'ex.org', account: 'test', timesheet: 'ts1'
+      });
+      expect(gateway.tsRefAsId({ '@id': 'test/ts1' })).toMatchObject({
+        gateway: 'ex.org', account: 'test', timesheet: 'ts1'
+      });
+    });
+
+    test('has cloned the gateway domain', () => {
       expect(clone.mock.calls).toMatchObject([[
         {
           '@id': expect.stringMatching(/\w+/),
@@ -133,7 +143,7 @@ describe('Gateway', () => {
     });
 
     test('gets timesheet config', async () => {
-      const tsConfig = await gateway.timesheetConfig('test', 'ts1');
+      const tsConfig = await gateway.timesheetConfig(gateway.tsId('test', 'ts1'));
       expect(tsConfig).toMatchObject({
         '@id': undefined,
         '@domain': 'ts1.test.ex.org',
@@ -179,7 +189,7 @@ describe('Gateway', () => {
     });
 
     test('removes a timesheet', async () => {
-      await gateway.timesheetConfig('test', 'ts1');
+      await gateway.timesheetConfig(gateway.tsId('test', 'ts1'));
       await gateway.domain.write({
         '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } }
       });

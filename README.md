@@ -25,6 +25,7 @@ The [desktop tool](https://www.npmjs.com/package/timeld-cli) can be used on MacO
 The [Gateway](https://www.npmjs.com/package/timeld-gateway) manages accounts and persists timesheets somewhere safe.
 
 - Register accounts
+- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Manage projects
 - ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Submit completed timesheets to other management systems
 - ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Import timesheets from other management systems
 

@@ -4,45 +4,94 @@
 hide circle
 allowmixing
 
-class Gateway <<domain>> <<ably app>> {
+class Gateway <<domain>> <<ably app>> <<service>> {
   appMasterKey <<secret>>
 }
 
 Gateway *-- "*" Account
 
-class Account <<subject>> {
-  vf:primaryAccountable : foaf:Agent
+class Account <<abstract>> <<subject>> {
+  vf:primaryAccountable : UserAccount [1..*]
+  timesheet : Timesheet [*]
+  project : Project [*]
+}
+note left of Account::vf:primaryAccountable
+  The account "admin".
+  For user accounts, a
+    redundant self-reference
+    (user admins their own account).
+end note
+note left of Account::timesheet
+  inverse injection: a Timesheet
+  can only appear in one Account
+end note
+note left of Account::project
+  inverse injection: a Project
+  can only appear in one Account
+end note
+
+Account "provider" *--> "*" Timesheet
+
+Account "client" *--> "*" Project
+
+class UserAccount {
   email : string [*]
   keyid : string [*]
-  timesheet : IRI [*]
-  project : IRI [*]
 }
-note right of Account::vf:primaryAccountable
-  TODO
+note left of UserAccount::email
+  Registered email, used
+  for account activation
 end note
-note right of Account::keyid
+note left of UserAccount::keyid
   Matches ""ably.key""
   Can be revoked
 end note
+UserAccount --|> Account
 
-Account *--> "*" Timesheet: owns
-
-Account *--> "*" Project: owns
-
-class Timesheet <<domain>> {
+class OrganisationAccount {
 }
-note right of Timesheet
-  not actually a subject
-  in the Gateway domain
+OrganisationAccount --|> Account
+OrganisationAccount o-- "1..*" UserAccount
+
+class Timesheet <<domain>> <<subject>> {
+  //account<sub>p</sub> : Account//
+  project : Project [*]
+}
+note left of Timesheet
+  a subject in the
+  Gateway domain;
+  also a domain shared to
+  authorised CLI clients
+end note
+note right of Timesheet::account
+  entailed from
+  Account.timesheet
+end note
+note right of Timesheet::project
+  Can only be set by
+  account admin
 end note
 
 class Project <<subject>> {
 }
-note right
-  TODO
-end note
+note right of Project
+  **entailed __read__ access to a timesheet**
+  (via Gateway export/publish)
 
-Project o-- "*" Account: contributors
+  the user account must be the timesheet provider
+  //or// the client of a project that contains the timesheet
+
+  account<sub>u</sub> ∈
+    account<sub>p</sub>.vf:primaryAccountable
+  ∨
+  ∃account<sub>c</sub>:Account ⦁
+    account<sub>u</sub> ∈
+      account<sub>c</sub>.vf:primaryAccountable
+    ∧
+    ∃project:Project ⦁
+      project ∈ account<sub>c</sub>.project ∧
+      project ∈ timesheet.project
+end note
 
 Project "*" -- "*" Timesheet
 
@@ -51,29 +100,46 @@ component CLI [
 
   ---
   ably.key <<secret>>
+  account<sub>u</sub> (aka user)
   timesheets : domain [*]
 ]
 note top of CLI
-  installed on a device
-  under an OS account
+  Installed on a device
+  under an OS account.
+  Registered to user account
+  via ably.key.
 end note
 
-Account .. "*" CLI: CLI instance\nregistered to\naccount
+UserAccount .. "*" CLI
 
-CLI ..> "*" Timesheet: entailed access
+CLI ..> "*" Timesheet
+note bottom on link
+  **entailed __read and write__ access**
+  (via the CLI)
+
+  the user account must be the timesheet provider
+
+  account<sub>u</sub> ∈
+    account<sub>p</sub>.vf:primaryAccountable
+end note
 
 package Ably <<service>> {
   class AblyKey {
     keyid
+    name
     secret
     capabilities : string
   }
-  note right of AblyKey::capabilities
-    Defines domain access
-    thus, timesheet access
+  note left of AblyKey::name
+    account<sub>u</sub>
+  end note
+  note left of AblyKey::capabilities
+    Defines channel
+    access and thus,
+    timesheet access
   end note
 
-  Account "1" -- "*" AblyKey
+  UserAccount "1" -- "*" AblyKey
 }
 
 @enduml

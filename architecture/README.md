@@ -7,5 +7,5 @@ PlantUML (`.puml` files; see [Reference Guide](http://pdf.plantuml.net/PlantUML_
 SVG files are generated and placed in the /img directory, e.g.
 
 ```
-plantuml $FilePath$ -o "$FileDir$/../img" -tsvg
+plantuml $FilePath$ -o "$FileDir$/img" -tsvg
 ```
