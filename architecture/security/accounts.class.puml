@@ -79,7 +79,7 @@ note right of Project
   (via Gateway export/publish)
 
   the user account must be the timesheet provider
-  //or// the client of a project containing the timesheet
+  //or// the client of a project that contains the timesheet
 
   account<sub>u</sub> ∈
     account<sub>p</sub>.vf:primaryAccountable
