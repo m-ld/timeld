@@ -10,9 +10,11 @@ If not using a [**timeld gateway**](https://github.com/m-ld/timeld#gateway), the
 
 ## install
 
-Install [Node.js](https://nodejs.org/).
+Install [Node.js](https://nodejs.org/). Then, in a terminal:
 
-In a terminal: `npm install timeld-cli -g`
+```bash
+npm install timeld-cli -g
+```
 
 ![coming soon](https://img.shields.io/badge/-coming%20soon-red) When we've developed an installer, this will be just one step.
 
@@ -20,23 +22,25 @@ In a terminal: `npm install timeld-cli -g`
 
 If using a Gateway:
 
-`timeld config --gateway gateway-domain-or-url`
+```bash
+timeld config --gateway gateway-domain-or-url --user my-name
+```
 
-The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`.
+The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`. The user name you provide may be registered with the Gateway when you first work on a timesheet.
 
-If not using a Gateway:
+If not using a Gateway, you need to provide your ably key, and the user as a URI, such as your favourite social media profile page:
 
-`timeld config --ably.key your-ably-key`
-
-In either case, you must provide a URI for yourself, as a user (you could use a link to your profile on your favourite social media site):
-
-`timeld config --user http://you.example.org/#profile`
+```bash
+timeld config --ably.key your-ably-key --user http://you.example.org/#profile
+```
 
 When creating timesheets, their identity will have two parts: an 'account' name and a timesheet name. You can set up a default account name:
 
-`timeld config --account your-account-name`
+```bash
+timeld config --account your-account-name
+```
 
-You can also use a different account for each timesheet you create.
+You can also use a different account for each timesheet you create, see below.
 
 ## use
 
@@ -58,13 +62,19 @@ You can `exit` the session and return to the normal terminal. To re-open it, use
 
 Every **timeld** command has a Help page describing what you can do. You can see it using the `--help` option. (It's also shown if **timeld** doesn't understand you.)
 
-`timeld --help`
+```bash
+timeld --help
+```
 
-`timeld open --help`
+```bash
+timeld open --help
+```
 
 In a timesheet session you can just press `<Enter>` to see the available commands. For each individual command use the `--help` option, e.g.:
 
-`add --help`
+```bash
+add --help
+```
 
 ## switching devices
 

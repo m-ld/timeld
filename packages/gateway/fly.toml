@@ -10,7 +10,7 @@ processes = []
   builder = "heroku/buildpacks:20"
 
 [env]
-  TIMELD_GATEWAY = "timeld.org"
+  TIMELD_GATEWAY_GATEWAY = "timeld.org"
 
 [mounts]
   source="timeld_data"

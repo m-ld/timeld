@@ -145,4 +145,9 @@ describe('Environment', () => {
       await expect(env.envDirs('data')).resolves.toEqual([]);
     });
   });
+
+  test('convert string to env var', () => {
+    expect(Env.toEnvVar('timeld')).toBe('TIMELD');
+    expect(Env.toEnvVar('timeld-gateway')).toBe('TIMELD_GATEWAY');
+  });
 });

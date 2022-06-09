@@ -69,6 +69,7 @@ export default class TimesheetId {
       this.gateway.split('.').forEach(TimesheetId.checkComponentId);
     TimesheetId.checkComponentId(this.account);
     TimesheetId.checkComponentId(this.timesheet);
+    return this;
   }
 
   static checkComponentId(id) {
@@ -77,7 +78,7 @@ export default class TimesheetId {
   }
 
   static isComponentId(id) {
-    return !!id.match(/[\w-]+/g);
+    return id != null && !!id.match(/[\w-]+/g);
   }
 
   /**

@@ -21,9 +21,15 @@ async function ably(config) {
 /**
  * @param {import('@m-ld/m-ld/dist/ably').MeldAblyConfig} config
  * @param {string} dataDir
+ * @param {import('@m-ld/m-ld').AppPrincipal} [principal]
  * @returns {Promise<import('@m-ld/m-ld').MeldClone>}
  */
-export default async function clone(config, dataDir) {
+export default async function clone(
+  config, dataDir, principal) {
   // noinspection JSCheckFunctionSignatures
-  return meldClone(leveldown(dataDir), await ably(config), config);
+  return meldClone(
+    leveldown(dataDir),
+    await ably(config),
+    config,
+    { principal });
 }

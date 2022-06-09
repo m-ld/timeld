@@ -25,12 +25,16 @@ export default class Gateway {
       '@context': timeldContext
     };
     LOG.info('Gateway ID is', this.config['@id']);
-    LOG.debug('Gateway domain is', this.config['@domain']);
+    LOG.debug('Gateway domain is', this.domainName);
     this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
     this.ablyApi = ablyApi;
     this.timesheetDomains =
       /**@type {{ [name: string]: import('@m-ld/m-ld').MeldClone }}*/{};
+  }
+
+  get domainName() {
+    return this.config['@domain'];
   }
 
   async initialise() {
@@ -44,7 +48,7 @@ export default class Gateway {
       state.read({
         '@select': '?tsh', '@where': { timesheet: '?tsh' }
       }).consume.subscribe(({ value, next }) => {
-        this.timesheetAdded(this.tsId(value['?tsh'])).finally(next);
+        this.timesheetAdded(this.tsRefAsId(value['?tsh'])).finally(next);
       });
     }, update => {
       // And watch for timesheets appearing and disappearing
@@ -52,10 +56,10 @@ export default class Gateway {
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
           safeTimesheetRefsIn(subject).map(tsRef =>
-            this.timesheetRemoved(this.tsId(tsRef))))),
+            this.timesheetRemoved(this.tsRefAsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
           safeTimesheetRefsIn(subject).map(tsRef =>
-            this.timesheetAdded(this.tsId(tsRef)))))
+            this.timesheetAdded(this.tsRefAsId(tsRef)))))
       ]);
     });
     return this;
@@ -65,9 +69,15 @@ export default class Gateway {
    * @param {import('@m-ld/m-ld').Reference} tsRef
    * @returns {TimesheetId}
    */
-  tsId(tsRef) {
+  tsRefAsId(tsRef) {
     // A timesheet reference may be relative to the domain base
-    return TimesheetId.fromUrl(new URL(tsRef['@id'], `http://${this.config['@domain']}`));
+    return TimesheetId.fromUrl(new URL(tsRef['@id'], `http://${this.domainName}`));
+  }
+
+  tsId(account, timesheet) {
+    return new TimesheetId({
+      gateway: this.domainName, account, timesheet
+    });
   }
 
   /**
@@ -139,7 +149,8 @@ export default class Gateway {
     // If the account exists, check the email is registered
     const acc = await this.account(account);
     if (acc != null && !acc.emails.has(email))
-      throw 'Email not registered to account';
+      throw new errors.UnauthorizedError(
+        'Email %s not registered to account %s', email, account);
     // Construct a JWT with the email, using our Ably key
     const { secret, keyid } = this.ablyKey;
     const jwt = jsonwebtoken.sign({ email }, secret, {
@@ -163,22 +174,18 @@ export default class Gateway {
   /**
    * Gets the m-ld configuration for a timesheet. Calling this method will
    * create the timesheet if it does not already exist.
-   * @param account
-   * @param timesheet
+   * @param {TimesheetId} tsId
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
    */
-  async timesheetConfig(account, timesheet) {
+  async timesheetConfig(tsId) {
     // Do we already have a clone of this timesheet?
-    const tsId = new TimesheetId({
-      gateway: this.config['@domain'], account, timesheet
-    });
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
         // Genesis if the timesheet is not already in the account
         // TODO: Use `ask` in m-ld-js v0.9
         const accountHasTimesheet = {
-          '@id': account, timesheet: { '@id': tsId.toUrl() }
+          '@id': tsId.account, timesheet: { '@id': tsId.toUrl() }
         };
         const genesis = !(await state.read({
           '@select': '?', '@where': accountHasTimesheet

@@ -1,9 +1,6 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { AblyKey, TimesheetId } from 'timeld-common';
+import { AblyKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
-import { promisify } from 'util';
-
-const verify = promisify(jsonwebtoken.verify);
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -50,14 +47,17 @@ export default class Account {
   }
 
   /**
+   * Activation of a gateway account requires an initial timesheet.
+   * This is because Ably cannot create a key without at least one capability.
+   *
    * @param {string} email
-   * @param {string} timesheet initial timesheet requested
    * @returns {Promise<string>} Ably key for the account
    */
-  async activate(email, timesheet) {
+  async activate(email) {
     // Every activation creates a new Ably key (assumes new device)
     const keyDetails = await this.gateway.ablyApi.createAppKey({
-      name: email, capability: tsCapability(this.tsId(timesheet))
+      name: `${this.name}@${this.gateway.domainName}`,
+      capability: this.keyCapability()
     });
     // Store the keyid and the email
     this.keyids.add(keyDetails.id);
@@ -67,51 +67,51 @@ export default class Account {
   }
 
   /**
-   * Verifies that the given JWT has access to the given timesheet.
+   * Verifies the given JWT for this account.
    *
    * @param {string} jwt a JWT containing a keyid associated with this Account
-   * @param {string} timesheet the timesheet for which access is requested
+   * @param {TimesheetId} [tsId] a timesheet for which access is requested
    * @returns {Promise<import('jsonwebtoken').JwtPayload>}
    */
-  verify(jwt, timesheet) {
+  async verify(jwt, tsId) {
     // Verify the JWT against its declared keyid
-    // noinspection JSCheckFunctionSignatures
-    return verify(jwt, this.getJwtKey(timesheet));
+    const payload = await verify(jwt, async header => {
+      // TODO: Check for write access to the timesheet
+      if (!this.keyids.has(header.kid))
+        throw new Error(`Key ${header.kid} does not belong to account ${this.name}`);
+      // Update the capability of the key to include the timesheet.
+      // This also serves as a check that the key exists.
+      // TODO: Include access via organisations
+      const authorisedTsIds = [...this.tsIds()].concat(tsId ?? []);
+      const keyDetail = await this.gateway.ablyApi.updateAppKey(header.kid, {
+        capability: this.keyCapability(...authorisedTsIds)
+      });
+      return new AblyKey(keyDetail.key).secret;
+    });
+    if (payload.sub !== this.name)
+      throw 'JWT does not correspond to user';
+    return payload;
   }
 
   /**
-   * @returns import('jsonwebtoken').GetPublicKeyOrSecret
-   * @private
+   * @returns the Timesheet IDs provided by this account
    */
-  getJwtKey(timesheet) {
-    return async (header, cb) => {
-      // TODO: Check for access to the timesheet via a Project
-      if (!this.keyids.has(header.kid))
-        return cb(new Error(`Key ${header.kid} does not have access to ${timesheet}`));
-      // Update the capability of the key to include the timesheet.
-      // This also serves as a check to see that the key exists.
-      try {
-        const keyDetail = await this.gateway.ablyApi.updateAppKey(header.kid, {
-          capability: tsCapability(this.tsId(timesheet), ...this.tsIds())
-        });
-        return cb(null, new AblyKey(keyDetail.key).secret);
-      } catch (e) {
-        cb(e);
-      }
-    };
-  }
-
-  tsId(timesheet) {
-    return new TimesheetId({
-      gateway: this.gateway.config['@domain'],
-      account: this.name,
-      timesheet
-    });
-  }
-
   *tsIds() {
     for (let tsRef of this.timesheets)
-      yield this.gateway.tsId(tsRef);
+      yield this.gateway.tsRefAsId(tsRef);
+  }
+
+  /**
+   * @param {TimesheetId} tsIds
+   * @returns {object}
+   */
+  keyCapability(...tsIds) {
+    return Object.assign({
+      // Ably keys must have a capability. Assign a notification channels as a minimum.
+      [`${this.gateway.domainName}:notify`]: ['subscribe']
+    }, ...tsIds.map(tsId => ({
+      [`${tsId.toDomain()}:*`]: ['publish', 'subscribe', 'presence']
+    })));
   }
 
   toJSON() {
@@ -126,11 +126,17 @@ export default class Account {
 }
 
 /**
- * @param {TimesheetId} tsIds
- * @returns {object}
+ * Promisified version of jsonwebtoken.verify
+ * @param {string} token
+ * @param {(header: import('jsonwebtoken').JwtHeader) => Promise<string>} getSecret
+ * @returns {Promise<import('jsonwebtoken').JwtPayload>}
  */
-function tsCapability(...tsIds) {
-  return Object.assign({}, ...tsIds.map(tsId => ({
-    [`${tsId.toDomain()}:*`]: ['publish', 'subscribe', 'presence']
-  })));
+function verify(token, getSecret) {
+  return new Promise((resolve, reject) =>
+    jsonwebtoken.verify(token, (header, cb) => {
+      getSecret(header).then(secret => cb(null, secret), err => cb(err));
+    }, (err, payload) => {
+      if (err) reject(err);
+      else resolve(payload);
+    }));
 }
