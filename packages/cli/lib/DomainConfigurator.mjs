@@ -16,12 +16,10 @@ export default class DomainConfigurator {
   /**
    * @param {Partial<TimeldConfig>} argv
    * @param {GatewayClient | null} gateway
-   * @param {(question: string) => Promise<string>} ask
    */
-  constructor(argv, gateway, ask) {
+  constructor(argv, gateway) {
     this.argv = argv;
     this.gateway = gateway;
-    this.ask = ask;
   }
 
   /**
@@ -63,35 +61,34 @@ export default class DomainConfigurator {
       if (!isURL(this.argv.user))
         throw 'Gateway-less use requires the user to be identified by a URL.';
       // see https://faqs.ably.com/how-do-i-find-my-app-id
-      const appId = this.ablyKey?.appId;
-      if (appId == null)
+      const ablyKey = this.argv.ably?.key;
+      if (ablyKey == null)
         throw 'Gateway-less use requires an Ably API key.\n' +
         'See https://faqs.ably.com/what-is-an-app-api-key';
       // The domain is scoped to the Ably App. We use "timeld" and the app key
       // just in case there are other real apps running in the same Ably App.
       return {
-        config: this.noGatewayConfig(`timeld.${appId.toLowerCase()}`),
+        config: this.noGatewayConfig(
+          `timeld.${new AblyKey(ablyKey).appId.toLowerCase()}`),
         principal: { '@id': this.argv.user /*, TODO: sign*/ }
       };
     } else {
-      const ablyKey = this.ablyKey || await this.activate();
-      const config = await this.fetchGatewayConfig(ablyKey);
+      const config = await this.fetchGatewayConfig();
       return {
-        config: Env.mergeConfig(config, { ably: { key: ablyKey.toString() } }),
-        principal: { '@id': this.gateway.principalId(this.argv.user) /*, TODO: sign*/ }
+        config: Env.mergeConfig(config, { ably: { key: this.gateway.ablyKey.toString() } }),
+        principal: { '@id': this.gateway.principalId /*, TODO: sign*/ }
       };
     }
   }
 
   /**
-   * @param {AblyKey} ablyKey
    * @returns {Promise<Partial<MeldConfig>>}
    */
-  async fetchGatewayConfig(ablyKey) {
-    const { user, account, timesheet, create } = this.argv;
+  async fetchGatewayConfig() {
+    const { account, timesheet, create } = this.argv;
     let gatewayConfig;
     try {
-      gatewayConfig = await this.gateway.config(user, account, timesheet, ablyKey);
+      gatewayConfig = await this.gateway.config(account, timesheet);
     } catch (e) {
       // Gateway client returns Strings for HTTP error responses!
       if (e instanceof Error) {
@@ -106,26 +103,11 @@ export default class DomainConfigurator {
     return gatewayConfig;
   }
 
-  /**
-   * @returns {Promise<AblyKey>} new Ably key
-   * @private
-   */
-  async activate() {
-    return this.gateway.activate(this.argv.user,
-      await this.ask('Please enter your email address to register this device:'),
-      () => this.ask('Please enter the activation code we sent you:'));
-  }
-
   noGatewayConfig(rootDomain) {
     const { account, timesheet, create } = this.argv;
     return {
       '@domain': `${timesheet}.${account}.${rootDomain}`,
       genesis: create // Will be ignored if true but domain exists locally
     };
-  }
-
-  get ablyKey() {
-    const keyStr = this.argv['ably']?.key;
-    return keyStr != null ? new AblyKey(keyStr) : null;
   }
 }

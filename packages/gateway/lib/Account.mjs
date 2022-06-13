@@ -1,6 +1,7 @@
 import { propertyValue } from '@m-ld/m-ld';
 import { AblyKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
+import errors from 'restify-errors';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -89,7 +90,7 @@ export default class Account {
       return new AblyKey(keyDetail.key).secret;
     });
     if (payload.sub !== this.name)
-      throw 'JWT does not correspond to user';
+      throw new errors.UnauthorizedError('JWT does not correspond to user');
     return payload;
   }
 

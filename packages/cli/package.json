@@ -23,10 +23,15 @@
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
     "@m-ld/m-ld-cli": "^0.1.0-0",
+    "@zeit/fetch": "^6.0.0",
     "chrono-node": "^2.3.8",
     "cryptr": "^6.0.3",
     "humanize-duration": "^3.27.1",
+    "json-stringify-pretty-compact": "^3.0.0",
+    "ndjson": "^2.0.0",
     "parse-duration": "^1.0.2",
+    "rx-flowable": "^0.1.1-0",
+    "rxjs": "^7.5.5",
     "simple-peer": "^9.11.1",
     "timeago.js": "^4.0.2",
     "timeld-common": "^0.1.0-9",
@@ -36,7 +41,6 @@
     "@types/cryptr": "^4.0.1",
     "@types/validator": "^13.7.2",
     "memdown": "^6.1.1",
-    "rxjs": "^7.5.5",
     "tmp": "^0.2.1"
   }
 }

@@ -1,14 +1,15 @@
 import restify from 'restify';
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { clone, Env, TimesheetId } from 'timeld-common';
+import { clone, Env, ResultsReadable, TimesheetId } from 'timeld-common';
 import Account from './lib/Account.mjs';
 import AblyApi from './lib/AblyApi.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import isEmail from 'validator/lib/isEmail.js';
-import isJWT from 'validator/lib/isJWT.js';
 import errors from 'restify-errors';
+import Authorization from './lib/Authorization.mjs';
+import { pipeline } from 'stream/promises';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -41,6 +42,13 @@ const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
 const notifier = new Notifier(config.courier);
 const server = restify.createServer();
 server.use(restify.plugins.queryParser({ mapParams: true }));
+server.use(restify.plugins.authorizationParser());
+server.use(restify.plugins.bodyParser());
+server.on('InternalServer', function (req, res, err, cb) {
+  LOG.warn(err);
+  cb();
+});
+const JSON_LINES = { stringify: JSON.stringify, separator: '\n' };
 
 server.get('/api/:user/jwe',
   async (req, res, next) => {
@@ -53,60 +61,61 @@ server.get('/api/:user/jwe',
       const { jwe, code } = await gateway.activation(user, email);
       await notifier.sendActivationCode(email, code);
       res.json({ jwe });
+      next();
     } catch (e) {
-      LOG.warn(e);
       next(e);
     }
-    next();
   });
 
 server.get('/api/:user/key',
   async (req, res, next) => {
-    const { user, jwt } = req.params;
-    if (!TimesheetId.isComponentId(user))
-      return next(new errors.BadRequestError('Bad user %s', user));
     try {
-      const { email } = gateway.verify(jwt);
+      const auth = new Authorization(gateway, req);
+      const { email } = gateway.verify(auth.jwt);
       if (!email || !isEmail(email))
         return next(new errors.BadRequestError('Bad email %s', email));
-      const acc = (await gateway.account(user)) ||
-        new Account(gateway, { name: user });
+      const acc = (await gateway.account(auth.user)) ||
+        new Account(gateway, { name: auth.user });
       const key = await acc.activate(email);
       res.json({ key });
+      next();
     } catch (e) {
-      LOG.warn(e);
       next(e);
     }
-    next();
   });
 
 server.get('/api/:account/tsh/:timesheet/cfg',
   async (req, res, next) => {
     // account is the timesheet account (may not be user account)
-    const { account, timesheet, user, jwt } = req.params;
-    if (typeof jwt != 'string' || !isJWT(jwt))
-      return next(new errors.BadRequestError('Bad JWT'));
+    const { account, timesheet } = req.params;
     try {
       const tsId = gateway.tsId(account, timesheet).validate();
       try {
-        const userAcc = await gateway.account(user);
-        if (userAcc == null)
-          return next(new errors.NotFoundError('Not found: %s', user));
-        try {
-          await userAcc.verify(jwt, tsId);
-        } catch (e) {
-          return next(new errors.ForbiddenError(e));
-        }
+        await new Authorization(gateway, req).verifyUser(tsId);
         res.json(await gateway.timesheetConfig(tsId));
       } catch (e) {
-        LOG.warn(e);
         next(e);
       }
+      next();
     } catch (e) {
+      // TimesheetId.validate throw strings
       return next(new errors.BadRequestError(
         'Bad timesheet %s/%s', account, timesheet));
     }
-    next();
+  });
+
+server.post('/api/read',
+  async (req, res, next) => {
+    try {
+      await new Authorization(gateway, req).verifyUser();
+      res.header('transfer-encoding', 'chunked');
+      res.header('content-type', 'application/x-ndjson');
+      res.status(200);
+      await pipeline(new ResultsReadable(gateway.read(req.body).consume, JSON_LINES), res);
+      next();
+    } catch (e) {
+      next(e);
+    }
   });
 
 server.listen(8080, function () {
@@ -119,3 +128,4 @@ process.on('beforeExit', async () => {
   await gateway.close();
   LOG.info('Gateway shut down');
 });
+
