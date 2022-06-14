@@ -42,6 +42,7 @@
     "@types/restify-errors": "^4.3.4",
     "@types/validator": "^13.7.2",
     "memdown": "^6.1.1",
+    "rx-flowable": "^0.1.1-0",
     "rxjs": "^7.5.5",
     "tmp": "^0.2.1"
   }

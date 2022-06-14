@@ -208,15 +208,6 @@ export default class Gateway {
     }), { genesis: false }); // Definitely not genesis
   }
 
-  /**
-   * @param {import('@m-ld/m-ld').Read} pattern
-   * @returns {import('@m-ld/m-ld').ReadResult} results
-   */
-  read(pattern) {
-    // TODO: Use e.g. ajv to validate queries & apply access control
-    return this.domain.read(pattern);
-  }
-
   close() {
     // Close the gateway domain
     return Promise.all([

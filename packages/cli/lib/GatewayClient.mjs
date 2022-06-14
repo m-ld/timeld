@@ -111,7 +111,7 @@ export default class GatewayClient {
         throw `"${code}" is not a valid activation code`;
       const jwt = new Cryptr(code).decrypt(jwe);
       if (!isJWT(jwt))
-        throw 'Something has gone wrong, sorry.';
+        throw 'Sorry, that code was incorrect, please start again.';
       const { key } = await this.fetchApi(`${this.user}/key`,
         { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
@@ -136,11 +136,15 @@ export default class GatewayClient {
    * @returns {import('@m-ld/m-ld').ReadResult['consume']} results
    */
   read(pattern) {
-    return consume(this.fetchApi('read', { json: pattern }))
-      .pipe(flatMap(res => {
-        checkSuccessRes(res);
-        return consume(res.body.pipe(ndjson.parse()));
-      }));
+    return consume(this.fetchApi('read', { json: pattern }).then(checkSuccessRes))
+      .pipe(flatMap(res => consume(res.body.pipe(ndjson.parse()))));
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').Write} pattern
+   */
+  async write(pattern) {
+    checkSuccessRes(await this.fetchApi('write', { json: pattern }));
   }
 
   /**

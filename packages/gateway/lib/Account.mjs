@@ -1,4 +1,4 @@
-import { propertyValue } from '@m-ld/m-ld';
+import { array, propertyValue } from '@m-ld/m-ld';
 import { AblyKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import errors from 'restify-errors';
@@ -92,6 +92,29 @@ export default class Account {
     if (payload.sub !== this.name)
       throw new errors.UnauthorizedError('JWT does not correspond to user');
     return payload;
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').Read} pattern
+   * @returns {import('@m-ld/m-ld').ReadResult} results
+   */
+  read(pattern) {
+    // Check that the given pattern only references data in the user account
+    if (pattern['@where'] == null)
+      throw new errors.ForbiddenError('Pattern has no @where clause');
+    if (!array(pattern['@where']).every(s => s['@id'] === this.name))
+      throw new errors.ForbiddenError('Pattern can only reference user account');
+    return this.gateway.domain.read(pattern);
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').Write} pattern
+   */
+  async write(pattern) {
+    if (!array(pattern).every(s => s['@id'] === this.name))
+      throw new errors.ForbiddenError('Write can only reference user account');
+    // TODO: Schema validation
+    await this.gateway.domain.write(pattern);
   }
 
   /**

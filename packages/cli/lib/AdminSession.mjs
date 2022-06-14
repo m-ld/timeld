@@ -16,6 +16,7 @@ export default class AdminSession extends Repl {
   }
 
   buildCommands(yargs, ctx) {
+    // noinspection JSCheckFunctionSignatures
     return yargs
       .command(
         ['add <detail> <value>', 'a', '+'],
@@ -43,22 +44,26 @@ export default class AdminSession extends Repl {
   }
 
   /**
-   * @param {string} detail
+   * @param {'email'} detail
    * @param {string} value
    * @returns {Proc}
    */
   addDetailProc({ detail, value }) {
-    return new PromiseProc(Promise.reject(undefined));
+    const pattern = /**@type {import('@m-ld/m-ld').Write}*/{
+      '@id': this.account, [detail]: value
+    };
+    return new PromiseProc(this.gateway.write(pattern));
   }
 
   /**
-   * @param {string} detail
+   * @param {'email'} detail
    * @param {string} value
    * @returns {Proc}
    */
   listDetailProc({ detail }) {
-    return new ResultsProc(this.gateway.read({
+    const pattern = /**@type {import('@m-ld/m-ld').Read}*/{
       '@select': '?value', '@where': { '@id': this.account, [detail]: '?value' }
-    }), new TableFormat('?value'));
+    };
+    return new ResultsProc(this.gateway.read(pattern), new TableFormat('?value'));
   }
 }

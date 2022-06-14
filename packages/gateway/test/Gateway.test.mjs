@@ -9,6 +9,7 @@ import Account from '../lib/Account.mjs';
 import Cryptr from 'cryptr';
 import DeadRemotes from './DeadRemotes.mjs';
 import { existsSync } from 'fs';
+import { drain } from 'rx-flowable';
 
 describe('Gateway', () => {
   let env;
@@ -189,7 +190,8 @@ describe('Gateway', () => {
     });
 
     test('removes a timesheet', async () => {
-      await gateway.timesheetConfig(gateway.tsId('test', 'ts1'));
+      const tsId = gateway.tsId('test', 'ts1');
+      await gateway.timesheetConfig(tsId);
       await gateway.domain.write({
         '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } }
       });
@@ -198,8 +200,66 @@ describe('Gateway', () => {
       expect(!existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
       expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
       // Cannot re-use a timesheet name
-      await expect(gateway.timesheetConfig('test', 'ts1'))
+      await expect(gateway.timesheetConfig(tsId))
         .rejects.toThrowError();
+    });
+
+    test('refuses unauthorised read', async () => {
+      await gateway.domain.write({
+        '@id': 'test',
+        '@type': 'Account',
+        email: 'test@ex.org'
+      });
+      const acc = await gateway.account('test');
+      // noinspection JSCheckFunctionSignatures
+      expect(() => acc.read({ '@describe': 'bob' }))
+        .toThrowError();
+      // noinspection JSCheckFunctionSignatures
+      expect(() => acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
+        .toThrowError();
+    });
+
+    test('reads from user account', async () => {
+      await gateway.domain.write({
+        '@id': 'test',
+        '@type': 'Account',
+        email: 'test@ex.org'
+      });
+      const acc = await gateway.account('test');
+      // noinspection JSCheckFunctionSignatures
+      expect(await drain(acc.read({
+        '@select': '?e', '@where': { '@id': 'test', email: '?e' }
+      }).consume)).toMatchObject([{ '?e': 'test@ex.org' }]);
+    });
+
+    test('refuses unauthorised write', async () => {
+      await gateway.domain.write({
+        '@id': 'test',
+        '@type': 'Account',
+        email: 'test@ex.org'
+      });
+      const acc = await gateway.account('test');
+      // noinspection JSCheckFunctionSignatures
+      await expect(acc.write({ foo: 'bar' }))
+        .rejects.toThrowError();
+      // noinspection JSCheckFunctionSignatures
+      await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
+        .rejects.toThrowError();
+    });
+
+    test('writes to existing user account', async () => {
+      await gateway.domain.write({
+        '@id': 'test',
+        '@type': 'Account',
+        email: 'test@ex.org'
+      });
+      const acc = await gateway.account('test');
+      await acc.write({
+        '@id': 'test',
+        email: 'test2@ex.org'
+      });
+      expect((await gateway.account('test')).emails)
+        .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
     });
   });
 });

@@ -48,7 +48,7 @@ server.on('InternalServer', function (req, res, err, cb) {
   LOG.warn(err);
   cb();
 });
-const JSON_LINES = { stringify: JSON.stringify, separator: '\n' };
+const ND_JSON = { stringify: JSON.stringify, separator: '\n' };
 
 server.get('/api/:user/jwe',
   async (req, res, next) => {
@@ -107,11 +107,28 @@ server.get('/api/:account/tsh/:timesheet/cfg',
 server.post('/api/read',
   async (req, res, next) => {
     try {
-      await new Authorization(gateway, req).verifyUser();
+      const auth = new Authorization(gateway, req);
+      await auth.verifyUser();
+      const acc = await gateway.account(auth.user);
       res.header('transfer-encoding', 'chunked');
       res.header('content-type', 'application/x-ndjson');
       res.status(200);
-      await pipeline(new ResultsReadable(gateway.read(req.body).consume, JSON_LINES), res);
+      const results = acc.read(req.body).consume;
+      await pipeline(new ResultsReadable(results, ND_JSON), res);
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
+
+server.post('/api/write',
+  async (req, res, next) => {
+    try {
+      const auth = new Authorization(gateway, req);
+      await auth.verifyUser();
+      const acc = await gateway.account(auth.user);
+      await acc.write(req.body);
+      res.send(200);
       next();
     } catch (e) {
       next(e);

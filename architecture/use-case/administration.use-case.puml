@@ -3,15 +3,20 @@
 left to right direction
 
 actor "User account owner or\nOrganisation acc admin" as user
-package "Account administration session" {
-  user --> (view account)
-  package "User Account" {
-    user --> ([list | add | rm] [emails | devices])
-  }
-  package "Organisation Account" {
-    user --> ([list | add | rm] org admins)
-  }
-  user --> ([list | add | rm] [projects | timesheets])
+package "Account administration" {
+  user --> ([✔︎list | add | rm] [✔︎email | device | org]): if User Account
+  note right
+    ≪constraint≫
+    add email requires
+    emailed access code
+  end note
+  user --> ([list | add | rm] org admin): if Organisation Account
+  note right
+    ≪constraint≫
+    cannot remove
+    last admin
+  end note
+  user --> ([list | add | rm] [project | timesheet])
   user --> (view [project | timesheet])
   user --> ([add | rm] timesheet project link)
 }
