@@ -28,6 +28,7 @@
     "@trycourier/courier": "^3.12.0",
     "cryptr": "^6.0.3",
     "jsonwebtoken": "^8.5.1",
+    "jtd": "^0.1.1",
     "loglevel": "^1.8.0",
     "restify": "^8.6.1",
     "restify-errors": "^8.0.2",

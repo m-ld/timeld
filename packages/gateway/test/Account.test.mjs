@@ -2,11 +2,15 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import DeadRemotes from './DeadRemotes.mjs';
-import { timeldContext, TimesheetId } from 'timeld-common';
+import { AccountSubId, timeldContext } from 'timeld-common';
 import Gateway from '../lib/Gateway.mjs';
 import Account from '../lib/Account.mjs';
 import jsonwebtoken from 'jsonwebtoken';
 
+/**
+ * NB: Account reads and writes are tested in the Gateway tests because they
+ * need a live gateway m-ld domain.
+ */
 describe('Gateway account', () => {
   let gateway;
 
@@ -33,19 +37,22 @@ describe('Gateway account', () => {
   test('to & from JSON', () => {
     const acc = new Account(gateway, {
       name: 'test',
-      emails: new Set(['test@ex.org']),
-      keyids: new Set(['keyid']),
+      emails: ['test@ex.org'],
+      keyids: ['keyid'],
+      admins: ['user1'],
       timesheets: [{ '@id': 'test/ts1' }]
     });
     expect(acc.name).toBe('test');
     expect(acc.emails).toEqual(new Set(['test@ex.org']));
     expect(acc.keyids).toEqual(new Set(['keyid']));
+    expect(acc.admins).toEqual(new Set(['user1']));
     expect(acc.timesheets).toEqual([{ '@id': 'test/ts1' }]);
     expect([...acc.tsIds()].map(tsId => tsId.toString())).toEqual(['test/ts1@ex.org']);
     expect(acc.toJSON()).toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: ['test@ex.org'],
+      'vf:primaryAccountable': [{ '@id': 'user1' }],
       keyid: ['keyid'],
       timesheet: [{ '@id': 'test/ts1' }]
     });
@@ -83,8 +90,8 @@ describe('Gateway account', () => {
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verify(jwt, new TimesheetId({
-      gateway: 'ex.org', account: 'test', timesheet: 'ts1'
+    await expect(acc.verify(jwt, new AccountSubId({
+      gateway: 'ex.org', account: 'test', name: 'ts1'
     }))).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
@@ -104,7 +111,8 @@ describe('Gateway account', () => {
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verify(jwt, 'ts1')).rejects.toThrowError();
+    await expect(acc.verify(jwt, AccountSubId.fromString('test/ts1@ex.org')))
+      .rejects.toThrowError();
   });
 
   test('reject account JWT if Ably has no keyid', async () => {
@@ -115,6 +123,7 @@ describe('Gateway account', () => {
       expiresIn: '1m', keyid: 'keyid'
     });
     gateway.ablyApi.updateAppKey.mockImplementation(() => Promise.reject('Not Found'));
-    await expect(acc.verify(jwt, 'ts1')).rejects.toThrowError();
+    await expect(acc.verify(jwt, AccountSubId.fromString('test/ts1@ex.org')))
+      .rejects.toThrowError();
   });
 });

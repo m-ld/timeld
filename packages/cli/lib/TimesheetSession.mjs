@@ -21,7 +21,7 @@ export default class TimesheetSession extends Repl {
   constructor(spec) {
     super({ logLevel: spec.logLevel, prompt: `${(spec.timesheet)}>` });
     this.id = spec.id;
-    this.timesheet = spec.timesheet;
+    this.name = spec.timesheet;
     this.providerId = spec.providerId;
     this.meld = spec.meld;
     this.logFile = spec.logFile;

@@ -69,10 +69,10 @@ describe('Gateway', () => {
     test('has expected properties', () => {
       expect(gateway.domainName).toBe('ex.org');
       expect(gateway.tsId('test', 'ts1')).toMatchObject({
-        gateway: 'ex.org', account: 'test', timesheet: 'ts1'
+        gateway: 'ex.org', account: 'test', name: 'ts1'
       });
       expect(gateway.tsRefAsId({ '@id': 'test/ts1' })).toMatchObject({
-        gateway: 'ex.org', account: 'test', timesheet: 'ts1'
+        gateway: 'ex.org', account: 'test', name: 'ts1'
       });
     });
 
@@ -144,7 +144,8 @@ describe('Gateway', () => {
     });
 
     test('gets timesheet config', async () => {
-      const tsConfig = await gateway.timesheetConfig(gateway.tsId('test', 'ts1'));
+      const tsConfig = await gateway.timesheetConfig(
+        gateway.tsId('test', 'ts1'));
       expect(tsConfig).toMatchObject({
         '@id': undefined,
         '@domain': 'ts1.test.ex.org',
@@ -212,54 +213,116 @@ describe('Gateway', () => {
       });
       const acc = await gateway.account('test');
       // noinspection JSCheckFunctionSignatures
-      expect(() => acc.read({ '@describe': 'bob' }))
-        .toThrowError();
-      // noinspection JSCheckFunctionSignatures
-      expect(() => acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
-        .toThrowError();
-    });
-
-    test('reads from user account', async () => {
-      await gateway.domain.write({
-        '@id': 'test',
-        '@type': 'Account',
-        email: 'test@ex.org'
-      });
-      const acc = await gateway.account('test');
-      // noinspection JSCheckFunctionSignatures
-      expect(await drain(acc.read({
-        '@select': '?e', '@where': { '@id': 'test', email: '?e' }
-      }).consume)).toMatchObject([{ '?e': 'test@ex.org' }]);
-    });
-
-    test('refuses unauthorised write', async () => {
-      await gateway.domain.write({
-        '@id': 'test',
-        '@type': 'Account',
-        email: 'test@ex.org'
-      });
-      const acc = await gateway.account('test');
-      // noinspection JSCheckFunctionSignatures
-      await expect(acc.write({ foo: 'bar' }))
+      await expect(acc.read({ '@describe': 'bob' }))
         .rejects.toThrowError();
       // noinspection JSCheckFunctionSignatures
-      await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
+      await expect(acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
         .rejects.toThrowError();
     });
 
-    test('writes to existing user account', async () => {
-      await gateway.domain.write({
-        '@id': 'test',
-        '@type': 'Account',
-        email: 'test@ex.org'
+    describe('Remote account reads and writes', () => {
+      let /**@type {Account}*/acc;
+
+      beforeEach(async () => {
+        await gateway.domain.write({
+          '@id': 'test',
+          '@type': 'Account',
+          email: 'test@ex.org'
+        });
+        acc = await gateway.account('test');
       });
-      const acc = await gateway.account('test');
-      await acc.write({
-        '@id': 'test',
-        email: 'test2@ex.org'
+
+      test('reads from user account', async () => {
+        // noinspection JSCheckFunctionSignatures
+        expect(await drain(await acc.read({
+          '@select': '?e', '@where': { '@id': 'test', '@type': 'Account', email: '?e' }
+        }))).toMatchObject([{ '?e': 'test@ex.org' }]);
       });
-      expect((await gateway.account('test')).emails)
-        .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
+
+      test('refuses unauthorised write', async () => {
+        // noinspection JSCheckFunctionSignatures
+        await expect(acc.write({ foo: 'bar' }))
+          .rejects.toThrowError();
+        // noinspection JSCheckFunctionSignatures
+        await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
+          .rejects.toThrowError();
+      });
+
+      test('writes email to existing user account', async () => {
+        await acc.write({
+          '@insert': { '@id': 'test', email: 'test2@ex.org' },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        expect((await gateway.account('test')).emails)
+          .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
+      });
+
+      test('writes timesheet to existing user account', async () => {
+        await acc.write({
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        expect((await gateway.account('test')).timesheets)
+          .toEqual([{ '@id': 'test/ts1' }]);
+        expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeDefined();
+      });
+
+      test('writes a new organisation', async () => {
+        await acc.write({
+          '@id': 'org1',
+          '@type': 'Account',
+          'vf:primaryAccountable': { '@id': 'test' }
+        });
+        await expect(gateway.account('org1'))
+          .resolves.toBeDefined();
+        // Cannot re-create an existing org
+        await expect(acc.write({
+          '@id': 'org1',
+          '@type': 'Account',
+          'vf:primaryAccountable': { '@id': 'test' }
+        })).rejects.toThrowError();
+      });
+
+      test('removes an organisation', async () => {
+        await acc.write({
+          '@id': 'org1',
+          '@type': 'Account',
+          'vf:primaryAccountable': { '@id': 'test' }
+        });
+        await acc.write({
+          '@delete': { '@id': 'org1' },
+          '@where': {
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          }
+        });
+        await expect(gateway.account('org1'))
+          .resolves.toBeUndefined();
+      });
+
+      test.todo('cascade deletes projects & timesheets');
+
+      test('inserts an organisation detail', async () => {
+        await acc.write({
+          '@id': 'org1',
+          '@type': 'Account',
+          'vf:primaryAccountable': { '@id': 'test' }
+        });
+        await acc.write({
+          '@insert': {
+            '@id': 'org1',
+            'vf:primaryAccountable': { '@id': 'other' }
+          },
+          '@where': {
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          }
+        });
+        expect((await gateway.account('org1')).admins)
+          .toEqual(new Set(['test', 'other']));
+      });
     });
   });
 });

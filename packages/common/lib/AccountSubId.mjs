@@ -1,35 +1,33 @@
 /**
- * Combination of gateway, account and timesheet. Representations:
- * 1. Presentation string `[<account>/]<timesheet>[@<gateway>]`,
+ * Combination of gateway, account and timesheet/project. Representations:
+ * 1. Presentation string `[<account>/]<name>[@<gateway>]`,
  *   see {@link toString} and {@link fromString}.
  * 2. Configuration/persistence path array
  *   see {@link toPath} and {@link fromPath}.
- * 3. m-ld domain name `<timesheet>.<account>.<gateway>`
+ * 3. m-ld domain name `<name>.<account>.<gateway>`
  *   see {@link fromDomain}.
  */
-export default class TimesheetId {
+export default class AccountSubId {
   /**
    * @param {string} str
-   * @returns {TimesheetId}
+   * @returns {AccountSubId}
    */
   static fromString(str) {
     const [orgTs, gateway] = str.split('@');
-    const [account, timesheet] = orgTs.split('/');
-    if (timesheet != null) // account included
-      return new TimesheetId({ account, timesheet, gateway });
+    const [account, name] = orgTs.split('/');
+    if (name != null) // account included
+      return new AccountSubId({ account, name, gateway });
     else // No account included
-      return new TimesheetId({ timesheet: account, gateway });
+      return new AccountSubId({ name: account, gateway });
   }
 
   /**
    * @param {string[]} dir
    */
   static fromPath(dir) {
-    const [timesheet, account, ...gateway] = [...dir].reverse();
-    return new TimesheetId({
-      account,
-      timesheet,
-      gateway: gateway.join('.')
+    const [name, account, ...gateway] = [...dir].reverse();
+    return new AccountSubId({
+      account, name, gateway: gateway.join('.')
     });
   }
 
@@ -37,7 +35,7 @@ export default class TimesheetId {
    * @param {string} domain
    */
   static fromDomain(domain) {
-    return TimesheetId.fromPath(domain.split('.').reverse());
+    return AccountSubId.fromPath(domain.split('.').reverse());
   }
 
   /**
@@ -47,33 +45,33 @@ export default class TimesheetId {
     if (typeof url == 'string')
       url = new URL(url);
     const gateway = url.hostname;
-    const [, account, timesheet] = url.pathname.split('/');
-    return new TimesheetId({ gateway, account, timesheet });
+    const [, account, name] = url.pathname.split('/');
+    return new AccountSubId({ gateway, account, name });
   }
 
   /**
-   * @param {string} timesheet
+   * @param {string} name
    * @param {string} [account]
    * @param {string} [gateway] dot-separated gateway "domain name"
    */
-  constructor({ gateway, account, timesheet }) {
+  constructor({ gateway, account, name }) {
     this.gateway = gateway;
     this.account = account;
-    this.timesheet = timesheet;
+    this.name = name;
   }
 
-  /** Validates this timesheet Id */
+  /** Validates this Id */
   validate() {
     // Gateway is allowed to be undefined or false
     if (typeof this.gateway == 'string')
-      this.gateway.split('.').forEach(TimesheetId.checkComponentId);
-    TimesheetId.checkComponentId(this.account);
-    TimesheetId.checkComponentId(this.timesheet);
+      this.gateway.split('.').forEach(AccountSubId.checkComponentId);
+    AccountSubId.checkComponentId(this.account);
+    AccountSubId.checkComponentId(this.name);
     return this;
   }
 
   static checkComponentId(id) {
-    if (!TimesheetId.isComponentId(id))
+    if (!AccountSubId.isComponentId(id))
       throw `${id} should contain only alphanumerics & dashes`;
   }
 
@@ -88,21 +86,21 @@ export default class TimesheetId {
     return [
       ...this.gateway.split('.').reverse(),
       this.account,
-      this.timesheet
+      this.name
     ];
   }
 
   toDomain() {
-    return `${this.timesheet}.${this.account}.${this.gateway}`;
+    return `${this.name}.${this.account}.${this.gateway}`;
   }
 
   toUrl() {
-    return `http://${this.gateway}/${this.account}/${this.timesheet}`;
+    return `http://${this.gateway}/${this.account}/${this.name}`;
   }
 
   toString() {
     let rtn = this.account ? `${this.account}/` : '';
-    rtn += this.timesheet;
+    rtn += this.name;
     rtn += this.gateway ? `@${this.gateway}` : '';
     return rtn;
   }

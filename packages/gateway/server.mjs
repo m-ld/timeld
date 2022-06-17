@@ -1,8 +1,7 @@
 import restify from 'restify';
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { clone, Env, ResultsReadable, TimesheetId } from 'timeld-common';
-import Account from './lib/Account.mjs';
+import { AccountSubId, clone, Env, ResultsReadable } from 'timeld-common';
 import AblyApi from './lib/AblyApi.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
@@ -53,7 +52,7 @@ const ND_JSON = { stringify: JSON.stringify, separator: '\n' };
 server.get('/api/:user/jwe',
   async (req, res, next) => {
     const { user, email } = req.params;
-    if (!TimesheetId.isComponentId(user))
+    if (!AccountSubId.isComponentId(user))
       return next(new errors.BadRequestError('Bad user %s', user));
     if (!email || !isEmail(email))
       return next(new errors.BadRequestError('Bad email %s', email));
@@ -74,8 +73,7 @@ server.get('/api/:user/key',
       const { email } = gateway.verify(auth.jwt);
       if (!email || !isEmail(email))
         return next(new errors.BadRequestError('Bad email %s', email));
-      const acc = (await gateway.account(auth.user)) ||
-        new Account(gateway, { name: auth.user });
+      const acc = await gateway.account(auth.user, { orCreate: true });
       const key = await acc.activate(email);
       res.json({ key });
       next();
@@ -110,10 +108,10 @@ server.post('/api/read',
       const auth = new Authorization(gateway, req);
       await auth.verifyUser();
       const acc = await gateway.account(auth.user);
+      const results = await acc.read(req.body);
       res.header('transfer-encoding', 'chunked');
       res.header('content-type', 'application/x-ndjson');
       res.status(200);
-      const results = acc.read(req.body).consume;
       await pipeline(new ResultsReadable(results, ND_JSON), res);
       next();
     } catch (e) {

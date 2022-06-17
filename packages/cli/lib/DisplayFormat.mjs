@@ -53,9 +53,17 @@ export class TableFormat extends DisplayFormat {
    */
   stringify(src) {
     return this.keys.map(key => {
-      if (src[key] == null)
+      const value = src[key];
+      if (value == null) {
         return '-';
-      return src[key];
+      } else if (typeof value == 'object') {
+        if ('@id' in value) // Reference or subject
+          return value['@id'];
+        else if ('@value' in value) // Value object
+          return value['@value']; // TODO: Normalise would be better
+      } else {
+        return value;
+      }
     }).join('\t');
   }
 }

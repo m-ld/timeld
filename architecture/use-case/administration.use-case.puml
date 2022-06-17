@@ -2,23 +2,65 @@
 'https://plantuml.com/use-case-diagram
 left to right direction
 
-actor "User account owner or\nOrganisation acc admin" as user
+actor User
 package "Account administration" {
-  user --> ([✔︎list | add | rm] [✔︎email | device | org]): if User Account
-  note right
+  note top
     ≪constraint≫
-    add email requires
-    emailed access code
+    User must be account owner OR admin
   end note
-  user --> ([list | add | rm] org admin): if Organisation Account
-  note right
+
+  usecase userAdminEmail as ([list | add | rm] email)
+  User --> userAdminEmail: if User Account
+  note right of userAdminEmail
+    ' TODO
+    ≪constraint≫
+    add email: requires
+    emailed activation
+  end note
+
+  usecase userAdminOrg as ([list | add | rm] org])
+  User --> userAdminOrg: if User Account
+  note right of userAdminOrg
+    ≪constraint≫
+    add org: org
+    must not exist
+  end note
+  note right of userAdminOrg
+    ≪constraint≫
+    remove org: cascade all
+    timesheets and projects
+  end note
+  usecase orgAdmin as ([list | add | rm] org admin)
+  User --> orgAdmin: if Organisation Account
+  note right of orgAdmin
     ≪constraint≫
     cannot remove
-    last admin
+    User as admin
   end note
-  user --> ([list | add | rm] [project | timesheet])
-  user --> (view [project | timesheet])
-  user --> ([add | rm] timesheet project link)
+
+  usecase ownedAdmin as ([list | add | rm] [project | timesheet])
+  User --> ownedAdmin
+  note right of ownedAdmin
+    ≪trigger≫
+    add timesheet:
+    init ts as genesis
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    add: owned @id
+    must have account
+  end note
+
+  User --> ([list | add | rm] timesheet project link)
+
+  ' TODO
+  User --> (revoke all device access)
+  note right
+    saves having to track
+    devices individually.
+    Followed by re-activate
+    of current device
+  end note
 }
 
 @enduml

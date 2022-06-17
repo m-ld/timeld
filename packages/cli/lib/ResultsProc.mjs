@@ -3,7 +3,7 @@ import { ResultsReadable } from 'timeld-common';
 
 export class ResultsProc extends SyncProc {
   /**
-   * @param {import('@m-ld/m-ld').ReadResult['consume']} results
+   * @param {Results} results
    * @param {Format} format
    */
   constructor(results, format) {

@@ -31,7 +31,7 @@ export default class GatewayClient {
     this.domain = domain;
     /**
      * Resolve our user name against the gateway to get the canonical user URI.
-     * Gateway-based URIs use HTTP by default (see also {@link TimesheetId}).
+     * Gateway-based URIs use HTTP by default (see also {@link AccountSubId}).
      */
     // This leaves an absolute URI alone
     this.principalId = new URL(this.user, `http://${this.domain}`).toString();
@@ -133,7 +133,7 @@ export default class GatewayClient {
 
   /**
    * @param {import('@m-ld/m-ld').Read} pattern
-   * @returns {import('@m-ld/m-ld').ReadResult['consume']} results
+   * @returns {Results} results
    */
   read(pattern) {
     return consume(this.fetchApi('read', { json: pattern }).then(checkSuccessRes))

@@ -1,12 +1,13 @@
 import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
-import { propertyValue, uuid } from '@m-ld/m-ld';
-import { AblyKey, Env, timeldContext, TimesheetId } from 'timeld-common';
+import { uuid } from '@m-ld/m-ld';
+import { AblyKey, AccountSubId, Env, timeldContext } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import errors from 'restify-errors';
+import { safeRefsIn } from './util.mjs';
 
 export default class Gateway {
   /**
@@ -55,10 +56,10 @@ export default class Gateway {
       // noinspection JSCheckFunctionSignatures
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
-          safeTimesheetRefsIn(subject).map(tsRef =>
+          safeRefsIn(subject, 'timesheet').map(tsRef =>
             this.timesheetRemoved(this.tsRefAsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
-          safeTimesheetRefsIn(subject).map(tsRef =>
+          safeRefsIn(subject, 'timesheet').map(tsRef =>
             this.timesheetAdded(this.tsRefAsId(tsRef)))))
       ]);
     });
@@ -67,21 +68,21 @@ export default class Gateway {
 
   /**
    * @param {import('@m-ld/m-ld').Reference} tsRef
-   * @returns {TimesheetId}
+   * @returns {AccountSubId}
    */
   tsRefAsId(tsRef) {
     // A timesheet reference may be relative to the domain base
-    return TimesheetId.fromUrl(new URL(tsRef['@id'], `http://${this.domainName}`));
+    return AccountSubId.fromUrl(new URL(tsRef['@id'], `http://${this.domainName}`));
   }
 
   tsId(account, timesheet) {
-    return new TimesheetId({
-      gateway: this.domainName, account, timesheet
+    return new AccountSubId({
+      gateway: this.domainName, account, name: timesheet
     });
   }
 
   /**
-   * @param {TimesheetId} tsId timesheet to clone
+   * @param {AccountSubId} tsId timesheet to clone
    * @param {boolean} genesis whether timesheet is expected to be new
    */
   async cloneTimesheet(tsId, genesis = false) {
@@ -94,7 +95,7 @@ export default class Gateway {
   }
 
   getDataPath(tsId) {
-    return this.env.readyPath('data', 'tsh', tsId.account, tsId.timesheet);
+    return this.env.readyPath('data', 'tsh', tsId.account, tsId.name);
   }
 
   async timesheetAdded(tsId) {
@@ -132,12 +133,21 @@ export default class Gateway {
 
   /**
    * @param {string} account name
+   * @param {true} [orCreate] allow creation of new account
    * @returns {Promise<Account | undefined>}
    */
-  async account(account) {
-    const src = await this.domain.get(account);
-    if (src != null)
-      return Account.fromJSON(this, src);
+  async account(account, { orCreate } = {}) {
+    let acc;
+    await this.domain.write(async state => {
+      const src = await state.get(account);
+      if (src != null) {
+        acc = Account.fromJSON(this, src);
+      } else if (orCreate) {
+        acc = new Account(this, { name: account });
+        await state.write(acc.toJSON());
+      }
+    });
+    return acc;
   }
 
   /**
@@ -174,7 +184,7 @@ export default class Gateway {
   /**
    * Gets the m-ld configuration for a timesheet. Calling this method will
    * create the timesheet if it does not already exist.
-   * @param {TimesheetId} tsId
+   * @param {AccountSubId} tsId
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
    */
   async timesheetConfig(tsId) {
@@ -182,20 +192,7 @@ export default class Gateway {
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
-        // Genesis if the timesheet is not already in the account
-        // TODO: Use `ask` in m-ld-js v0.9
-        const accountHasTimesheet = {
-          '@id': tsId.account, timesheet: { '@id': tsId.toUrl() }
-        };
-        const genesis = !(await state.read({
-          '@select': '?', '@where': accountHasTimesheet
-        })).length;
-        // If genesis, check that this timesheet has not existed before
-        if (genesis && await this.tsTombstoneExists(tsId))
-          throw new errors.ConflictError();
-        const ts = await this.cloneTimesheet(tsId, genesis);
-        // Ensure that the clone is online to avoid race with the client
-        await ts.status.becomes({ online: true });
+        const accountHasTimesheet = await this.initTimesheet(tsId, state);
         // Ensure the timesheet is in the domain
         await state.write(accountHasTimesheet);
       });
@@ -208,6 +205,30 @@ export default class Gateway {
     }), { genesis: false }); // Definitely not genesis
   }
 
+  /**
+   * @param {AccountSubId} tsId
+   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @returns {Promise<import('@m-ld/m-ld').Query>}
+   */
+  async initTimesheet(tsId, state) {
+    // Genesis if the timesheet is not already in the account
+    // TODO: Use `ask` in m-ld-js v0.9
+    const accountHasTimesheet = {
+      '@id': tsId.account, timesheet: { '@id': tsId.toUrl() }
+    };
+    const genesis = !(await state.read({
+      '@select': '?', '@where': accountHasTimesheet
+    })).length;
+    // If genesis, check that this timesheet has not existed before
+    if (genesis && await this.tsTombstoneExists(tsId))
+      throw new errors.ConflictError();
+    const ts = await this.cloneTimesheet(tsId, genesis);
+    // Ensure that the clone is online to avoid race with the client
+    await ts.status.becomes({ online: true });
+    // noinspection JSValidateTypes
+    return accountHasTimesheet;
+  }
+
   close() {
     // Close the gateway domain
     return Promise.all([
@@ -217,16 +238,3 @@ export default class Gateway {
   }
 }
 
-/**
- * @param subject may contain `timesheet` property
- * @returns {import('@m-ld/m-ld').Reference[]}
- */
-function safeTimesheetRefsIn(subject) {
-  try {
-    // TODO: Use Array of Reference in m-ld-js v0.9
-    return propertyValue(subject, 'timesheet', Array, Object)
-      .filter(ref => ref['@id'] != null);
-  } catch (e) {
-    return [];
-  }
-}

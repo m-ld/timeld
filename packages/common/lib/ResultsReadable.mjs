@@ -8,10 +8,13 @@ import { Readable } from 'stream';
  * @property {(s: import('@m-ld/m-ld').GraphSubject) => string | Promise<string>} stringify
  */
 
+/**
+ * @typedef {import('@m-ld/m-ld').ReadResult['consume']} Results
+ */
+
 export default class ResultsReadable extends Readable {
   /**
-   *
-   * @param {import('@m-ld/m-ld').ReadResult['consume']} results
+   * @param {Results} results
    * @param {Format} format
    * @param {import('stream').ReadableOptions} [opts]
    */

@@ -1,4 +1,4 @@
-import { TimesheetId } from 'timeld-common';
+import { AccountSubId } from 'timeld-common';
 import errors from 'restify-errors';
 
 export default class Authorization {
@@ -7,7 +7,7 @@ export default class Authorization {
    * @param {import('restify').Request} req
    */
   constructor(gateway, req) {
-    if (!TimesheetId.isComponentId(req.params.user))
+    if (!AccountSubId.isComponentId(req.params.user))
       throw new errors.BadRequestError('Bad user %s', req.params.user);
     if (req.authorization.scheme !== 'Bearer')
       throw new errors.UnauthorizedError('Bearer token not provided');
@@ -17,7 +17,7 @@ export default class Authorization {
   }
 
   /**
-   * @param {TimesheetId} [tsId]
+   * @param {AccountSubId} [tsId]
    * @returns {Promise<void>}
    */
   async verifyUser(tsId) {
