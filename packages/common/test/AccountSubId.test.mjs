@@ -50,6 +50,10 @@ describe('Timesheet Id', () => {
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
+    tsId = AccountSubId.fromUrl('org/ts', 'gw.net');
+    expect(tsId.name).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBe('gw.net');
     tsId = AccountSubId.fromUrl('http://gw.net:8080/org/ts/what');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');

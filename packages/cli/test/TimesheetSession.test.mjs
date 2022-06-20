@@ -1,15 +1,9 @@
 import { describe, expect, jest, test } from '@jest/globals';
-import { BehaviorSubject } from 'rxjs';
+import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
 import { clone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import TimesheetSession from '../lib/TimesheetSession.mjs';
 import { fileSync } from 'tmp';
-
-// noinspection JSUnusedGlobalSymbols
-class DeadRemotes {
-  live = new BehaviorSubject(false);
-  setLocal() {}
-}
 
 describe('CLI Session', () => {
   let /**@type string*/id;

@@ -92,8 +92,8 @@ export default class DomainConfigurator {
     } catch (e) {
       // Gateway client returns Strings for HTTP error responses!
       if (e instanceof Error) {
-        console.info(`Gateway ${this.gateway.domain} is not reachable (${e})`);
-        return this.noGatewayConfig(this.gateway.domain);
+        console.info(`Gateway ${this.gateway.domainName} is not reachable (${e})`);
+        return this.noGatewayConfig(this.gateway.domainName);
       } else {
         throw e;
       }

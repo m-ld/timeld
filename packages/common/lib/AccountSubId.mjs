@@ -40,11 +40,12 @@ export default class AccountSubId {
 
   /**
    * @param {string | URL} url
+   * @param {string} [gateway]
    */
-  static fromUrl(url) {
+  static fromUrl(url, gateway) {
     if (typeof url == 'string')
-      url = new URL(url);
-    const gateway = url.hostname;
+      url = new URL(url, `http://${gateway}`);
+    gateway = url.hostname;
     const [, account, name] = url.pathname.split('/');
     return new AccountSubId({ gateway, account, name });
   }

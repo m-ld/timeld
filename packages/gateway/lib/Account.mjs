@@ -1,9 +1,10 @@
 import { array, propertyValue } from '@m-ld/m-ld';
 import { AblyKey } from 'timeld-common';
 import errors from 'restify-errors';
-import { QueryPattern, ReadPattern } from './QueryPattern.mjs';
+import { isReference, isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
-import { safeRefsIn, verify } from './util.mjs';
+import { verify } from './util.mjs';
+import { safeRefsIn } from 'timeld-common/lib/util.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -96,42 +97,84 @@ export default class Account {
 
   get allowedReadPatterns() {
     const accountName = this.name;
-    const isVariable = { type: 'string' };
+    const thisAccount = {
+      properties: {
+        '@id': { enum: [accountName] },
+        '@type': { enum: ['Account'] }
+      }
+    };
+    const thisAccountIsAdmin = {
+      properties: {
+        '@id': { type: 'string' },
+        '@type': { enum: ['Account'] },
+        // Primary accountable must be included for admin filter (see below)
+        'vf:primaryAccountable': {}
+      }
+    };
+    // JSON Type Definition says `any`
+    const isCheckingAdmin = where =>
+      // where is an array when reading timesheet details
+      array(array(where)[0]['vf:primaryAccountable'])
+        .some(admin => admin['@id'] === accountName);
+    const timesheetProperty = {
+      properties: {
+        '@id': { type: 'string' },
+        '@type': { enum: ['Timesheet'] },
+        project: isReference
+      }
+    };
+    // Check we are joining either projects or timesheets
+    const hasOwnedTimesheetJoin = query =>
+      query['@where'][0].project?.['@id'] === query['@where'][1].project['@id'] ||
+      query['@where'][0].timesheet?.['@id'] === query['@where'][1]['@id'];
     return [
       // Read property details from user account
       new ReadPattern({
-        properties: {
-          '@id': { enum: [accountName] },
-          '@type': { enum: ['Account'] }
-        },
+        ...thisAccount,
         optionalProperties: {
           email: isVariable,
           project: isVariable,
           timesheet: isVariable
         }
       }),
-      // Read details of an organisations the user is admin of
+      // Read timesheet details from user account
       new class extends ReadPattern {
-        async check(state, query) {
-          // JSON Type Definition only tells us it's an array
-          if (array(query['@where']['vf:primaryAccountable'])
-            .find(admin => admin['@id'] === accountName) == null)
-            throw new errors.ForbiddenError('Read must check org admin');
-          return query;
+        matches(query) {
+          return super.matches(query) && hasOwnedTimesheetJoin(query);
         }
       }({
-        properties: {
-          '@id': { type: 'string' },
-          '@type': { enum: ['Account'] },
-          // Primary accountable must be included for admin filter (above)
-          'vf:primaryAccountable': {}
-        },
+        ...thisAccount,
         optionalProperties: {
-          'vf:primaryAccountable': { type: 'string' }, // Variable
+          project: isReference,
+          timesheet: isReference
+        }
+      }, timesheetProperty),
+      // Read details of an organisation account the user is admin of
+      new class extends ReadPattern {
+        matches(query) {
+          return super.matches(query) && isCheckingAdmin(query['@where']);
+        }
+      }({
+        ...thisAccountIsAdmin,
+        optionalProperties: {
           project: isVariable,
           timesheet: isVariable
         }
-      })
+      }),
+      // Read timesheet details from organisation account the user is admin of
+      new class extends ReadPattern {
+        matches(query) {
+          return super.matches(query) &&
+            isCheckingAdmin(query['@where']) &&
+            hasOwnedTimesheetJoin(query);
+        }
+      }({
+        ...thisAccountIsAdmin,
+        optionalProperties: {
+          project: isReference,
+          timesheet: isReference
+        }
+      }, timesheetProperty)
     ];
   }
 
@@ -143,7 +186,7 @@ export default class Account {
     // Check that the given pattern matches a permitted query
     const matchingPattern = this.allowedReadPatterns.find(qp => qp.matches(query));
     if (matchingPattern == null)
-      throw new errors.ForbiddenError('Unrecognised read pattern');
+      throw new errors.ForbiddenError('Unrecognised read pattern: %j', query);
     return new Promise((resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
@@ -159,48 +202,70 @@ export default class Account {
   get allowedWritePatterns() {
     const { name: thisAccountName, interceptInsertTimesheet } = this;
     const isThisAccountRef = { properties: { '@id': { enum: [thisAccountName] } } };
-    const isThisAccount = {
+    /** @param {object} [properties] */
+    const isThisAccount = properties => ({
       properties: {
         '@id': { enum: [thisAccountName] },
-        '@type': { enum: ['Account'] }
+        '@type': { enum: ['Account'] },
+        ...properties
       }
+    });
+    /**
+     * @param {'Timesheet'|'Project'} type
+     * @param {'@insert'|'@delete'} verb
+     */
+    const isOwned = (type, verb) => ({
+      properties: { '@id': { type: 'string' }, '@type': { enum: [type] } },
+      additionalProperties: verb === '@delete' // ?p ?o
+    });
+    const matchOwned = {
+      properties: { '@id': { type: 'string' } },
+      additionalProperties: true // ?p ?o
     };
-    const isReference = { properties: { '@id': { type: 'string' } } };
-    const thisAccountDetail = {
+    const whereDeleteOwned = {
+      optionalProperties: { timesheet: matchOwned, project: matchOwned }
+    };
+    const deletesOwnedProperties = query => {
+      const deleteMatchesWhere = owned => !query['@where'][owned] ||
+        Object.entries(query['@where'][owned]).every(([p, v]) =>
+          query['@delete'][owned]?.[p] === v);
+      return deleteMatchesWhere('timesheet') &&
+        deleteMatchesWhere('project');
+    };
+    const thisAccountDetail = verb => ({
       ...isThisAccountRef,
       optionalProperties: {
         email: { type: 'string' },
-        timesheet: isReference,
-        project: isReference
+        timesheet: isOwned('Timesheet', verb),
+        project: isOwned('Project', verb)
       }
-    };
-    const thisAccountIsAdmin = {
+    });
+    /** @param {object} [properties] */
+    const thisAccountIsAdmin = properties => ({
       properties: {
         '@id': { type: 'string' },
         '@type': { enum: ['Account'] },
-        'vf:primaryAccountable': isThisAccountRef
+        'vf:primaryAccountable': isThisAccountRef,
+        ...properties
       }
-    };
-    const orgDetail = {
+    });
+    const orgDetail = verb => ({
       properties: { '@id': { type: 'string' } },
       optionalProperties: {
         'vf:primaryAccountable': isReference,
-        timesheet: isReference,
-        project: isReference
+        timesheet: isOwned('Timesheet', verb),
+        project: isOwned('Project', verb)
       }
+    });
+    // Close loophole in schema: different IDs for update and where
+    const isModifyOrgDetail = query =>
+      // Either insert or delete (not both)
+      (query['@delete']?.['@id'] || query['@insert']?.['@id']) === query['@where']['@id'];
+    const timesheetDetail = {
+      properties: { '@id': { type: 'string' }, project: isReference }
     };
-
-    class ModifyOrgPattern extends QueryPattern {
-      async check(state, query) {
-        // Either insert or delete (not both)
-        const orgId = query['@delete']?.['@id'] || query['@insert']?.['@id'];
-        // Close loophole in schema, different IDs
-        if (orgId !== query['@where']['@id'])
-          throw new errors.ForbiddenError('Malformed query');
-        return query;
-      }
-    }
-
+    const isUpdateOwnedTimesheet = query =>
+      query['@insert']['@id'] === query['@where']['timesheet']['@id'];
     return [
       // Add details to user account
       new class extends QueryPattern {
@@ -210,15 +275,20 @@ export default class Account {
         }
       }({
         properties: {
-          '@insert': thisAccountDetail,
-          '@where': isThisAccount
+          '@insert': thisAccountDetail('@insert'),
+          '@where': isThisAccount()
         }
       }),
       // Remove details from user account
-      new QueryPattern({
+      new class extends QueryPattern {
+        matches(query) {
+          // Check timesheet delete includes linked projects
+          return super.matches(query) && deletesOwnedProperties(query);
+        }
+      }({
         properties: {
-          '@delete': thisAccountDetail,
-          '@where': isThisAccount
+          '@delete': thisAccountDetail('@delete'),
+          '@where': { ...isThisAccount(), ...whereDeleteOwned }
         }
       }),
       // Write new organisation account (with this account as admin)
@@ -230,20 +300,27 @@ export default class Account {
             throw new errors.ForbiddenError('Organisation already exists');
           return query;
         }
-      }(thisAccountIsAdmin),
+      }(thisAccountIsAdmin()),
       // Add details to an organisation
-      new class extends ModifyOrgPattern {
+      new class extends QueryPattern {
+        matches(query) {
+          return super.matches(query) && isModifyOrgDetail(query);
+        }
         async check(state, query) {
           await interceptInsertTimesheet(state, query);
           return query;
         }
       }({
-        properties: { '@insert': orgDetail, '@where': thisAccountIsAdmin }
+        properties: { '@insert': orgDetail('@insert'), '@where': thisAccountIsAdmin() }
       }),
       // Remove organisation or its details
-      new class extends ModifyOrgPattern {
+      new class extends QueryPattern {
+        matches(query) {
+          return super.matches(query) &&
+            isModifyOrgDetail(query) &&
+            deletesOwnedProperties(query);
+        }
         async check(state, query) {
-          await super.check(state, query);
           if (Object.keys(query['@delete']).length === 1) {
             const orgId = query['@delete']['@id'];
             // The whole org is being deleted. Cascade delete the organisation
@@ -273,8 +350,40 @@ export default class Account {
           }
         }
       }({
-        properties: { '@delete': orgDetail, '@where': thisAccountIsAdmin }
-      })
+        properties: {
+          '@delete': orgDetail('@delete'),
+          '@where': { ...thisAccountIsAdmin(), ...whereDeleteOwned }
+        }
+      }),
+      // Add project to user or organisation owned timesheet
+      new class extends QueryPattern {
+        matches(query) {
+          return super.matches(query) && isUpdateOwnedTimesheet(query);
+        }
+        async check(state, query) {
+          const insert = query['@insert'];
+          if (insert != null && insert.project != null) {
+            // TODO Use ask in m-ld-js@edge
+            const ts = await state.get(insert['@id'], '@type');
+            if (ts == null)
+              throw new errors.NotFoundError('Timesheet does not exist');
+            const project = await state.get(insert.project['@id'], '@type');
+            if (project == null)
+              throw new errors.NotFoundError('Project does not exist');
+          }
+          return query;
+        }
+      }(...['@insert', '@delete'].map(verb => ({
+        properties: {
+          [verb]: timesheetDetail,
+          '@where': isThisAccount({ timesheet: isReference })
+        }
+      })), ...['@insert', '@delete'].map(verb => ({
+        properties: {
+          [verb]: timesheetDetail,
+          '@where': thisAccountIsAdmin({ timesheet: isReference })
+        }
+      })))
     ];
   }
 
@@ -299,7 +408,7 @@ export default class Account {
   async write(query) {
     const matchingPattern = this.allowedWritePatterns.find(qp => qp.matches(query));
     if (matchingPattern == null)
-      throw new errors.ForbiddenError('Unrecognised write pattern');
+      throw new errors.ForbiddenError('Unrecognised write pattern: %j', query);
     await this.gateway.domain.write(async state => {
       await state.write(await matchingPattern.check(state, query));
     });

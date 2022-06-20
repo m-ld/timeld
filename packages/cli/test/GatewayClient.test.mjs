@@ -11,7 +11,7 @@ describe('Gateway Client', () => {
       gateway: 'timeld.org', user: 'user', ably: { key: 'app.id:secret' }
     });
     expect(gw.ablyKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
-    expect(gw.domain).toBe('timeld.org');
+    expect(gw.domainName).toBe('timeld.org');
     expect(gw.principalId).toBe('http://timeld.org/user');
   });
 

@@ -1,3 +1,5 @@
+// noinspection JSCheckFunctionSignatures
+
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
@@ -7,7 +9,7 @@ import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
 import Cryptr from 'cryptr';
-import DeadRemotes from './DeadRemotes.mjs';
+import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
 import { existsSync } from 'fs';
 import { drain } from 'rx-flowable';
 
@@ -18,10 +20,8 @@ describe('Gateway', () => {
   let ablyApi;
 
   beforeEach(() => {
-    // noinspection JSCheckFunctionSignatures
     tmpDir = dirSync({ unsafeCleanup: true });
     env = new Env({ data: join(tmpDir.name, 'data') });
-    // noinspection JSCheckFunctionSignatures
     clone = jest.fn(config =>
       meldClone(new MeldMemDown(), DeadRemotes, config));
     ablyApi = {
@@ -171,7 +171,6 @@ describe('Gateway', () => {
     });
 
     test('clones a new timesheet', async () => {
-      // noinspection JSCheckFunctionSignatures
       await gateway.domain.write({
         '@id': 'test', timesheet: { '@id': 'test/ts1' }
       });
@@ -212,10 +211,8 @@ describe('Gateway', () => {
         email: 'test@ex.org'
       });
       const acc = await gateway.account('test');
-      // noinspection JSCheckFunctionSignatures
       await expect(acc.read({ '@describe': 'bob' }))
         .rejects.toThrowError();
-      // noinspection JSCheckFunctionSignatures
       await expect(acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
         .rejects.toThrowError();
     });
@@ -233,17 +230,14 @@ describe('Gateway', () => {
       });
 
       test('reads from user account', async () => {
-        // noinspection JSCheckFunctionSignatures
         expect(await drain(await acc.read({
           '@select': '?e', '@where': { '@id': 'test', '@type': 'Account', email: '?e' }
         }))).toMatchObject([{ '?e': 'test@ex.org' }]);
       });
 
       test('refuses unauthorised write', async () => {
-        // noinspection JSCheckFunctionSignatures
         await expect(acc.write({ foo: 'bar' }))
           .rejects.toThrowError();
-        // noinspection JSCheckFunctionSignatures
         await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
           .rejects.toThrowError();
       });
@@ -257,14 +251,45 @@ describe('Gateway', () => {
           .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
       });
 
-      test('writes timesheet to existing user account', async () => {
+      test('adds timesheet to user account', async () => {
         await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1' } },
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
           '@where': { '@id': 'test', '@type': 'Account' }
         });
         expect((await gateway.account('test')).timesheets)
           .toEqual([{ '@id': 'test/ts1' }]);
         expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeDefined();
+      });
+
+      test('removes timesheet from user account', async () => {
+        await acc.write({
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        await acc.write({
+          '@delete': {
+            '@id': 'test',
+            timesheet: { '@id': 'test/ts1', '@type': 'Timesheet', '?p': '?o' }
+          },
+          '@where': {
+            '@id': 'test', '@type': 'Account',
+            timesheet: { '@id': 'test/ts1', '?p': '?o' }
+          }
+        });
+        expect((await gateway.account('test')).timesheets)
+          .toEqual([]);
+        expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
+      });
+
+      test('cannot orphan timesheet', async () => {
+        await acc.write({
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        await expect(acc.write({
+          '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } },
+          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+        })).rejects.toThrow();
       });
 
       test('writes a new organisation', async () => {
@@ -322,6 +347,41 @@ describe('Gateway', () => {
         });
         expect((await gateway.account('org1')).admins)
           .toEqual(new Set(['test', 'other']));
+      });
+
+      test('cannot insert project if not exists', async () => {
+        await acc.write({
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        await expect(acc.write({
+          '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+        })).rejects.toThrow();
+      });
+
+      test('writes timesheet projects', async () => {
+        // Inserting the timesheet
+        await acc.write({
+          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        // Inserting the project
+        await acc.write({
+          '@insert': { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
+          '@where': { '@id': 'test', '@type': 'Account' }
+        });
+        // Inserting project link into timesheet
+        await acc.write({
+          '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+        });
+        expect(await drain(await acc.read({
+          '@select': '?t', '@where': [
+            { '@id': 'test', '@type': 'Account', project: { '@id': 'test/pr1' } },
+            { '@id': '?t', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
+          ]
+        }))).toMatchObject([{ '?t': { '@id': 'test/ts1' } }]);
       });
     });
   });

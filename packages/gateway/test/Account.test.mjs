@@ -1,7 +1,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
-import DeadRemotes from './DeadRemotes.mjs';
+import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
 import { AccountSubId, timeldContext } from 'timeld-common';
 import Gateway from '../lib/Gateway.mjs';
 import Account from '../lib/Account.mjs';

@@ -4,10 +4,7 @@ left to right direction
 
 actor User
 package "Account administration" {
-  note top
-    ≪constraint≫
-    User must be account owner OR admin
-  end note
+  note "≪constraint≫ on all\nUser must be account owner OR admin" as appliesToAll
 
   usecase userAdminEmail as ([list | add | rm] email)
   User --> userAdminEmail: if User Account
@@ -42,16 +39,26 @@ package "Account administration" {
   User --> ownedAdmin
   note right of ownedAdmin
     ≪trigger≫
-    add timesheet:
-    init ts as genesis
+    add timesheet: init
+    ts domain as genesis
   end note
   note right of ownedAdmin
     ≪constraint≫
     add: owned @id
     must have account
   end note
+  note right of ownedAdmin
+    ≪constraint≫
+    owned is //composition//,
+    cascade create & delete
+    of account property
+  end note
 
   User --> ([list | add | rm] timesheet project link)
+  note right
+    ≪constraint≫
+    project must exist
+  end note
 
   ' TODO
   User --> (revoke all device access)

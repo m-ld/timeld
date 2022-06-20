@@ -5,13 +5,13 @@ import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
 import dns from 'dns/promises';
-import { AblyKey } from 'timeld-common';
+import { AblyKey, BaseGateway } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
 import ndjson from 'ndjson';
 
-export default class GatewayClient {
+export default class GatewayClient extends BaseGateway {
   /**
    * @param {string} gateway
    * @param {string} user
@@ -24,17 +24,17 @@ export default class GatewayClient {
     user,
     ably: { key } = {}
   }, fetch = setupFetch()) {
+    const { apiRoot, domainName } = GatewayClient.resolveApiRoot(gateway);
+    super(domainName);
     this.user = user;
     this.ablyKey = key != null ? new AblyKey(key) : null;
-    const { apiRoot, domain } = GatewayClient.resolveApiRoot(gateway);
     this.apiRoot = apiRoot;
-    this.domain = domain;
     /**
      * Resolve our user name against the gateway to get the canonical user URI.
      * Gateway-based URIs use HTTP by default (see also {@link AccountSubId}).
      */
     // This leaves an absolute URI alone
-    this.principalId = new URL(this.user, `http://${this.domain}`).toString();
+    this.principalId = new URL(this.user, `http://${this.domainName}`).toString();
     this.fetch = fetch;
   }
 
@@ -71,24 +71,24 @@ export default class GatewayClient {
 
   /**
    * @param {string} address
-   * @returns {{ apiRoot: URL | Promise<URL>, domain: string }}
+   * @returns {{ apiRoot: URL | Promise<URL>, domainName: string }}
    */
   static resolveApiRoot(address) {
     if (isFQDN(address)) {
-      return { apiRoot: new URL(`https://${address}/api/`), domain: address };
+      return { apiRoot: new URL(`https://${address}/api/`), domainName: address };
     } else {
       const url = new URL('/api/', address);
-      const domain = url.hostname;
-      if (domain.endsWith('.local')) {
+      const domainName = url.hostname;
+      if (domainName.endsWith('.local')) {
         return {
-          apiRoot: dns.lookup(domain).then(a => {
+          apiRoot: dns.lookup(domainName).then(a => {
             url.hostname = a.address;
             return url;
           }),
-          domain
+          domainName
         };
       } else {
-        return { apiRoot: url, domain };
+        return { apiRoot: url, domainName };
       }
     }
   }

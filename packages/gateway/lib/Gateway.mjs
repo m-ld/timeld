@@ -2,14 +2,13 @@ import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
 import { uuid } from '@m-ld/m-ld';
-import { AblyKey, AccountSubId, Env, timeldContext } from 'timeld-common';
+import { AblyKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import errors from 'restify-errors';
-import { safeRefsIn } from './util.mjs';
 
-export default class Gateway {
+export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
@@ -17,8 +16,7 @@ export default class Gateway {
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
-    if (config['@domain'] == null)
-      throw new RangeError('No domain specified for Gateway');
+    super(config['@domain']);
     this.env = env;
     this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
       ...config,
@@ -32,10 +30,6 @@ export default class Gateway {
     this.ablyApi = ablyApi;
     this.timesheetDomains =
       /**@type {{ [name: string]: import('@m-ld/m-ld').MeldClone }}*/{};
-  }
-
-  get domainName() {
-    return this.config['@domain'];
   }
 
   async initialise() {
@@ -64,21 +58,6 @@ export default class Gateway {
       ]);
     });
     return this;
-  }
-
-  /**
-   * @param {import('@m-ld/m-ld').Reference} tsRef
-   * @returns {AccountSubId}
-   */
-  tsRefAsId(tsRef) {
-    // A timesheet reference may be relative to the domain base
-    return AccountSubId.fromUrl(new URL(tsRef['@id'], `http://${this.domainName}`));
-  }
-
-  tsId(account, timesheet) {
-    return new AccountSubId({
-      gateway: this.domainName, account, name: timesheet
-    });
   }
 
   /**
