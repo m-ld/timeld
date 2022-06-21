@@ -5,7 +5,7 @@
   "description": "Live shared timesheets",
   "scripts": {
     "version-packages": "npm version $VERSION -ws && npm i timeld-common@$(npm run ver -w packages/common -s) -w packages/cli -w packages/gateway",
-    "publish": "npm run test && npm run version-packages && git commit -m \"version-packages\" && npm version $VERSION && npm publish -ws && git push",
+    "publish": "npm run test && npm run version-packages && git commit -am \"version-packages\" && npm version $VERSION && npm publish -ws && git push",
     "local": "node ./packages/gateway/server.mjs",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --silent"
   },
