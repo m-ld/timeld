@@ -80,8 +80,13 @@ describe('Administration session', () => {
       await session.execute('add link ts1 --project pr1', outLines, errLines);
       await session.execute('ls link --ts ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('test/pr1');
+      outLines.mockReset();
       await session.execute('ls link --project pr1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('test/ts1');
+      outLines.mockReset();
+      await session.execute('rm link pr1 --timesheet ts1', outLines, errLines);
+      await session.execute('ls link --project pr1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
     });
 
     test('Cannot link missing timesheet', async () => {

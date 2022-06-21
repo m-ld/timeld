@@ -75,7 +75,7 @@ export default class DomainConfigurator {
     } else {
       const config = await this.fetchGatewayConfig();
       return {
-        config: Env.mergeConfig(config, { ably: { key: this.gateway.ablyKey.toString() } }),
+        config: Env.mergeConfig(config, this.gateway.accessConfig),
         principal: { '@id': this.gateway.principalId /*, TODO: sign*/ }
       };
     }

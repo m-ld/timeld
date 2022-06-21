@@ -7,6 +7,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import errors from 'restify-errors';
+import { accountHasTimesheet, Ask } from './statements.mjs';
 
 export default class Gateway extends BaseGateway {
   /**
@@ -163,6 +164,9 @@ export default class Gateway extends BaseGateway {
   /**
    * Gets the m-ld configuration for a timesheet. Calling this method will
    * create the timesheet if it does not already exist.
+   *
+   * The caller must have already checked user access to the timesheet.
+   *
    * @param {AccountSubId} tsId
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
    */
@@ -171,9 +175,10 @@ export default class Gateway extends BaseGateway {
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
-        const accountHasTimesheet = await this.initTimesheet(tsId, state);
+        const genesis = !(await new Ask(state).exists(accountHasTimesheet(tsId)));
+        await this.initTimesheet(tsId, genesis);
         // Ensure the timesheet is in the domain
-        await state.write(accountHasTimesheet);
+        await state.write(accountHasTimesheet(tsId));
       });
     }
     // Return the config required for a new clone
@@ -186,26 +191,17 @@ export default class Gateway extends BaseGateway {
 
   /**
    * @param {AccountSubId} tsId
-   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {boolean} genesis
    * @returns {Promise<import('@m-ld/m-ld').Query>}
    */
-  async initTimesheet(tsId, state) {
+  async initTimesheet(tsId, genesis) {
     // Genesis if the timesheet is not already in the account
-    // TODO: Use `ask` in m-ld-js v0.9
-    const accountHasTimesheet = {
-      '@id': tsId.account, timesheet: { '@id': tsId.toUrl() }
-    };
-    const genesis = !(await state.read({
-      '@select': '?', '@where': accountHasTimesheet
-    })).length;
     // If genesis, check that this timesheet has not existed before
     if (genesis && await this.tsTombstoneExists(tsId))
       throw new errors.ConflictError();
     const ts = await this.cloneTimesheet(tsId, genesis);
     // Ensure that the clone is online to avoid race with the client
     await ts.status.becomes({ online: true });
-    // noinspection JSValidateTypes
-    return accountHasTimesheet;
   }
 
   close() {

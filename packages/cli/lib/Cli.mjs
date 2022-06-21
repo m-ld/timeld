@@ -128,8 +128,6 @@ export default class Cli {
   async openCmd(argv) {
     const gateway = argv.gateway ? await this.openGatewayClient(argv) : null;
     const { config, principal } = await new DomainConfigurator(argv, gateway).load();
-    // Save any new globally-applicable config
-    await this.env.updateConfig(...Cli.globalConfigs(config));
     try {
       // Start the m-ld clone
       const { meld, logFile } = await this.createMeldClone(config, principal);
@@ -156,19 +154,13 @@ export default class Cli {
     const rl = readline.createInterface({ input, output });
     try {
       const ask = promisify(rl.question).bind(rl);
-      return await new GatewayClient(argv).activate(ask);
+      const gateway = new GatewayClient(argv);
+      await gateway.activate(ask);
+      await this.env.updateConfig(gateway.accessConfig);
+      return gateway;
     } finally {
       rl.close();
     }
-  }
-
-  /**
-   * Picks out configuration that makes sense to store as global defaults at the
-   * beginning of a timesheet session
-   */
-  static *globalConfigs(config) {
-    yield { user: config.user };
-    yield { ably: { key: config['ably']?.key } };
   }
 
   /**

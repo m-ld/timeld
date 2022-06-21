@@ -117,7 +117,13 @@ export default class GatewayClient extends BaseGateway {
         .then(checkSuccessRes).then(resJson);
       this.ablyKey = new AblyKey(key);
     }
-    return this;
+  }
+
+  /**
+   * @returns {{ably: {key: string}}}
+   */
+  get accessConfig() {
+    return { ably: { key: this.ablyKey.toString() } };
   }
 
   /**

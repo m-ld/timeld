@@ -5,6 +5,7 @@ import { isReference, isVariable, QueryPattern, ReadPattern } from './QueryPatte
 import { EmptyError, firstValueFrom } from 'rxjs';
 import { verify } from './util.mjs';
 import { safeRefsIn } from 'timeld-common/lib/util.mjs';
+import { accountHasTimesheet, Ask, userIsAdmin } from './statements.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -257,15 +258,14 @@ export default class Account {
         project: isOwned('Project', verb)
       }
     });
+    // Either insert or delete (not both)
+    const updatedId = query => query['@delete']?.['@id'] || query['@insert']?.['@id'];
     // Close loophole in schema: different IDs for update and where
     const isModifyOrgDetail = query =>
-      // Either insert or delete (not both)
-      (query['@delete']?.['@id'] || query['@insert']?.['@id']) === query['@where']['@id'];
+      updatedId(query) === query['@where']['@id'];
     const timesheetDetail = {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
-    const isUpdateOwnedTimesheet = query =>
-      query['@insert']['@id'] === query['@where']['timesheet']['@id'];
     return [
       // Add details to user account
       new class extends QueryPattern {
@@ -358,7 +358,8 @@ export default class Account {
       // Add project to user or organisation owned timesheet
       new class extends QueryPattern {
         matches(query) {
-          return super.matches(query) && isUpdateOwnedTimesheet(query);
+          return super.matches(query) &&
+            updatedId(query) === query['@where']['timesheet']['@id'];
         }
         async check(state, query) {
           const insert = query['@insert'];
@@ -398,7 +399,13 @@ export default class Account {
       const tsId = this.gateway.tsRefAsId(tsRef);
       if (tsId.account !== query['@insert']['@id'])
         throw new errors.BadRequestError('Timesheet does not match account');
-      await this.gateway.initTimesheet(tsId, state);
+      const ask = new Ask(state);
+      if (await ask.exists(accountHasTimesheet(tsId)))
+        throw new errors.ConflictError('Timesheet already exists');
+      if (this.name !== tsId.account &&
+        !(await ask.exists(userIsAdmin(this.name, tsId.account))))
+        throw new errors.UnauthorizedError('No access to timesheet');
+      await this.gateway.initTimesheet(tsId, true);
     }
   };
 
