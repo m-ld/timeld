@@ -27,7 +27,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/jest": "^27.4.1",
-    "jest": "^28.0.3"
+    "@types/jest": "^28.1.2",
+    "jest": "^28.1.1"
   }
 }

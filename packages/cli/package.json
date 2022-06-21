@@ -26,11 +26,11 @@
     "@zeit/fetch": "^6.0.0",
     "chrono-node": "^2.3.8",
     "cryptr": "^6.0.3",
-    "humanize-duration": "^3.27.1",
-    "json-stringify-pretty-compact": "^3.0.0",
+    "humanize-duration": "^3.27.2",
+    "json-stringify-pretty-compact": "^4.0.0",
     "ndjson": "^2.0.0",
     "parse-duration": "^1.0.2",
-    "rx-flowable": "^0.1.1-0",
+    "rx-flowable": "^0.1.1",
     "rxjs": "^7.5.5",
     "simple-peer": "^9.11.1",
     "timeago.js": "^4.0.2",
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@types/cryptr": "^4.0.1",
-    "@types/validator": "^13.7.2",
+    "@types/validator": "^13.7.3",
     "memdown": "^6.1.1",
     "tmp": "^0.2.1"
   }

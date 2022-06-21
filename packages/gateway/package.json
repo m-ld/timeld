@@ -25,14 +25,14 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
-    "@trycourier/courier": "^3.12.0",
+    "@trycourier/courier": "^3.13.1",
     "cryptr": "^6.0.3",
     "jsonwebtoken": "^8.5.1",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.0",
     "restify": "^8.6.1",
     "restify-errors": "^8.0.2",
-    "rx-flowable": "^0.1.1-0",
+    "rx-flowable": "^0.1.1",
     "rxjs": "^7.5.5",
     "simple-peer": "^9.11.1",
     "timeld-common": "^0.1.0-9",
@@ -43,7 +43,7 @@
     "@types/jsonwebtoken": "^8.5.8",
     "@types/restify": "^8.5.4",
     "@types/restify-errors": "^4.3.4",
-    "@types/validator": "^13.7.2",
+    "@types/validator": "^13.7.3",
     "memdown": "^6.1.1",
     "tmp": "^0.2.1"
   }

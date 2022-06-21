@@ -24,13 +24,13 @@
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
     "@m-ld/m-ld": "^0.8.2",
-    "ably": "^1.2.20",
+    "ably": "^1.2.25",
     "dotenv": "^16.0.1",
     "env-paths": "^3.0.0",
     "leveldown": "^6.1.1",
-    "rx-flowable": "^0.1.1-0",
+    "rx-flowable": "^0.1.1",
     "rxjs": "^7.5.5",
-    "yargs": "^17.4.1"
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
     "@types/yargs": "^17.0.10",
