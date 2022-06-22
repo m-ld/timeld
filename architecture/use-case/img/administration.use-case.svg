@@ -1,36 +1,82 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="941px" preserveAspectRatio="none" style="width:475px;height:941px;background:#FFFFFF;" version="1.1" viewBox="0 0 475 941" width="475px" zoomAndPan="magnify"><defs><filter height="300%" id="f3bwi13pgm6pm" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[e39e801fea952dcd5e3ce7a6d35cb68a]
-cluster Account administration session--><polygon fill="#FFFFFF" filter="url(#f3bwi13pgm6pm)" points="212,6,447,6,454,28.4883,458,28.4883,458,934,212,934,212,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="212" x2="454" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="229" x="216" y="21.5352">Account administration session</text><ellipse cx="334.968" cy="56.9936" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="67.968" ry="15.9936" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="88" x="288.0052" y="61.0034">view account</text><ellipse cx="335.2079" cy="126.1416" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="76.2079" ry="17.6416" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109" x="280.7079" y="129.4326">[add | rm] email</text><ellipse cx="335.206" cy="197.1412" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="78.706" ry="18.1412" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="115" x="277.706" y="200.4322">[add | rm] device</text><ellipse cx="335.2394" cy="269.1479" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="81.2394" ry="18.6479" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="121" x="274.7394" y="272.4389">view organisation</text><ellipse cx="335.2247" cy="343.9449" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="95.2247" ry="21.4449" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153" x="258.7247" y="347.236">add [admin | member]</text><ellipse cx="335.1075" cy="421.8215" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="92.1075" ry="20.8215" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="146" x="262.1075" y="425.1125">rm [admin | member]</text><ellipse cx="335.1409" cy="502.0282" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="105.6409" ry="23.5282" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="176" x="247.1409" y="505.3192">list [projects | timesheets]</text><ellipse cx="334.8124" cy="584.1625" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="103.8124" ry="23.1625" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="172" x="248.8124" y="587.4535">view [project | timesheet]</text><ellipse cx="334.8196" cy="664.1639" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="98.8196" ry="22.1639" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="161" x="254.3196" y="667.4549">rm [project | timesheet]</text><ellipse cx="335.199" cy="737.9398" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="70.199" ry="16.4398" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94" x="286.5115" y="741.6647">create project</text><ellipse cx="335.0363" cy="812.2073" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="101.5363" ry="22.7073" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="167" x="251.5363" y="815.4983">add timesheet to project</text><ellipse cx="335.0163" cy="893.8033" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="107.0163" ry="23.8033" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="179" x="245.5163" y="897.0943">rm timesheet from project</text><!--MD5=[8fc3522a43f8c7199df5e09e5bb0188e]
-entity user--><ellipse cx="87" cy="422.5" fill="#FEFECE" filter="url(#f3bwi13pgm6pm)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><path d="M87,430.5 L87,457.5 M74,438.5 L100,438.5 M87,457.5 L74,472.5 M87,457.5 L100,472.5 " fill="none" filter="url(#f3bwi13pgm6pm)" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="155" x="6" y="491.5352">User account owner or</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="162" x="6" y="508.0234">Organisation acc admin</text><!--MD5=[d53bb370a4ff5089bda773ba155bda37]
-link user to view account--><path d="M88.94,412.75 C93.2,333.39 113.42,177.4 204,91 C220.17,75.57 242.45,66.93 264,62.15 " fill="none" id="user-to-view account" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="269.17,61.08,259.539,59.0199,264.2773,62.1101,261.1871,66.8483,269.17,61.08" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[040824a4a88912ac05bf953deb1142ba]
-link user to [add | rm] email--><path d="M93.23,412.93 C103,346.16 130.23,227.42 204,161 C219.21,147.3 239.23,138.88 258.99,133.73 " fill="none" id="user-to-[add | rm] email" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="264,132.49,254.3033,130.7654,259.1459,133.6892,256.2221,138.5319,264,132.49" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c71c8b3f2a9e92e501b0cba5f770e3b9]
-link user to [add | rm] device--><path d="M100.12,412.95 C115.55,360.75 147.27,279.44 204,233 C219.87,220.01 240.1,211.69 259.84,206.37 " fill="none" id="user-to-[add | rm] device" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="264.85,205.08,255.1382,203.4428,260.0069,206.3229,257.1268,211.1917,264.85,205.08" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[416c7ac81806474fe5ffb66a5f739c65]
-link user to view organisation--><path d="M112.72,412.92 C132.77,377.91 164.21,332.36 204,305 C220.9,293.38 241.45,285.5 261.18,280.15 " fill="none" id="user-to-view organisation" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="266.17,278.85,256.4493,277.2665,261.3339,280.1197,258.4807,285.0043,266.17,278.85" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[e5276060f98c2cb73192af5e19053eee]
-link user to add [admin | member]--><path d="M152.76,412.8 C168.92,401.97 186.62,391.28 204,383 C222.63,374.12 243.73,366.76 263.42,360.9 " fill="none" id="user-to-add [admin | member]" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="268.4,359.45,258.64,358.13,263.6,360.85,260.88,365.81,268.4,359.45" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[bb66fa01cc2e915f834a790559a70149]
-link user to rm [admin | member]--><path d="M168.21,448.96 C195.8,444.47 226.66,439.45 254.22,434.97 " fill="none" id="user-to-rm [admin | member]" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="259.32,434.14,249.7954,431.6337,254.3846,434.9411,251.0772,439.5303,259.32,434.14" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[ca43c6fc758e6206240191841d8a6cbd]
-link user to list [projects | timesheets]--><path d="M168.21,475.04 C192.53,479 219.39,483.36 244.29,487.41 " fill="none" id="user-to-list [projects | timesheets]" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="249.24,488.22,240.9972,482.8297,244.3046,487.4189,239.7154,490.7263,249.24,488.22" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6978175d1a0e4dc4f2bfa8d540864205]
-link user to view [project | timesheet]--><path d="M150.88,511.06 C167.53,522.59 185.93,534.1 204,543 C221.81,551.77 241.91,559.19 260.88,565.21 " fill="none" id="user-to-view [project | timesheet]" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="265.68,566.71,258.2761,560.2152,260.9061,565.2235,255.8977,567.8535,265.68,566.71" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[e0a20ed3e6519163bad2c3da459275fe]
-link user to rm [project | timesheet]--><path d="M111.97,511.18 C131.92,547.28 163.57,594.9 204,624 C218.8,634.66 236.51,642.52 254.01,648.31 " fill="none" id="user-to-rm [project | timesheet]" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="258.94,649.89,251.5951,643.3285,254.1797,648.3604,249.1478,650.945,258.94,649.89" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[48fe83bd3371e32f7cba0d8036a4d5f8]
-link user to create project--><path d="M98.67,511.18 C113.14,566.01 144.32,653.48 204,703 C221.07,717.16 243.35,725.63 264.62,730.69 " fill="none" id="user-to-create project" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="269.72,731.84,261.8184,725.9609,264.8421,730.7418,260.0612,733.7655,269.72,731.84" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[a7c360015da6f53625f9b791bd833944]
-link user to add timesheet to project--><path d="M93.01,511.26 C102.55,579.39 129.55,701.86 204,772 C215.99,783.3 231.11,791.41 246.75,797.23 " fill="none" id="user-to-add timesheet to project" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="251.62,798.97,244.4923,792.1733,246.9119,797.2865,241.7987,799.7062,251.62,798.97" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[091123cd6d4d081c2b9b758d5a56030d]
-link user to rm timesheet from project--><path d="M88.62,511.13 C92.34,592.96 111.69,757.51 204,852 C215.02,863.28 229.08,871.53 243.87,877.57 " fill="none" id="user-to-rm timesheet from project" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="248.9,879.54,241.9659,872.5459,244.2411,877.725,239.0619,880.0002,248.9,879.54" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[cc0563ef6a73ddeafbd0828badae4814]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="865px" preserveAspectRatio="none" style="width:801px;height:865px;background:#FFFFFF;" version="1.1" viewBox="0 0 801 865" width="801px" zoomAndPan="magnify"><defs><filter height="300%" id="f164d3xvuinjhz" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[87082398342ff5d5d96b854a3cdd19e0]
+cluster Account administration--><polygon fill="#FFFFFF" filter="url(#f164d3xvuinjhz)" points="235,6,410,6,417,28.4883,784,28.4883,784,858,235,858,235,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="235" x2="417" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="169" x="239" y="21.5352">Account administration</text><path d="M260.5,54.5 L260.5,95.1211 L525.5,95.1211 L525.5,64.5 L515.5,54.5 L260.5,54.5 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M515.5,54.5 L515.5,64.5 L525.5,64.5 L515.5,54.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="266.5" y="72.0684">≪constraint≫ on all</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="244" x="266.5" y="87.3789">User must be account owner OR admin</text><ellipse cx="392.8393" cy="163.9679" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="90.3393" ry="20.4679" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="142" x="321.8393" y="167.2589">[list | add | rm] email</text><path d="M611.5,41 L611.5,88.05 L444.98,147.13 L611.5,96.05 L611.5,96.9316 A0,0 0 0 0 611.5,96.9316 L752.5,96.9316 A0,0 0 0 0 752.5,96.9316 L752.5,51 L742.5,41 L611.5,41 A0,0 0 0 0 611.5,41 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M742.5,41 L742.5,51 L752.5,51 L742.5,41 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="617.5" y="58.5684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="120" x="617.5" y="73.8789">add email: requires</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="115" x="617.5" y="89.1895">emailed activation</text><ellipse cx="392.834" cy="250.7668" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="86.834" ry="19.7668" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="134" x="325.834" y="254.0578">[list | add | rm] org]</text><path d="M625.5,223 L625.5,247 L480.11,251 L625.5,255 L625.5,278.9316 A0,0 0 0 0 625.5,278.9316 L738.5,278.9316 A0,0 0 0 0 738.5,278.9316 L738.5,233 L728.5,223 L625.5,223 A0,0 0 0 0 625.5,223 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M728.5,223 L728.5,233 L738.5,233 L728.5,223 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="631.5" y="240.5684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="77" x="631.5" y="255.8789">add org: org</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="92" x="631.5" y="271.1895">must not exist</text><path d="M596,132 L596,179.9316 L444.98,234.84 L596,187.9316 L596,187.9316 A0,0 0 0 0 596,187.9316 L768,187.9316 A0,0 0 0 0 768,187.9316 L768,142 L758,132 L596,132 A0,0 0 0 0 596,132 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M758,132 L758,142 L768,142 L758,132 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="602" y="149.5684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="148" x="602" y="164.8789">remove org: cascade all</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="151" x="602" y="180.1895">timesheets and projects</text><ellipse cx="393.1409" cy="403.0282" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="105.6409" ry="23.5282" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="176" x="305.1409" y="406.3192">[list | add | rm] org admin</text><path d="M625,314 L625,349.91 L470.16,386.81 L625,357.91 L625,369.9316 A0,0 0 0 0 625,369.9316 L739,369.9316 A0,0 0 0 0 739,369.9316 L739,324 L729,314 L625,314 A0,0 0 0 0 625,314 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M729,314 L729,324 L739,324 L729,314 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="631" y="331.5684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="93" x="631" y="346.8789">cannot remove</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="89" x="631" y="362.1895">User as admin</text><ellipse cx="392.9977" cy="511.7995" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="136.9977" ry="29.7995" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="243" x="271.4977" y="515.0906">[list | add | rm] [project | timesheet]</text><path d="M605,603 L605,658.9316 A0,0 0 0 0 605,658.9316 L759,658.9316 A0,0 0 0 0 759,658.9316 L759,613 L749,603 L617.4,603 L458.05,538.56 L609.4,603 L605,603 A0,0 0 0 0 605,603 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M749,603 L749,613 L759,613 L749,603 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="61" x="611" y="620.5684">≪trigger≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="118" x="611" y="635.8789">add timesheet: init</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="133" x="611" y="651.1895">ts domain as genesis</text><path d="M612,512 L612,529.24 L518.63,524.16 L612,537.24 L612,567.9316 A0,0 0 0 0 612,567.9316 L752,567.9316 A0,0 0 0 0 752,567.9316 L752,522 L742,512 L612,512 A0,0 0 0 0 612,512 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M742,512 L742,522 L752,522 L742,512 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="618" y="529.5684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="99" x="618" y="544.8789">add: owned @id</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="119" x="618" y="560.1895">must have account</text><path d="M598,405.5 L598,457.57 L484.41,489.63 L598,465.57 L598,476.7422 A0,0 0 0 0 598,476.7422 L766,476.7422 A0,0 0 0 0 766,476.7422 L766,415.5 L756,405.5 L598,405.5 A0,0 0 0 0 598,405.5 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M756,405.5 L756,415.5 L766,415.5 L756,405.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="604" y="423.0684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="56" x="604" y="438.3789">owned is</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="79" x="664" y="438.3789">composition</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4" x="743" y="438.3789">,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="147" x="604" y="453.6895">cascade create &amp; delete</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="124" x="604" y="469">of account property</text><ellipse cx="392.7638" cy="627.7528" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="141.7638" ry="30.7528" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="253" x="266.2638" y="631.0438">[list | add | rm] timesheet project link</text><path d="M614,694.5 L614,735.1211 A0,0 0 0 0 614,735.1211 L750,735.1211 A0,0 0 0 0 750,735.1211 L750,704.5 L740,694.5 L622,694.5 L477.01,653.16 L614,694.5 L614,694.5 A0,0 0 0 0 614,694.5 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M740,694.5 L740,704.5 L750,704.5 L740,694.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="83" x="620" y="712.0684">≪constraint≫</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="115" x="620" y="727.3789">project must exist</text><ellipse cx="392.8196" cy="757.1639" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="98.8196" ry="22.1639" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="161" x="312.3196" y="760.4549">revoke all device access</text><path d="M597.5,770.5 L597.5,787.73 L472.04,770.32 L597.5,795.73 L597.5,841.7422 A0,0 0 0 0 597.5,841.7422 L766.5,841.7422 A0,0 0 0 0 766.5,841.7422 L766.5,780.5 L756.5,770.5 L597.5,770.5 A0,0 0 0 0 597.5,770.5 " fill="#FBFB77" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M756.5,770.5 L756.5,780.5 L766.5,780.5 L756.5,770.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="134" x="603.5" y="788.0684">saves having to track</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="128" x="603.5" y="803.3789">devices individually.</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="148" x="603.5" y="818.6895">Followed by re-activate</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="106" x="603.5" y="834">of current device</text><!--MD5=[fee662a292a0353a69bd162820bae93b]
+entity User--><ellipse cx="21.5" cy="449" fill="#FEFECE" filter="url(#f164d3xvuinjhz)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><path d="M21.5,457 L21.5,484 M8.5,465 L34.5,465 M21.5,484 L8.5,499 M21.5,484 L34.5,499 " fill="none" filter="url(#f164d3xvuinjhz)" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="31" x="6" y="518.0352">User</text><!--MD5=[0af43a27ea7d8c7c70a340bcf4789f34]
+link User to userAdminEmail--><path d="M22.08,439.42 C23.72,397.43 32.29,332.09 67,289 C125.15,216.82 230.22,186.26 305.15,173.36 " fill="none" id="User-to-userAdminEmail" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="310.49,172.46,300.9514,170.0075,305.5592,173.2889,302.2777,177.8967,310.49,172.46" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="97" x="94.5" y="192.5684">if User Account</text><!--MD5=[7c4e8a6294297ff40244c57d595087aa]
+link User to userAdminOrg--><path d="M37,447.65 C44.43,433.79 54.56,418.25 67,407 C145.64,335.85 262.55,290.55 332.62,268.04 " fill="none" id="User-to-userAdminOrg" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="337.58,266.46,327.7917,265.3699,332.8142,267.9725,330.2116,272.9951,337.58,266.46" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="97" x="94.5" y="310.5684">if User Account</text><!--MD5=[cff2b2305a54a52442aac09815baeff1]
+link User to orgAdmin--><path d="M37.18,474.49 C45.78,471.4 56.91,467.65 67,465 C144.84,444.56 234.82,427.92 300.34,417.05 " fill="none" id="User-to-orgAdmin" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="305.41,416.21,295.8783,413.7306,300.4769,417.025,297.1824,421.6236,305.41,416.21" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="150" x="68" y="428.5684">if Organisation Account</text><!--MD5=[98906cbddb6f364f9cfc9ce6cd6edf22]
+link User to ownedAdmin--><path d="M37.44,481.29 C74.84,484.53 175.54,493.25 260.11,500.58 " fill="none" id="User-to-ownedAdmin" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="265.14,501.01,256.5156,496.2539,260.1584,500.5818,255.8305,504.2245,265.14,501.01" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[569a3ea65b6b2dbb90f755b559debcf2]
+link User to [list | add | rm] timesheet project link--><path d="M37.04,488.9 C45.6,493.95 56.72,500.2 67,505 C147.34,542.51 242.55,577.49 309.08,600.49 " fill="none" id="User-to-[list | add | rm] timesheet project link" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="313.82,602.12,306.6376,595.3811,309.0985,600.4746,304.005,602.9355,313.82,602.12" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[1b6fd5439fea7a63f90296fd4123bb53]
+link User to revoke all device access--><path d="M35.41,520.87 C42.62,539.18 53.02,560.16 67,576 C139.52,658.16 258.68,710.92 330.8,737.16 " fill="none" id="User-to-revoke all device access" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="335.91,739.01,328.8005,732.1942,331.2065,737.3139,326.0868,739.7198,335.91,739.01" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[2423cdf89dda38ed0a4f7c87394d5da5]
 @startuml
 'https://plantuml.com/use-case-diagram
 left to right direction
 
-actor "User account owner or\nOrganisation acc admin" as user
-package "Account administration session" {
-  user - -> (view account)
-  user - -> ([add | rm] email)
-  user - -> ([add | rm] device)
-  user - -> (view organisation)
-  user - -> (add [admin | member])
-  user - -> (rm [admin | member])
-  user - -> (list [projects | timesheets])
-  user - -> (view [project | timesheet])
-  user - -> (rm [project | timesheet])
-  user - -> (create project)
-  user - -> (add timesheet to project)
-  user - -> (rm timesheet from project)
+actor User
+package "Account administration" {
+  note "≪constraint≫ on all\nUser must be account owner OR admin" as appliesToAll
+
+  usecase userAdminEmail as ([list | add | rm] email)
+  User - -> userAdminEmail: if User Account
+  note right of userAdminEmail
+    ' TODO
+    ≪constraint≫
+    add email: requires
+    emailed activation
+  end note
+
+  usecase userAdminOrg as ([list | add | rm] org])
+  User - -> userAdminOrg: if User Account
+  note right of userAdminOrg
+    ≪constraint≫
+    add org: org
+    must not exist
+  end note
+  note right of userAdminOrg
+    ≪constraint≫
+    remove org: cascade all
+    timesheets and projects
+  end note
+  usecase orgAdmin as ([list | add | rm] org admin)
+  User - -> orgAdmin: if Organisation Account
+  note right of orgAdmin
+    ≪constraint≫
+    cannot remove
+    User as admin
+  end note
+
+  usecase ownedAdmin as ([list | add | rm] [project | timesheet])
+  User - -> ownedAdmin
+  note right of ownedAdmin
+    ≪trigger≫
+    add timesheet: init
+    ts domain as genesis
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    add: owned @id
+    must have account
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    owned is //composition//,
+    cascade create & delete
+    of account property
+  end note
+
+  User - -> ([list | add | rm] timesheet project link)
+  note right
+    ≪constraint≫
+    project must exist
+  end note
+
+  ' TODO
+  User - -> (revoke all device access)
+  note right
+    saves having to track
+    devices individually.
+    Followed by re-activate
+    of current device
+  end note
 }
 
 @enduml
@@ -38,20 +84,70 @@ package "Account administration session" {
 @startuml
 left to right direction
 
-actor "User account owner or\nOrganisation acc admin" as user
-package "Account administration session" {
-  user - -> (view account)
-  user - -> ([add | rm] email)
-  user - -> ([add | rm] device)
-  user - -> (view organisation)
-  user - -> (add [admin | member])
-  user - -> (rm [admin | member])
-  user - -> (list [projects | timesheets])
-  user - -> (view [project | timesheet])
-  user - -> (rm [project | timesheet])
-  user - -> (create project)
-  user - -> (add timesheet to project)
-  user - -> (rm timesheet from project)
+actor User
+package "Account administration" {
+  note "≪constraint≫ on all\nUser must be account owner OR admin" as appliesToAll
+
+  usecase userAdminEmail as ([list | add | rm] email)
+  User - -> userAdminEmail: if User Account
+  note right of userAdminEmail
+    ≪constraint≫
+    add email: requires
+    emailed activation
+  end note
+
+  usecase userAdminOrg as ([list | add | rm] org])
+  User - -> userAdminOrg: if User Account
+  note right of userAdminOrg
+    ≪constraint≫
+    add org: org
+    must not exist
+  end note
+  note right of userAdminOrg
+    ≪constraint≫
+    remove org: cascade all
+    timesheets and projects
+  end note
+  usecase orgAdmin as ([list | add | rm] org admin)
+  User - -> orgAdmin: if Organisation Account
+  note right of orgAdmin
+    ≪constraint≫
+    cannot remove
+    User as admin
+  end note
+
+  usecase ownedAdmin as ([list | add | rm] [project | timesheet])
+  User - -> ownedAdmin
+  note right of ownedAdmin
+    ≪trigger≫
+    add timesheet: init
+    ts domain as genesis
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    add: owned @id
+    must have account
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    owned is //composition//,
+    cascade create & delete
+    of account property
+  end note
+
+  User - -> ([list | add | rm] timesheet project link)
+  note right
+    ≪constraint≫
+    project must exist
+  end note
+
+  User - -> (revoke all device access)
+  note right
+    saves having to track
+    devices individually.
+    Followed by re-activate
+    of current device
+  end note
 }
 
 @enduml

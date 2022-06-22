@@ -1,14 +1,15 @@
 import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
-import { propertyValue, uuid } from '@m-ld/m-ld';
-import { AblyKey, Env, timeldContext, TimesheetId } from 'timeld-common';
+import { uuid } from '@m-ld/m-ld';
+import { AblyKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import errors from 'restify-errors';
+import { accountHasTimesheet, Ask } from './statements.mjs';
 
-export default class Gateway {
+export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
@@ -16,8 +17,7 @@ export default class Gateway {
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
-    if (config['@domain'] == null)
-      throw new RangeError('No domain specified for Gateway');
+    super(config['@domain']);
     this.env = env;
     this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
       ...config,
@@ -31,10 +31,6 @@ export default class Gateway {
     this.ablyApi = ablyApi;
     this.timesheetDomains =
       /**@type {{ [name: string]: import('@m-ld/m-ld').MeldClone }}*/{};
-  }
-
-  get domainName() {
-    return this.config['@domain'];
   }
 
   async initialise() {
@@ -55,10 +51,10 @@ export default class Gateway {
       // noinspection JSCheckFunctionSignatures
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
-          safeTimesheetRefsIn(subject).map(tsRef =>
+          safeRefsIn(subject, 'timesheet').map(tsRef =>
             this.timesheetRemoved(this.tsRefAsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
-          safeTimesheetRefsIn(subject).map(tsRef =>
+          safeRefsIn(subject, 'timesheet').map(tsRef =>
             this.timesheetAdded(this.tsRefAsId(tsRef)))))
       ]);
     });
@@ -66,22 +62,7 @@ export default class Gateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Reference} tsRef
-   * @returns {TimesheetId}
-   */
-  tsRefAsId(tsRef) {
-    // A timesheet reference may be relative to the domain base
-    return TimesheetId.fromUrl(new URL(tsRef['@id'], `http://${this.domainName}`));
-  }
-
-  tsId(account, timesheet) {
-    return new TimesheetId({
-      gateway: this.domainName, account, timesheet
-    });
-  }
-
-  /**
-   * @param {TimesheetId} tsId timesheet to clone
+   * @param {AccountSubId} tsId timesheet to clone
    * @param {boolean} genesis whether timesheet is expected to be new
    */
   async cloneTimesheet(tsId, genesis = false) {
@@ -94,7 +75,7 @@ export default class Gateway {
   }
 
   getDataPath(tsId) {
-    return this.env.readyPath('data', 'tsh', tsId.account, tsId.timesheet);
+    return this.env.readyPath('data', 'tsh', tsId.account, tsId.name);
   }
 
   async timesheetAdded(tsId) {
@@ -132,12 +113,21 @@ export default class Gateway {
 
   /**
    * @param {string} account name
+   * @param {true} [orCreate] allow creation of new account
    * @returns {Promise<Account | undefined>}
    */
-  async account(account) {
-    const src = await this.domain.get(account);
-    if (src != null)
-      return Account.fromJSON(this, src);
+  async account(account, { orCreate } = {}) {
+    let acc;
+    await this.domain.write(async state => {
+      const src = await state.get(account);
+      if (src != null) {
+        acc = Account.fromJSON(this, src);
+      } else if (orCreate) {
+        acc = new Account(this, { name: account });
+        await state.write(acc.toJSON());
+      }
+    });
+    return acc;
   }
 
   /**
@@ -174,7 +164,10 @@ export default class Gateway {
   /**
    * Gets the m-ld configuration for a timesheet. Calling this method will
    * create the timesheet if it does not already exist.
-   * @param {TimesheetId} tsId
+   *
+   * The caller must have already checked user access to the timesheet.
+   *
+   * @param {AccountSubId} tsId
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
    */
   async timesheetConfig(tsId) {
@@ -182,22 +175,10 @@ export default class Gateway {
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
-        // Genesis if the timesheet is not already in the account
-        // TODO: Use `ask` in m-ld-js v0.9
-        const accountHasTimesheet = {
-          '@id': tsId.account, timesheet: { '@id': tsId.toUrl() }
-        };
-        const genesis = !(await state.read({
-          '@select': '?', '@where': accountHasTimesheet
-        })).length;
-        // If genesis, check that this timesheet has not existed before
-        if (genesis && await this.tsTombstoneExists(tsId))
-          throw new errors.ConflictError();
-        const ts = await this.cloneTimesheet(tsId, genesis);
-        // Ensure that the clone is online to avoid race with the client
-        await ts.status.becomes({ online: true });
+        const genesis = !(await new Ask(state).exists(accountHasTimesheet(tsId)));
+        await this.initTimesheet(tsId, genesis);
         // Ensure the timesheet is in the domain
-        await state.write(accountHasTimesheet);
+        await state.write(accountHasTimesheet(tsId));
       });
     }
     // Return the config required for a new clone
@@ -206,6 +187,21 @@ export default class Gateway {
       '@domain': tsId.toDomain(),
       ably: { key: false } // Remove our secret
     }), { genesis: false }); // Definitely not genesis
+  }
+
+  /**
+   * @param {AccountSubId} tsId
+   * @param {boolean} genesis
+   * @returns {Promise<import('@m-ld/m-ld').Query>}
+   */
+  async initTimesheet(tsId, genesis) {
+    // Genesis if the timesheet is not already in the account
+    // If genesis, check that this timesheet has not existed before
+    if (genesis && await this.tsTombstoneExists(tsId))
+      throw new errors.ConflictError();
+    const ts = await this.cloneTimesheet(tsId, genesis);
+    // Ensure that the clone is online to avoid race with the client
+    await ts.status.becomes({ online: true });
   }
 
   close() {
@@ -217,16 +213,3 @@ export default class Gateway {
   }
 }
 
-/**
- * @param subject may contain `timesheet` property
- * @returns {import('@m-ld/m-ld').Reference[]}
- */
-function safeTimesheetRefsIn(subject) {
-  try {
-    // TODO: Use Array of Reference in m-ld-js v0.9
-    return propertyValue(subject, 'timesheet', Array, Object)
-      .filter(ref => ref['@id'] != null);
-  } catch (e) {
-    return [];
-  }
-}

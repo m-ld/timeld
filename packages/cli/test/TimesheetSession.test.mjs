@@ -1,21 +1,15 @@
 import { describe, expect, jest, test } from '@jest/globals';
-import { BehaviorSubject } from 'rxjs';
+import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
 import { clone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
-import Session from '../lib/Session.mjs';
+import TimesheetSession from '../lib/TimesheetSession.mjs';
 import { fileSync } from 'tmp';
-
-// noinspection JSUnusedGlobalSymbols
-class DeadRemotes {
-  live = new BehaviorSubject(false);
-  setLocal() {}
-}
 
 describe('CLI Session', () => {
   let /**@type string*/id;
   let /**@type import('@m-ld/m-ld').MeldClone*/meld;
   let /**@type import('tmp').FileSyncObject*/logFile;
-  let /**@type Session*/session;
+  let /**@type TimesheetSession*/session;
 
   beforeEach(async () => {
     id = uuid();
@@ -27,7 +21,7 @@ describe('CLI Session', () => {
     });
     // noinspection JSCheckFunctionSignatures
     logFile = fileSync();
-    session = new Session({
+    session = new TimesheetSession({
       id, timesheet: 'test', providerId: 'http://alice.example/#profile',
       logLevel: 'DEBUG', logFile: logFile.name, meld
     });

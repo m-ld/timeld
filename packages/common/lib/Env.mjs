@@ -36,7 +36,9 @@ export default class Env {
    * @returns {yargs.Argv<{}>}
    */
   baseYargs(args = hideBin(process.argv)) {
+    // noinspection SpellCheckingInspection
     return createYargs(args)
+      .updateStrings({ 'Positionals:': 'Details:' })
       .parserConfiguration({ 'strip-dashed': true, 'strip-aliased': true });
   }
 

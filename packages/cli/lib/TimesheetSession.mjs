@@ -1,14 +1,15 @@
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
-import { Proc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
+import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
 import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
 import { ResultsProc } from './ResultsProc.mjs';
 import { dateJsonLd, parseDate, parseDuration } from './util.mjs';
 import { Entry } from './Entry.mjs';
-import { DefaultFormat, jsonLdFormat } from './Format.mjs';
+import { DefaultEntryFormat, JSON_LD_GRAPH } from './DisplayFormat.mjs';
+import { PromiseProc } from './PromiseProc.mjs';
 
-export default class Session extends Repl {
+export default class TimesheetSession extends Repl {
   /**
    * @param {string} spec.id
    * @param {string} spec.timesheet
@@ -20,7 +21,7 @@ export default class Session extends Repl {
   constructor(spec) {
     super({ logLevel: spec.logLevel, prompt: `${(spec.timesheet)}>` });
     this.id = spec.id;
-    this.timesheet = spec.timesheet;
+    this.name = spec.timesheet;
     this.providerId = spec.providerId;
     this.meld = spec.meld;
     this.logFile = spec.logFile;
@@ -32,7 +33,6 @@ export default class Session extends Repl {
     const COMPLETES_ENTRY = '. Using this option will mark the entry complete.';
     // noinspection JSCheckFunctionSignatures
     return yargs
-      .updateStrings({ 'Positionals:': 'Details:' })
       .command(fileCmd(ctx))
       .command(
         'log',
@@ -134,11 +134,11 @@ export default class Session extends Repl {
     return new ResultsProc(this.meld.read({
       '@describe': '?activity',
       '@where': { '@id': '?activity', '@type': 'Entry' }
-    }), {
-      'JSON-LD': jsonLdFormat,
-      'json-ld': jsonLdFormat,
-      ld: jsonLdFormat
-    }[format] || new DefaultFormat(this));
+    }).consume, {
+      'JSON-LD': JSON_LD_GRAPH,
+      'json-ld': JSON_LD_GRAPH,
+      ld: JSON_LD_GRAPH
+    }[format] || new DefaultEntryFormat(this));
   }
 
   /**
@@ -244,13 +244,5 @@ export default class Session extends Repl {
   async close() {
     await this.meld?.close();
     await super.close();
-  }
-}
-
-class PromiseProc extends Proc {
-  /** @param {Promise} promise */
-  constructor(promise) {
-    super();
-    promise.then(() => this.setDone(), this.setDone);
   }
 }

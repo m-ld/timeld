@@ -2,20 +2,72 @@
 'https://plantuml.com/use-case-diagram
 left to right direction
 
-actor "User account owner or\nOrganisation acc admin" as user
-package "Account administration session" {
-  user --> (view account)
-  user --> ([add | rm] email)
-  user --> ([add | rm] device)
-  user --> (view organisation)
-  user --> (add [admin | member])
-  user --> (rm [admin | member])
-  user --> (list [projects | timesheets])
-  user --> (view [project | timesheet])
-  user --> (rm [project | timesheet])
-  user --> (create project)
-  user --> (add timesheet to project)
-  user --> (rm timesheet from project)
+actor User
+package "Account administration" {
+  note "≪constraint≫ on all\nUser must be account owner OR admin" as appliesToAll
+
+  usecase userAdminEmail as ([list | add | rm] email)
+  User --> userAdminEmail: if User Account
+  note right of userAdminEmail
+    ' TODO
+    ≪constraint≫
+    add email: requires
+    emailed activation
+  end note
+
+  usecase userAdminOrg as ([list | add | rm] org])
+  User --> userAdminOrg: if User Account
+  note right of userAdminOrg
+    ≪constraint≫
+    add org: org
+    must not exist
+  end note
+  note right of userAdminOrg
+    ≪constraint≫
+    remove org: cascade all
+    timesheets and projects
+  end note
+  usecase orgAdmin as ([list | add | rm] org admin)
+  User --> orgAdmin: if Organisation Account
+  note right of orgAdmin
+    ≪constraint≫
+    cannot remove
+    User as admin
+  end note
+
+  usecase ownedAdmin as ([list | add | rm] [project | timesheet])
+  User --> ownedAdmin
+  note right of ownedAdmin
+    ≪trigger≫
+    add timesheet: init
+    ts domain as genesis
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    add: owned @id
+    must have account
+  end note
+  note right of ownedAdmin
+    ≪constraint≫
+    owned is //composition//,
+    cascade create & delete
+    of account property
+  end note
+
+  User --> ([list | add | rm] timesheet project link)
+  note right
+    ≪constraint≫
+    project must exist
+  end note
+
+  ' TODO
+  User --> (revoke all device access)
+  note right
+    saves having to track
+    devices individually.
+    Followed by re-activate
+    of current device
+  end note
 }
 
 @enduml

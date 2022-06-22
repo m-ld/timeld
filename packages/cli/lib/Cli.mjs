@@ -1,11 +1,12 @@
-import { clone, Env, TimesheetId } from 'timeld-common';
+import { AccountSubId, clone, Env } from 'timeld-common';
 import { createWriteStream } from 'fs';
 import { once } from 'events';
 import GatewayClient from './GatewayClient.mjs';
 import DomainConfigurator from './DomainConfigurator.mjs';
-import Session from './Session.mjs';
+import TimesheetSession from './TimesheetSession.mjs';
 import readline from 'readline';
 import { promisify } from 'util';
+import AdminSession from './AdminSession.mjs';
 
 export default class Cli {
   /**
@@ -33,7 +34,7 @@ export default class Cli {
       .option('account', {
         alias: 'acc',
         type: 'string',
-        describe: 'The default account for creating timesheets'
+        describe: 'The default account for creating timesheets or admin'
       })
       .option('gateway', {
         alias: 'gw',
@@ -43,7 +44,7 @@ export default class Cli {
       .option('user', {
         alias: 'u',
         type: 'string',
-        describe: 'The user account, as a URL or a name',
+        describe: 'The user account, as a URL or a name'
       })
       .command(
         ['config', 'cfg'],
@@ -67,7 +68,7 @@ export default class Cli {
       )
       .command(
         ['open <timesheet>', 'o'],
-        'open a timesheet session',
+        'Open a timesheet session',
         yargs => yargs
           .positional('timesheet', {
             describe: 'Timesheet identity, can include ' +
@@ -76,13 +77,13 @@ export default class Cli {
           })
           .middleware(argv => {
             // Interpret a timesheet with account and/or gateway
-            const { timesheet, account, gateway } =
-              TimesheetId.fromString(argv.timesheet);
+            const { name, account, gateway } =
+              AccountSubId.fromString(argv.timesheet);
             if (gateway != null)
               argv.gateway = gateway;
             if (account != null)
               argv.account = account;
-            argv.timesheet = timesheet;
+            argv.timesheet = name;
             // If a user is provided but no account, use the user account
             if (argv.gateway != null && argv.account == null)
               argv.account = argv.user;
@@ -94,10 +95,26 @@ export default class Cli {
           .demandOption('account')
           .demandOption('user')
           .check(argv => {
-            new TimesheetId(argv).validate();
+            const { timesheet, account, gateway } = argv;
+            new AccountSubId({ name: timesheet, account, gateway }).validate();
             return true;
           }),
-        argv => this.openCmd(argv))
+        argv => this.openCmd(argv)
+      )
+      .command(
+        ['admin', 'a'],
+        'Start an administration session',
+        yargs => yargs
+          .middleware(argv => {
+            // If a user is provided but no account, use the user account
+            if (argv.account == null)
+              argv.account = argv.user;
+          }, true)
+          .demandOption('gateway')
+          .demandOption('account')
+          .demandOption('user'),
+        argv => this.adminCmd(argv)
+      )
       .demandCommand()
       .strictCommands()
       .help()
@@ -109,9 +126,9 @@ export default class Cli {
    * @returns {Promise<void>}
    */
   async openCmd(argv) {
+    const gateway = argv.gateway ? await this.openGatewayClient(argv) : null;
+    const { config, principal } = await new DomainConfigurator(argv, gateway).load();
     try {
-      const gateway = argv.gateway ? new GatewayClient(argv.gateway) : null;
-      const { config, principal } = await this.loadMeldConfig(argv, gateway);
       // Start the m-ld clone
       const { meld, logFile } = await this.createMeldClone(config, principal);
       return this.createSession(config, principal, meld, logFile)
@@ -125,24 +142,25 @@ export default class Cli {
     }
   }
 
-  async loadMeldConfig(argv, gateway) {
+  async adminCmd(argv) {
+    const gateway = await this.openGatewayClient(argv);
+    const { account, logLevel } = argv;
+    new AdminSession({ gateway, account, logLevel })
+      .start({ console: this.console });
+  }
+
+  async openGatewayClient(argv) {
     const { input, output } = this;
     const rl = readline.createInterface({ input, output });
     try {
       const ask = promisify(rl.question).bind(rl);
-      const { config, principal } = await new DomainConfigurator(argv, gateway, ask).load();
-      // Save any new globally-applicable config
-      await this.env.updateConfig(...Cli.globalConfigs(config));
-      return { config, principal };
+      const gateway = new GatewayClient(argv);
+      await gateway.activate(ask);
+      await this.env.updateConfig(gateway.accessConfig);
+      return gateway;
     } finally {
       rl.close();
     }
-  }
-
-  /** Picks out configuration that makes sense to store as global defaults */
-  static *globalConfigs(config) {
-    yield { user: config.user };
-    yield { ably: { key: config['ably']?.key } };
   }
 
   /**
@@ -151,7 +169,7 @@ export default class Cli {
    * @returns {Promise<{meld: import('@m-ld/m-ld').MeldClone, logFile: string}>}
    */
   async createMeldClone(config, principal) {
-    const tsId = TimesheetId.fromDomain(config['@domain']);
+    const tsId = AccountSubId.fromDomain(config['@domain']);
     const logFile = await this.setUpLogging(tsId.toPath());
     const dataDir = await this.env.readyPath('data', ...tsId.toPath());
     // noinspection JSCheckFunctionSignatures
@@ -163,10 +181,10 @@ export default class Cli {
    * @param {import('@m-ld/m-ld').AppPrincipal} principal
    * @param {import('@m-ld/m-ld').MeldClone} meld
    * @param {string} logFile
-   * @returns {Session}
+   * @returns {TimesheetSession}
    */
   createSession(config, principal, meld, logFile) {
-    return new Session({
+    return new TimesheetSession({
       id: config['@id'],
       timesheet: config.timesheet,
       providerId: principal['@id'],
@@ -211,23 +229,22 @@ export default class Cli {
 
   async listCmd() {
     for (let dir of await this.env.envDirs('data'))
-      this.console.log(TimesheetId.fromPath(dir).toString());
+      this.console.log(AccountSubId.fromPath(dir).toString());
   }
-
   /**
    * @param {*} argv.timesheet as tmId
    * @param {boolean} [argv.force]
    */
   async removeCmd(argv) {
-    const { timesheet, account, gateway } = TimesheetId.fromString(argv.timesheet);
+    const { name, account, gateway } = AccountSubId.fromString(argv.timesheet);
     const pattern = new RegExp(
-      `${account || '[\\w-]+'}/${timesheet || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
+      `${account || '[\\w-]+'}/${name || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
       'g');
     if (!argv.force)
       this.console.info('If you use --force, ' +
         'these local timesheets will be deleted:');
     for (let path of await this.env.envDirs('data')) {
-      const tsId = TimesheetId.fromPath(path);
+      const tsId = AccountSubId.fromPath(path);
       if (tsId.toString().match(pattern)) {
         if (argv.force) {
           await this.env.delEnvDir('data', path, { force: true });

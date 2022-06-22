@@ -43,7 +43,7 @@ package ts {
 
     class Project {
         startDate : xsd:dateTime
-        duration : om2:Duration
+        duration : xsd:decimal
         milestone : xsd:string
         client : foaf:Agent [0..1]
         vf:provider : foaf:Agent
