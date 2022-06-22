@@ -14,3 +14,15 @@ export function safeRefsIn(subject, property) {
     return [];
   }
 }
+
+/**
+ * @param {Date} date
+ * @returns {{'@value': string, '@type': string}}
+ * @todo replace with normaliseValue in m-ld-js v0.9
+ */
+export function dateJsonLd(date) {
+  return {
+    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+    '@value': date.toISOString()
+  };
+}

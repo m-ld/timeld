@@ -1,7 +1,7 @@
 import restify from 'restify';
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { AccountSubId, clone, Env, ResultsReadable } from 'timeld-common';
+import { AccountOwnedId, clone, Env, ResultsReadable } from 'timeld-common';
 import AblyApi from './lib/AblyApi.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
@@ -49,10 +49,10 @@ server.on('InternalServer', function (req, res, err, cb) {
 });
 const ND_JSON = { stringify: JSON.stringify, separator: '\n' };
 
-server.get('/api/:user/jwe',
+server.get('/api/jwe/:user',
   async (req, res, next) => {
     const { user, email } = req.params;
-    if (!AccountSubId.isComponentId(user))
+    if (!AccountOwnedId.isComponentId(user))
       return next(new errors.BadRequestError('Bad user %s', user));
     if (!email || !isEmail(email))
       return next(new errors.BadRequestError('Bad email %s', email));
@@ -66,7 +66,7 @@ server.get('/api/:user/jwe',
     }
   });
 
-server.get('/api/:user/key',
+server.get('/api/key/:user',
   async (req, res, next) => {
     try {
       const auth = new Authorization(gateway, req);
@@ -82,15 +82,15 @@ server.get('/api/:user/key',
     }
   });
 
-server.get('/api/:account/tsh/:timesheet/cfg',
+server.get('/api/cfg/:account/tsh/:timesheet',
   async (req, res, next) => {
     // account is the timesheet account (may not be user account)
     const { account, timesheet } = req.params;
     try {
-      const tsId = gateway.tsId(account, timesheet).validate();
+      const owned = gateway.ownedId(account, timesheet).validate();
       try {
-        await new Authorization(gateway, req).verifyUser(tsId);
-        res.json(await gateway.timesheetConfig(tsId));
+        await new Authorization(gateway, req).verifyUser(owned);
+        res.json(await gateway.timesheetConfig(owned));
       } catch (e) {
         next(e);
       }
@@ -108,11 +108,7 @@ server.post('/api/read',
       const auth = new Authorization(gateway, req);
       await auth.verifyUser();
       const acc = await gateway.account(auth.user);
-      const results = await acc.read(req.body);
-      res.header('transfer-encoding', 'chunked');
-      res.header('content-type', 'application/x-ndjson');
-      res.status(200);
-      await pipeline(new ResultsReadable(results, ND_JSON), res);
+      await sendStream(res, await acc.read(req.body));
       next();
     } catch (e) {
       next(e);
@@ -132,6 +128,31 @@ server.post('/api/write',
       next(e);
     }
   });
+
+server.get('/api/rpt/:account/own/:owned',
+  async (req, res, next) => {
+    const { account, owned } = req.params;
+    try {
+      const ownedId = gateway.ownedId(account, owned).validate();
+      await new Authorization(gateway, req).verifyUser(ownedId);
+      await sendStream(res, await gateway.report(ownedId));
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
+
+/**
+ * @param {import('restify').Response} res
+ * @param {Results} results
+ * @returns {Promise<void>}
+ */
+async function sendStream(res, results) {
+  res.header('transfer-encoding', 'chunked');
+  res.header('content-type', 'application/x-ndjson');
+  res.status(200);
+  await pipeline(new ResultsReadable(results, ND_JSON), res);
+}
 
 server.listen(8080, function () {
   // noinspection JSUnresolvedVariable

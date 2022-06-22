@@ -73,19 +73,19 @@ export default class Account {
    * Verifies the given JWT for this account.
    *
    * @param {string} jwt a JWT containing a keyid associated with this Account
-   * @param {AccountSubId} [tsId] a timesheet for which access is requested
+   * @param {AccountOwnedId} [ownedId] a timesheet or project ID for which access is requested
    * @returns {Promise<import('jsonwebtoken').JwtPayload>}
    */
-  async verify(jwt, tsId) {
+  async verify(jwt, ownedId) {
     // Verify the JWT against its declared keyid
     const payload = await verify(jwt, async header => {
-      // TODO: Check for write access to the timesheet
+      // TODO: Check for write access to the owned ID
       if (!this.keyids.has(header.kid))
         throw new Error(`Key ${header.kid} does not belong to account ${this.name}`);
       // Update the capability of the key to include the timesheet.
       // This also serves as a check that the key exists.
       // TODO: Include access via organisations
-      const authorisedTsIds = [...this.tsIds()].concat(tsId ?? []);
+      const authorisedTsIds = [...this.tsIds()].concat(ownedId ?? []);
       const keyDetail = await this.gateway.ablyApi.updateAppKey(header.kid, {
         capability: this.keyCapability(...authorisedTsIds)
       });
@@ -396,7 +396,7 @@ export default class Account {
   interceptInsertTimesheet = async (state, query) => {
     const tsRef = query['@insert']['timesheet'];
     if (tsRef != null) {
-      const tsId = this.gateway.tsRefAsId(tsRef);
+      const tsId = this.gateway.ownedRefAsId(tsRef);
       if (tsId.account !== query['@insert']['@id'])
         throw new errors.BadRequestError('Timesheet does not match account');
       const ask = new Ask(state);
@@ -426,11 +426,11 @@ export default class Account {
    */
   *tsIds() {
     for (let tsRef of this.timesheets)
-      yield this.gateway.tsRefAsId(tsRef);
+      yield this.gateway.ownedRefAsId(tsRef);
   }
 
   /**
-   * @param {AccountSubId} tsIds
+   * @param {AccountOwnedId} tsIds
    * @returns {object}
    */
   keyCapability(...tsIds) {

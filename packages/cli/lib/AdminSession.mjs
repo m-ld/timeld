@@ -1,9 +1,9 @@
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
 import { ResultsProc } from './ResultsProc.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
-import { TableFormat } from './DisplayFormat.mjs';
+import { ENTRY_FORMAT_OPTIONS, getSubjectFormat, TableFormat } from './DisplayFormat.mjs';
 import isEmail from 'validator/lib/isEmail.js';
-import { AccountSubId } from 'timeld-common';
+import { AccountOwnedId } from 'timeld-common';
 import { EMPTY } from 'rxjs';
 import { any } from '@m-ld/m-ld';
 
@@ -49,16 +49,18 @@ export default class AdminSession extends Repl {
     return yargs
       .option('project', {
         type: 'string',
-        describe: 'Project to link (use with "link")'
+        describe: 'Project (use with "link" or "report")',
+        conflicts: 'timesheet'
       })
       .option('timesheet', {
         alias: 'ts',
         type: 'string',
-        describe: 'Timesheet to link (use with "link")'
+        describe: 'Timesheet (use with "link" or "report")',
+        conflicts: 'project'
       })
       .check(argv => {
-        if (argv.detail === 'link' && !argv.project === !argv.timesheet)
-          throw 'Link requires "--project" or "--timesheet"';
+        if (argv.detail === 'link' && !argv.project && !argv.timesheet)
+          return 'Link requires a "--project" or "--timesheet"';
         return true;
       })
       .command(
@@ -105,6 +107,19 @@ export default class AdminSession extends Repl {
           }),
         argv => ctx.exec(() =>
           this.getDetailHandler(argv).remove())
+      )
+      .command(
+        'report',
+        'Report on the time entries in a timesheet or project',
+        yargs => yargs
+          .option('format', ENTRY_FORMAT_OPTIONS)
+          .check(argv => {
+            if (!argv.project && !argv.timesheet)
+              return 'Reporting requires a "--project" or "--timesheet"';
+            return true;
+          }),
+        argv => ctx.exec(
+          () => this.reportEntriesProc(argv))
       );
   }
 
@@ -142,10 +157,22 @@ export default class AdminSession extends Repl {
     return new ResultsProc(this.gateway.read(pattern), format);
   }
 
+  /**
+   * @param {EntryFormatName} format
+   * @param {string} timesheet exclusive with `project`
+   * @param {string} project exclusive with `timesheet`
+   * @returns {Proc}
+   */
+  reportEntriesProc({ format, timesheet, project }) {
+    return new ResultsProc(
+      this.gateway.report(this.account, timesheet || project),
+      getSubjectFormat(format));
+  }
+
   resolveId(owned) {
     if (owned) {
       // Projects share a namespace with timesheets
-      let { name, account, gateway } = AccountSubId.fromString(owned);
+      let { name, account, gateway } = AccountOwnedId.fromString(owned);
       if (gateway && gateway !== this.gateway.domainName)
         throw `Cannot write to ${gateway}`;
       account ||= this.account;
@@ -205,7 +232,7 @@ export default class AdminSession extends Repl {
       }
 
       add() {
-        if (!AccountSubId.isComponentId(org))
+        if (!AccountOwnedId.isComponentId(org))
           throw `${org} is not a valid organisation ID`;
         // I am the admin of any org I create
         return this.session.writeProc(this.session.userIsAdmin(org));
@@ -235,7 +262,7 @@ export default class AdminSession extends Repl {
       }
 
       update(verb) {
-        if (!AccountSubId.isComponentId(admin))
+        if (!AccountOwnedId.isComponentId(admin))
           throw `${admin} is not a valid user name`;
         return this.session.writeProc({
           [verb]: {

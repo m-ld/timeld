@@ -4,10 +4,11 @@ import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
 import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
 import { ResultsProc } from './ResultsProc.mjs';
-import { dateJsonLd, parseDate, parseDuration } from './util.mjs';
-import { Entry } from './Entry.mjs';
-import { DefaultEntryFormat, JSON_LD_GRAPH } from './DisplayFormat.mjs';
+import { parseDate, parseDuration } from './util.mjs';
+import { Entry } from 'timeld-common';
+import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
+import { dateJsonLd } from 'timeld-common/lib/util.mjs';
 
 export default class TimesheetSession extends Repl {
   /**
@@ -111,14 +112,7 @@ export default class TimesheetSession extends Repl {
             type: 'string',
             default: 'today'
           })
-          .option('format', {
-            describe: 'Timesheet format to use',
-            choices: [
-              'default',
-              'JSON-LD', 'json-ld', 'ld'
-            ],
-            default: 'default'
-          }),
+          .option('format', ENTRY_FORMAT_OPTIONS),
         argv => ctx.exec(
           () => this.listEntriesProc(argv))
       );
@@ -126,19 +120,18 @@ export default class TimesheetSession extends Repl {
 
   /**
    * @param {string} selector
-   * @param {'default'|'JSON-LD'} format
+   * @param {EntryFormatName} format
    * @returns {Proc}
    */
   listEntriesProc({ selector, format }) {
     // TODO: selectors
-    return new ResultsProc(this.meld.read({
-      '@describe': '?activity',
-      '@where': { '@id': '?activity', '@type': 'Entry' }
-    }).consume, {
-      'JSON-LD': JSON_LD_GRAPH,
-      'json-ld': JSON_LD_GRAPH,
-      ld: JSON_LD_GRAPH
-    }[format] || new DefaultEntryFormat(this));
+    return new ResultsProc(
+      this.meld.read({
+        '@describe': '?entry',
+        '@where': { '@id': '?entry', '@type': 'Entry' }
+      }).consume,
+      getSubjectFormat(format, async entry =>
+        entry.sessionId === this.id ? 'This session' : this.meld.get(entry.sessionId)));
   }
 
   /**
@@ -159,7 +152,7 @@ export default class TimesheetSession extends Repl {
           entry.duration = Entry.durationFromInterval(entry.start, end);
         if (duration != null)
           entry.duration = duration;
-        proc.emit('message', entry.toString());
+        proc.emit('message', DefaultFormat.entryLabel(entry));
         return state.write({
           '@delete': src,
           '@insert': entry.toJSON()
@@ -209,7 +202,7 @@ export default class TimesheetSession extends Repl {
     const proc = new PromiseProc(this.meld.write({
       '@graph': [entry.toJSON(), this.toJSON()]
     }).then(() => {
-      proc.emit('message', entry.toString());
+      proc.emit('message', DefaultFormat.entryLabel(entry));
       proc.emit('message', 'Use a "modify" command if this is wrong.');
     }));
     return proc;

@@ -3,7 +3,7 @@
  */
 
 /**
- * @param {import('timeld-common').AccountSubId} tsId
+ * @param {import('timeld-common').AccountOwnedId} tsId
  * @returns {Where}
  */
 export const accountHasTimesheet = tsId => ({

@@ -9,7 +9,7 @@ import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
 import Cryptr from 'cryptr';
-import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
+import { DeadRemotes, exampleEntryJson } from 'timeld-common/test/fixtures.mjs';
 import { existsSync } from 'fs';
 import { drain } from 'rx-flowable';
 
@@ -68,10 +68,10 @@ describe('Gateway', () => {
 
     test('has expected properties', () => {
       expect(gateway.domainName).toBe('ex.org');
-      expect(gateway.tsId('test', 'ts1')).toMatchObject({
+      expect(gateway.ownedId('test', 'ts1')).toMatchObject({
         gateway: 'ex.org', account: 'test', name: 'ts1'
       });
-      expect(gateway.tsRefAsId({ '@id': 'test/ts1' })).toMatchObject({
+      expect(gateway.ownedRefAsId({ '@id': 'test/ts1' })).toMatchObject({
         gateway: 'ex.org', account: 'test', name: 'ts1'
       });
     });
@@ -145,7 +145,7 @@ describe('Gateway', () => {
 
     test('gets timesheet config', async () => {
       const tsConfig = await gateway.timesheetConfig(
-        gateway.tsId('test', 'ts1'));
+        gateway.ownedId('test', 'ts1'));
       expect(tsConfig).toMatchObject({
         '@id': undefined,
         '@domain': 'ts1.test.ex.org',
@@ -172,7 +172,7 @@ describe('Gateway', () => {
 
     test('clones a new timesheet', async () => {
       await gateway.domain.write({
-        '@id': 'test', timesheet: { '@id': 'test/ts1' }
+        '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
       });
       // Doing another write awaits all follow handlers
       await gateway.domain.write({});
@@ -190,10 +190,10 @@ describe('Gateway', () => {
     });
 
     test('removes a timesheet', async () => {
-      const tsId = gateway.tsId('test', 'ts1');
+      const tsId = gateway.ownedId('test', 'ts1');
       await gateway.timesheetConfig(tsId);
       await gateway.domain.write({
-        '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } }
+        '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } }
       });
       // Doing another write awaits all follow handlers
       await gateway.domain.write({});
@@ -202,6 +202,40 @@ describe('Gateway', () => {
       // Cannot re-use a timesheet name
       await expect(gateway.timesheetConfig(tsId))
         .rejects.toThrowError();
+    });
+
+    test('reports on a timesheet', async () => {
+      const tsId = gateway.ownedId('test', 'ts1');
+      await gateway.timesheetConfig(tsId);
+      await gateway.timesheetDomains['ts1.test.ex.org']
+        .write(exampleEntryJson(new Date));
+      const report = await gateway.report(tsId);
+      await expect(drain(report)).resolves.toMatchObject([
+        { '@id': 'test/ts1', '@type': 'Timesheet' },
+        { '@id': 'session123/1', '@type': 'Entry' } // Plus a lot more
+      ]);
+    });
+
+    test('reports on a project', async () => {
+      await gateway.timesheetConfig(gateway.ownedId('test', 'ts1'));
+      await gateway.timesheetConfig(gateway.ownedId('test', 'ts2'));
+      await gateway.domain.write({
+        '@insert': [ // brittle use of direct write
+          { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
+          { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+          { '@id': 'test/ts2', project: { '@id': 'test/pr1' } }
+        ]
+      });
+      await Promise.all(['ts1', 'ts2'].map((id, i) =>
+        gateway.timesheetDomains[`${id}.test.ex.org`].write(exampleEntryJson(new Date, i))));
+      const report = await gateway.report(gateway.ownedId('test', 'pr1'));
+      await expect(drain(report)).resolves.toMatchObject([
+        { '@id': 'test/pr1', '@type': 'Project' },
+        { '@id': 'test/ts1', '@type': 'Timesheet' },
+        { '@id': 'session123/0', '@type': 'Entry' },
+        { '@id': 'test/ts2', '@type': 'Timesheet' },
+        { '@id': 'session123/1', '@type': 'Entry' }
+      ]);
     });
 
     test('refuses unauthorised read', async () => {

@@ -8,6 +8,12 @@ import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import errors from 'restify-errors';
 import { accountHasTimesheet, Ask } from './statements.mjs';
+import { concat } from 'rxjs';
+import { consume } from 'rx-flowable/consume';
+
+/**
+ * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
+ */
 
 export default class Gateway extends BaseGateway {
   /**
@@ -29,8 +35,7 @@ export default class Gateway extends BaseGateway {
     this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
     this.ablyApi = ablyApi;
-    this.timesheetDomains =
-      /**@type {{ [name: string]: import('@m-ld/m-ld').MeldClone }}*/{};
+    this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
   }
 
   async initialise() {
@@ -44,7 +49,7 @@ export default class Gateway extends BaseGateway {
       state.read({
         '@select': '?tsh', '@where': { timesheet: '?tsh' }
       }).consume.subscribe(({ value, next }) => {
-        this.timesheetAdded(this.tsRefAsId(value['?tsh'])).finally(next);
+        this.timesheetAdded(this.ownedRefAsId(value['?tsh'])).finally(next);
       });
     }, update => {
       // And watch for timesheets appearing and disappearing
@@ -52,18 +57,19 @@ export default class Gateway extends BaseGateway {
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
           safeRefsIn(subject, 'timesheet').map(tsRef =>
-            this.timesheetRemoved(this.tsRefAsId(tsRef))))),
+            this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
           safeRefsIn(subject, 'timesheet').map(tsRef =>
-            this.timesheetAdded(this.tsRefAsId(tsRef)))))
+            this.timesheetAdded(this.ownedRefAsId(tsRef)))))
       ]);
     });
     return this;
   }
 
   /**
-   * @param {AccountSubId} tsId timesheet to clone
+   * @param {AccountOwnedId} tsId timesheet to clone
    * @param {boolean} genesis whether timesheet is expected to be new
+   * @returns {Promise<MeldClone>}
    */
   async cloneTimesheet(tsId, genesis = false) {
     const config = Object.assign(Env.mergeConfig(this.config, {
@@ -167,7 +173,7 @@ export default class Gateway extends BaseGateway {
    *
    * The caller must have already checked user access to the timesheet.
    *
-   * @param {AccountSubId} tsId
+   * @param {AccountOwnedId} tsId
    * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
    */
   async timesheetConfig(tsId) {
@@ -175,6 +181,7 @@ export default class Gateway extends BaseGateway {
     if (!(tsId.toDomain() in this.timesheetDomains)) {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
+        // Genesis if the timesheet is not already in the account
         const genesis = !(await new Ask(state).exists(accountHasTimesheet(tsId)));
         await this.initTimesheet(tsId, genesis);
         // Ensure the timesheet is in the domain
@@ -190,19 +197,74 @@ export default class Gateway extends BaseGateway {
   }
 
   /**
-   * @param {AccountSubId} tsId
+   * @param {AccountOwnedId} tsId
    * @param {boolean} genesis
-   * @returns {Promise<import('@m-ld/m-ld').Query>}
+   * @returns {Promise<MeldClone>}
    */
   async initTimesheet(tsId, genesis) {
-    // Genesis if the timesheet is not already in the account
+    if (tsId.toDomain() in this.timesheetDomains)
+      return this.timesheetDomains[tsId.toDomain()];
     // If genesis, check that this timesheet has not existed before
     if (genesis && await this.tsTombstoneExists(tsId))
       throw new errors.ConflictError();
     const ts = await this.cloneTimesheet(tsId, genesis);
     // Ensure that the clone is online to avoid race with the client
     await ts.status.becomes({ online: true });
+    return ts;
   }
+
+  /**
+   * Reports on the given timesheet OR project with the given ID.
+   *
+   * The results will contain the following subjects in guaranteed order:
+   * 1. The project, if applicable
+   * 2. The timesheet OR all timesheets in the project, each followed
+   * immediately by its entries
+   *
+   * @param {AccountOwnedId} ownedId
+   * @returns {Promise<Results>}
+   */
+  report(ownedId) {
+    return new Promise(async (resolve, reject) => {
+      this.domain.read(async state => {
+        try {
+          const owned = await state.get(ownedId.toUrl());
+          switch (owned?.['@type']) {
+            case 'Timesheet':
+              return resolve(await this.reportTimesheet(owned));
+            case 'Project':
+              // Don't hold the gateway domain open while all timesheets are output
+              const timesheets = await state.read({
+                '@describe': '?ts',
+                '@where': { '@id': '?ts', '@type': 'Timesheet', project: owned['@id'] }
+              });
+              const tsFlows = await Promise.all(timesheets.map(this.reportTimesheet));
+              return resolve(concat(consume([owned]), ...tsFlows));
+            default:
+              return reject(new errors.NotFoundError('%s not found', ownedId));
+          }
+        } catch (e) {
+          return reject(e);
+        }
+      });
+    });
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').GraphSubject} ts
+   * @returns {Promise<Results>}
+   */
+  reportTimesheet = async ts => {
+    const tsId = this.ownedRefAsId(ts);
+    const tsClone = await this.initTimesheet(tsId, false);
+    // FIXME: Bug in m-ld-js does not permit result consumable to be subscribed
+    // after read completes. Should be using read(<req>).consume.
+    const result = await tsClone.read({
+      '@describe': '?entry',
+      '@where': { '@id': '?entry', '@type': 'Entry' }
+    });
+    return concat(consume([ts]), consume(result));
+  };
 
   close() {
     // Close the gateway domain

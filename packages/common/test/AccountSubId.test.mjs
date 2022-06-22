@@ -1,8 +1,8 @@
-import { AccountSubId } from '..';
+import { AccountOwnedId } from '..';
 
 describe('Timesheet Id', () => {
   test('from full display string', () => {
-    const tsId = AccountSubId.fromString('org/ts@gw.net');
+    const tsId = AccountOwnedId.fromString('org/ts@gw.net');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
@@ -14,7 +14,7 @@ describe('Timesheet Id', () => {
   });
 
   test('from only timesheet', () => {
-    const tsId = AccountSubId.fromString('ts');
+    const tsId = AccountOwnedId.fromString('ts');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBeUndefined();
     expect(tsId.gateway).toBeUndefined();
@@ -23,7 +23,7 @@ describe('Timesheet Id', () => {
   });
 
   test('from account and timesheet', () => {
-    const tsId = AccountSubId.fromString('org/ts');
+    const tsId = AccountOwnedId.fromString('org/ts');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBeUndefined();
@@ -32,29 +32,29 @@ describe('Timesheet Id', () => {
   });
 
   test('from path', () => {
-    const tsId = AccountSubId.fromPath(['net', 'gw', 'org', 'ts']);
+    const tsId = AccountOwnedId.fromPath(['net', 'gw', 'org', 'ts']);
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
   });
 
   test('from domain', () => {
-    const tsId = AccountSubId.fromDomain('ts.org.gw.net');
+    const tsId = AccountOwnedId.fromDomain('ts.org.gw.net');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
   });
 
   test('from URL', () => {
-    let tsId = AccountSubId.fromUrl('https://gw.net/org/ts');
+    let tsId = AccountOwnedId.fromUrl('https://gw.net/org/ts');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
-    tsId = AccountSubId.fromUrl('org/ts', 'gw.net');
+    tsId = AccountOwnedId.fromUrl('org/ts', 'gw.net');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
-    tsId = AccountSubId.fromUrl('http://gw.net:8080/org/ts/what');
+    tsId = AccountOwnedId.fromUrl('http://gw.net:8080/org/ts/what');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');

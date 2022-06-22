@@ -1,4 +1,4 @@
-import { AccountSubId } from '../index.mjs';
+import { AccountOwnedId } from '../index.mjs';
 
 /**
  * Utility base class for things that represent a Gateway
@@ -15,16 +15,16 @@ export default class BaseGateway {
 
   /**
    * @param {import('@m-ld/m-ld').Reference} tsRef
-   * @returns {AccountSubId}
+   * @returns {AccountOwnedId}
    */
-  tsRefAsId(tsRef) {
+  ownedRefAsId(tsRef) {
     // A timesheet reference may be relative to the domain base
-    return AccountSubId.fromUrl(tsRef['@id'], this.domainName);
+    return AccountOwnedId.fromUrl(tsRef['@id'], this.domainName);
   }
 
-  tsId(account, timesheet) {
-    return new AccountSubId({
-      gateway: this.domainName, account, name: timesheet
+  ownedId(account, name) {
+    return new AccountOwnedId({
+      gateway: this.domainName, account, name
     });
   }
 }

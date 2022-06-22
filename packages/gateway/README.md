@@ -33,11 +33,11 @@ Where the .env file contains:
 
 ### deploy
 
+_If you have made any changes to timeld-common, it needs to be published first._
+
 ```bash
 flyctl deploy
 ```
-
-(For development, use `flyctl deploy ./packages/gateway` in the monorepo root, to pick up the local `.env`.)
 
 The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 

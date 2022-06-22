@@ -7,18 +7,18 @@
  * 3. m-ld domain name `<name>.<account>.<gateway>`
  *   see {@link fromDomain}.
  */
-export default class AccountSubId {
+export default class AccountOwnedId {
   /**
    * @param {string} str
-   * @returns {AccountSubId}
+   * @returns {AccountOwnedId}
    */
   static fromString(str) {
     const [orgTs, gateway] = str.split('@');
     const [account, name] = orgTs.split('/');
     if (name != null) // account included
-      return new AccountSubId({ account, name, gateway });
+      return new AccountOwnedId({ account, name, gateway });
     else // No account included
-      return new AccountSubId({ name: account, gateway });
+      return new AccountOwnedId({ name: account, gateway });
   }
 
   /**
@@ -26,7 +26,7 @@ export default class AccountSubId {
    */
   static fromPath(dir) {
     const [name, account, ...gateway] = [...dir].reverse();
-    return new AccountSubId({
+    return new AccountOwnedId({
       account, name, gateway: gateway.join('.')
     });
   }
@@ -35,7 +35,7 @@ export default class AccountSubId {
    * @param {string} domain
    */
   static fromDomain(domain) {
-    return AccountSubId.fromPath(domain.split('.').reverse());
+    return AccountOwnedId.fromPath(domain.split('.').reverse());
   }
 
   /**
@@ -47,7 +47,7 @@ export default class AccountSubId {
       url = new URL(url, `http://${gateway}`);
     gateway = url.hostname;
     const [, account, name] = url.pathname.split('/');
-    return new AccountSubId({ gateway, account, name });
+    return new AccountOwnedId({ gateway, account, name });
   }
 
   /**
@@ -65,14 +65,14 @@ export default class AccountSubId {
   validate() {
     // Gateway is allowed to be undefined or false
     if (typeof this.gateway == 'string')
-      this.gateway.split('.').forEach(AccountSubId.checkComponentId);
-    AccountSubId.checkComponentId(this.account);
-    AccountSubId.checkComponentId(this.name);
+      this.gateway.split('.').forEach(AccountOwnedId.checkComponentId);
+    AccountOwnedId.checkComponentId(this.account);
+    AccountOwnedId.checkComponentId(this.name);
     return this;
   }
 
   static checkComponentId(id) {
-    if (!AccountSubId.isComponentId(id))
+    if (!AccountOwnedId.isComponentId(id))
       throw `${id} should contain only alphanumerics & dashes`;
   }
 

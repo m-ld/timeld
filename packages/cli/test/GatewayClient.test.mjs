@@ -22,11 +22,11 @@ describe('Gateway Client', () => {
       keyid: 'id', expiresIn: '10m'
     });
     const fetch = jest.fn(async (url, options) => {
-      if (url === 'https://timeld.org/api/user/jwe?email=user%40timeld.org') {
+      if (url === 'https://timeld.org/api/jwe/user?email=user%40timeld.org') {
         expect(options.headers?.Authorization).toBeUndefined();
         const jwe = new Cryptr('111111').encrypt(jwt);
         return { ok: true, json: async () => ({ jwe }) };
-      } else if (url === 'https://timeld.org/api/user/key') {
+      } else if (url === 'https://timeld.org/api/key/user') {
         expect(options.headers.Authorization).toBe(`Bearer ${jwt}`);
         return { ok: true, json: async () => ({ key: 'app.id:secret' }) };
       }
@@ -44,7 +44,7 @@ describe('Gateway Client', () => {
   test('config', async () => {
     const resJson = { '@domain': 'ts1.acc.timeld.org' };
     const fetch = jest.fn(async (url, options) => {
-      if (url === 'https://timeld.org/api/acc/tsh/ts1/cfg?user=user') {
+      if (url === 'https://timeld.org/api/cfg/acc/tsh/ts1?user=user') {
         expect(options.headers.Authorization).toMatch(/Bearer \S*/);
         return { ok: true, json: async () => resJson };
       }
