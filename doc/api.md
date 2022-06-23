@@ -48,12 +48,12 @@ The order of subjects will be:
   }
   ```
 - **Example**
-  ```
+  ```ndjson
   {"@id":"org1/pr1","@type":"Project"}
   {"@id":"org1/ts1","project":{"@id":"org1/pr1"},"@type":"Timesheet"}
-  {"@id":"69msUcupDDNbgnt8b7VYdf/1","@type":"Entry","activity":"orging","duration":60,"session":{"@id":"69msUcupDDNbgnt8b7VYdf"},"start":{"@value":"2022-06-22T16:40:55.946Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"vf:provider":{"@id":"test"}}
+  {"@id":"69msUcupDDNbgnt8b7VYdf/1","activity":"orging","duration":60,"session":{"@id":"69msUcupDDNbgnt8b7VYdf"},"start":{"@value":"2022-06-22T16:40:55.946Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"@type":"Entry","vf:provider":{"@id":"test"}}
   {"@id":"test/ts2","project":{"@id":"org1/pr1"},"@type":"Timesheet"}
-  {"@id":"nJHsHgSKURAxKrVPm8ETf9/1","@type":"Entry","activity":"testing","duration":120,"session":{"@id":"nJHsHgSKURAxKrVPm8ETf9"},"start":{"@value":"2022-06-21T10:52:11.032Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"vf:provider":{"@id":"test"}}
+  {"@id":"nJHsHgSKURAxKrVPm8ETf9/1","activity":"testing","duration":120,"session":{"@id":"nJHsHgSKURAxKrVPm8ETf9"},"start":{"@value":"2022-06-21T10:52:11.032Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"@type":"Entry","vf:provider":{"@id":"test"}}
   ```
   
 ### timesheet live updates

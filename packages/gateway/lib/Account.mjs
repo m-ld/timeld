@@ -69,6 +69,7 @@ export default class Account {
     await this.gateway.domain.write(this.toJSON());
     return keyDetails.key;
   }
+
   /**
    * Verifies the given JWT for this account.
    *
@@ -76,24 +77,47 @@ export default class Account {
    * @param {AccountOwnedId} [ownedId] a timesheet or project ID for which access is requested
    * @returns {Promise<import('jsonwebtoken').JwtPayload>}
    */
-  async verify(jwt, ownedId) {
+  async verifyJwt(jwt, ownedId) {
     // Verify the JWT against its declared keyid
     const payload = await verify(jwt, async header => {
-      // TODO: Check for write access to the owned ID
-      if (!this.keyids.has(header.kid))
-        throw new Error(`Key ${header.kid} does not belong to account ${this.name}`);
-      // Update the capability of the key to include the timesheet.
-      // This also serves as a check that the key exists.
-      // TODO: Include access via organisations
-      const authorisedTsIds = [...this.tsIds()].concat(ownedId ?? []);
-      const keyDetail = await this.gateway.ablyApi.updateAppKey(header.kid, {
-        capability: this.keyCapability(...authorisedTsIds)
-      });
-      return new AblyKey(keyDetail.key).secret;
+      const { key } = await this.authorise(header.kid, ownedId);
+      return new AblyKey(key).secret;
     });
     if (payload.sub !== this.name)
       throw new errors.UnauthorizedError('JWT does not correspond to user');
     return payload;
+  }
+
+  /**
+   * Verifies the given JWT for this account.
+   *
+   * @param {string} key an Ably key associated with this Account
+   * @param {AccountOwnedId} [ownedId] a timesheet or project ID for which access is requested
+   * @returns {Promise<void>}
+   */
+  async verifyKey(key, ownedId) {
+    const ablyKey = new AblyKey(key);
+    const { key: actualKey } = await this.authorise(ablyKey.keyid, ownedId);
+    if (key !== actualKey)
+      throw new errors.UnauthorizedError();
+  }
+
+  /**
+   * @param keyid user key ID
+   * @param ownedId account owned ID being accessed
+   * @returns {Promise<AblyKeyDetail>}
+   */
+  async authorise(keyid, ownedId) {
+    // TODO: Check for write access to the owned ID
+    if (!this.keyids.has(keyid))
+      throw new Error(`Key ${keyid} does not belong to account ${this.name}`);
+    // Update the capability of the key to include the timesheet.
+    // This also serves as a check that the key exists.
+    // TODO: Include access via projects
+    const authorisedTsIds = [...this.tsIds()].concat(ownedId ?? []);
+    return this.gateway.ablyApi.updateAppKey(keyid, {
+      capability: this.keyCapability(...authorisedTsIds)
+    });
   }
 
   get allowedReadPatterns() {

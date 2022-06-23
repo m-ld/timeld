@@ -69,7 +69,7 @@ server.get('/api/jwe/:user',
 server.get('/api/key/:user',
   async (req, res, next) => {
     try {
-      const auth = new Authorization(gateway, req);
+      const auth = new Authorization(req);
       const { email } = gateway.verify(auth.jwt);
       if (!email || !isEmail(email))
         return next(new errors.BadRequestError('Bad email %s', email));
@@ -89,7 +89,7 @@ server.get('/api/cfg/:account/tsh/:timesheet',
     try {
       const owned = gateway.ownedId(account, timesheet).validate();
       try {
-        await new Authorization(gateway, req).verifyUser(owned);
+        await new Authorization(req).verifyUser(gateway, owned);
         res.json(await gateway.timesheetConfig(owned));
       } catch (e) {
         next(e);
@@ -105,8 +105,8 @@ server.get('/api/cfg/:account/tsh/:timesheet',
 server.post('/api/read',
   async (req, res, next) => {
     try {
-      const auth = new Authorization(gateway, req);
-      await auth.verifyUser();
+      const auth = new Authorization(req);
+      await auth.verifyUser(gateway);
       const acc = await gateway.account(auth.user);
       await sendStream(res, await acc.read(req.body));
       next();
@@ -118,8 +118,8 @@ server.post('/api/read',
 server.post('/api/write',
   async (req, res, next) => {
     try {
-      const auth = new Authorization(gateway, req);
-      await auth.verifyUser();
+      const auth = new Authorization(req);
+      await auth.verifyUser(gateway);
       const acc = await gateway.account(auth.user);
       await acc.write(req.body);
       res.send(200);
@@ -134,7 +134,7 @@ server.get('/api/rpt/:account/own/:owned',
     const { account, owned } = req.params;
     try {
       const ownedId = gateway.ownedId(account, owned).validate();
-      await new Authorization(gateway, req).verifyUser(ownedId);
+      await new Authorization(req).verifyUser(gateway, ownedId);
       await sendStream(res, await gateway.report(ownedId));
       next();
     } catch (e) {

@@ -88,9 +88,8 @@ describe('Gateway account', () => {
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verify(jwt, new AccountOwnedId({
-      gateway: 'ex.org', account: 'test', name: 'ts1'
-    }))).resolves.toMatchObject({});
+    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
+      .resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
         'ex.org:notify': ['subscribe'],
@@ -98,7 +97,6 @@ describe('Gateway account', () => {
       }
     });
   });
-
   test('reject account JWT if not registered keyid', async () => {
     const acc = new Account(gateway, {
       name: 'test', keyids: [], timesheets: [{ '@id': 'test/ts1' }]
@@ -109,7 +107,7 @@ describe('Gateway account', () => {
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verify(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
+    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
       .rejects.toThrowError();
   });
 
@@ -121,7 +119,26 @@ describe('Gateway account', () => {
       expiresIn: '1m', keyid: 'keyid'
     });
     gateway.ablyApi.updateAppKey.mockImplementation(() => Promise.reject('Not Found'));
-    await expect(acc.verify(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
+    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
       .rejects.toThrowError();
+  });
+
+
+  test('verify account key', async () => {
+    const acc = new Account(gateway, {
+      name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
+    });
+    const key = 'appid.keyid:secret';
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.verifyKey(key, AccountOwnedId.fromString('test/ts1@ex.org')))
+      .resolves.not.toThrow();
+    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
+      capability: {
+        'ex.org:notify': ['subscribe'],
+        'ts1.test.ex.org:*': ['publish', 'subscribe', 'presence']
+      }
+    });
   });
 });
