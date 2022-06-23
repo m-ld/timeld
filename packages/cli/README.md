@@ -42,7 +42,7 @@ timeld config --account your-account-name
 
 You can also use a different account for each timesheet you create, see below.
 
-## use
+## timesheeting
 
 `timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
 
@@ -57,6 +57,16 @@ Once you've added an entry, you can always modify it e.g. `modify the-activity -
 To see all the entries you have added, use the `list` command.
 
 You can `exit` the session and return to the normal terminal. To re-open it, use `timeld open your-timesheet` (without the `--create` option).
+
+## admin
+
+_Only available with a Gateway._
+
+`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; and report on timesheets.
+
+By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option.
+
+![coming soon](https://img.shields.io/badge/-coming%20soon-red) _full documentation of organisations and projects._
 
 ## help
 
