@@ -1,19 +1,17 @@
 import Env from './lib/Env.mjs';
 import clone from './lib/clone.mjs';
-import AccountSubId from './lib/AccountSubId.mjs';
-import { timeldContext } from './lib/context.mjs';
+import AccountOwnedId from './lib/AccountOwnedId.mjs';
 import AblyKey from './lib/AblyKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
 import BaseGateway from './lib/BaseGateway.mjs';
-import { safeRefsIn } from './lib/util.mjs';
 
 export {
   clone,
   Env,
-  AccountSubId,
-  timeldContext,
+  AccountOwnedId,
   AblyKey,
   ResultsReadable,
-  BaseGateway,
-  safeRefsIn
+  BaseGateway
 };
+export { timeldContext, isTimeldType, Entry, Project, Timesheet } from './data/index.mjs';
+export { dateJsonLd, safeRefsIn, mustBe, isReference } from './lib/util.mjs';

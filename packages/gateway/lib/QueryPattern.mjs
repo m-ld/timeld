@@ -17,7 +17,6 @@ function matches(schema, query) {
 }
 
 export const isVariable = { type: 'string' };
-export const isReference = { properties: { '@id': { type: 'string' } } };
 
 export class QueryPattern {
   /**

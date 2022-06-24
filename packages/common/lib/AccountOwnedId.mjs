@@ -7,18 +7,18 @@
  * 3. m-ld domain name `<name>.<account>.<gateway>`
  *   see {@link fromDomain}.
  */
-export default class AccountSubId {
+export default class AccountOwnedId {
   /**
    * @param {string} str
-   * @returns {AccountSubId}
+   * @returns {AccountOwnedId}
    */
   static fromString(str) {
     const [orgTs, gateway] = str.split('@');
     const [account, name] = orgTs.split('/');
     if (name != null) // account included
-      return new AccountSubId({ account, name, gateway });
+      return new AccountOwnedId({ account, name, gateway });
     else // No account included
-      return new AccountSubId({ name: account, gateway });
+      return new AccountOwnedId({ name: account, gateway });
   }
 
   /**
@@ -26,7 +26,7 @@ export default class AccountSubId {
    */
   static fromPath(dir) {
     const [name, account, ...gateway] = [...dir].reverse();
-    return new AccountSubId({
+    return new AccountOwnedId({
       account, name, gateway: gateway.join('.')
     });
   }
@@ -35,19 +35,24 @@ export default class AccountSubId {
    * @param {string} domain
    */
   static fromDomain(domain) {
-    return AccountSubId.fromPath(domain.split('.').reverse());
+    return AccountOwnedId.fromPath(domain.split('.').reverse());
   }
 
   /**
-   * @param {string | URL} url
+   * @param {string | URL} iri
    * @param {string} [gateway]
    */
-  static fromUrl(url, gateway) {
-    if (typeof url == 'string')
-      url = new URL(url, `http://${gateway}`);
-    gateway = url.hostname;
-    const [, account, name] = url.pathname.split('/');
-    return new AccountSubId({ gateway, account, name });
+  static fromIri(iri, gateway) {
+    if (typeof iri == 'string') {
+      if (!gateway && !iri.includes('//')) {
+        const [account, name] = iri.split('/');
+        return new AccountOwnedId({ account, name });
+      }
+      iri = new URL(iri, `http://${gateway}`);
+    }
+    gateway = iri.hostname;
+    const [, account, name] = iri.pathname.split('/');
+    return new AccountOwnedId({ gateway, account, name });
   }
 
   /**
@@ -61,18 +66,22 @@ export default class AccountSubId {
     this.name = name;
   }
 
+  get isRelative() {
+    return typeof this.gateway != 'string';
+  }
+
   /** Validates this Id */
   validate() {
     // Gateway is allowed to be undefined or false
-    if (typeof this.gateway == 'string')
-      this.gateway.split('.').forEach(AccountSubId.checkComponentId);
-    AccountSubId.checkComponentId(this.account);
-    AccountSubId.checkComponentId(this.name);
+    if (!this.isRelative)
+      this.gateway.split('.').forEach(AccountOwnedId.checkComponentId);
+    AccountOwnedId.checkComponentId(this.account);
+    AccountOwnedId.checkComponentId(this.name);
     return this;
   }
 
   static checkComponentId(id) {
-    if (!AccountSubId.isComponentId(id))
+    if (!AccountOwnedId.isComponentId(id))
       throw `${id} should contain only alphanumerics & dashes`;
   }
 
@@ -95,8 +104,13 @@ export default class AccountSubId {
     return `${this.name}.${this.account}.${this.gateway}`;
   }
 
-  toUrl() {
-    return `http://${this.gateway}/${this.account}/${this.name}`;
+  toIri() {
+    const path = `${this.account}/${this.name}`;
+    return this.isRelative ? path : `http://${this.gateway}/${path}`;
+  }
+
+  toReference() {
+    return { '@id': this.toIri() };
   }
 
   toString() {

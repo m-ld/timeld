@@ -14,3 +14,36 @@ export function safeRefsIn(subject, property) {
     return [];
   }
 }
+
+/**
+ * @param {Date} date
+ * @returns {{'@value': string, '@type': string}}
+ * @todo replace with normaliseValue in m-ld-js v0.9
+ */
+export function dateJsonLd(date) {
+  return {
+    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+    '@value': date.toISOString()
+  };
+}
+
+/**
+ * @param {string|number} value
+ * @returns {import('jtd').Schema}
+ */
+export const mustBe = value => ({ enum: [value] });
+
+/**
+ * @type {import('jtd').Schema}
+ */
+export const isReference = { properties: { '@id': { type: 'string' } } };
+
+/**
+ * @type {import('jtd').Schema}
+ */
+export const isDate = {
+  properties: {
+    '@type': mustBe('http://www.w3.org/2001/XMLSchema#dateTime'),
+    '@value': { type: 'timestamp' }
+  }
+};

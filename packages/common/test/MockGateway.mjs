@@ -1,6 +1,6 @@
 import { clone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
-import DeadRemotes from './DeadRemotes.mjs';
+import { DeadRemotes } from './fixtures.mjs';
 import { BaseGateway } from '../index.mjs';
 import { jest } from '@jest/globals';
 import { consume } from 'rx-flowable/consume';
@@ -18,6 +18,7 @@ import { flatMap } from 'rx-flowable/operators';
  * @property {() => *} toJSON
  */
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * Pretends to be both a gateway client to CLI components, and a gateway to
  * server components

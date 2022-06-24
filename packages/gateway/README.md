@@ -27,17 +27,17 @@ flyctl secrets import < .env
 ```
 
 Where the .env file contains:
-- `TIMELD_GATEWAY_ABLY__KEY=<your root ably key>`
-- `TIMELD_GATEWAY_ABLY__API_KEY=<your ably control API key>`
-- `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=<your courier auth token>`
+- `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
+- `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
+- `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN={your courier auth token}`
 
 ### deploy
+
+_If you have made any changes to timeld-common, it needs to be published first._
 
 ```bash
 flyctl deploy
 ```
-
-(For development, use `flyctl deploy ./packages/gateway` in the monorepo root, to pick up the local `.env`.)
 
 The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 

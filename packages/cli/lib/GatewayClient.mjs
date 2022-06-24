@@ -31,7 +31,7 @@ export default class GatewayClient extends BaseGateway {
     this.apiRoot = apiRoot;
     /**
      * Resolve our user name against the gateway to get the canonical user URI.
-     * Gateway-based URIs use HTTP by default (see also {@link AccountSubId}).
+     * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
      */
     // This leaves an absolute URI alone
     this.principalId = new URL(this.user, `http://${this.domainName}`).toString();
@@ -102,7 +102,7 @@ export default class GatewayClient extends BaseGateway {
         'Please enter your email address to register this device: ');
       if (!isEmail(email))
         throw `"${email}" is not a valid email address`;
-      const { jwe } = await this.fetchApi(`${this.user}/jwe`,
+      const { jwe } = await this.fetchApi(`jwe/${this.user}`,
         { params: { email }, jwt: false, user: false })
         .then(checkSuccessRes).then(resJson);
       const code = await ask(
@@ -112,7 +112,7 @@ export default class GatewayClient extends BaseGateway {
       const jwt = new Cryptr(code).decrypt(jwe);
       if (!isJWT(jwt))
         throw 'Sorry, that code was incorrect, please start again.';
-      const { key } = await this.fetchApi(`${this.user}/key`,
+      const { key } = await this.fetchApi(`key/${this.user}`,
         { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
       this.ablyKey = new AblyKey(key);
@@ -133,7 +133,7 @@ export default class GatewayClient extends BaseGateway {
    * timesheet domain
    */
   async config(account, timesheet) {
-    return this.fetchApi(`${account}/tsh/${timesheet}/cfg`)
+    return this.fetchApi(`cfg/${account}/tsh/${timesheet}`)
       .then(checkSuccessRes).then(resJson);
   }
 
@@ -151,6 +151,19 @@ export default class GatewayClient extends BaseGateway {
    */
   async write(pattern) {
     checkSuccessRes(await this.fetchApi('write', { json: pattern }));
+  }
+
+  /**
+   * Reports on the given timesheet OR project with the given ID.
+   *
+   * @param {string} account to which the project or timesheet belongs
+   * @param {string} owned project or timesheet ID
+   * @returns {Results} results subjects
+   * @see Gateway#report
+   */
+  report(account, owned) {
+    return consume(this.fetchApi(`rpt/${account}/own/${owned}`).then(checkSuccessRes))
+      .pipe(flatMap(res => consume(res.body.pipe(ndjson.parse()))));
   }
 
   /**

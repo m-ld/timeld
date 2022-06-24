@@ -3,18 +3,6 @@ import _parseDuration from 'parse-duration';
 import { parseDate as _parseDate } from 'chrono-node';
 
 /**
- * @param {Date} date
- * @returns {{'@value': string, '@type': string}}
- * @todo replace with normaliseValue in m-ld-js v0.9
- */
-export function dateJsonLd(date) {
-  return {
-    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
-    '@value': date.toISOString()
-  };
-}
-
-/**
  * @param {number} duration in fractional minutes
  * @returns formatted duration as a string
  */

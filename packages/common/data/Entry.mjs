@@ -1,7 +1,21 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { dateJsonLd, formatDate, formatDuration, formatTimeAgo } from './util.mjs';
+import { dateJsonLd, isDate, isReference, mustBe } from '../lib/util.mjs';
 
-export class Entry {
+export default class Entry {
+  /** @type {import('jtd').Schema} */
+  static SCHEMA = {
+    properties : {
+      '@id': { type: 'string' },
+      '@type': mustBe('Entry'),
+      session: isReference,
+      activity: { type: 'string' },
+      'vf:provider': isReference,
+      start: isDate
+    },
+    optionalProperties: {
+      duration: { type: 'int16' }
+    }
+  }
   /**
    * @param {import('@m-ld/m-ld').GraphSubject} src
    */
@@ -46,16 +60,6 @@ export class Entry {
     this.duration = spec.duration;
   }
 
-  /**
-   * @param {import('@m-ld/m-ld').MeldReadState} state
-   * @returns {Promise<string>}
-   */
-  async sessionLabel(state) {
-    const session = await state.get(this.sessionId, 'start');
-    // noinspection JSCheckFunctionSignatures
-    return 'Session ' + formatTimeAgo(propertyValue(session, 'start', Date));
-  }
-
   toJSON() {
     return {
       '@id': `${this.sessionId}/${this.seqNo}`,
@@ -66,10 +70,5 @@ export class Entry {
       'start': dateJsonLd(this.start),
       'duration': this.duration
     };
-  }
-
-  toString() {
-    return `#${this.seqNo}: ${this.activity} (${formatDate(this.start)}` +
-      (this.duration != null ? `, ${formatDuration(this.duration)}` : '') + `)`;
   }
 }

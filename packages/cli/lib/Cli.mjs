@@ -1,4 +1,4 @@
-import { AccountSubId, clone, Env } from 'timeld-common';
+import { AccountOwnedId, clone, Env } from 'timeld-common';
 import { createWriteStream } from 'fs';
 import { once } from 'events';
 import GatewayClient from './GatewayClient.mjs';
@@ -78,7 +78,7 @@ export default class Cli {
           .middleware(argv => {
             // Interpret a timesheet with account and/or gateway
             const { name, account, gateway } =
-              AccountSubId.fromString(argv.timesheet);
+              AccountOwnedId.fromString(argv.timesheet);
             if (gateway != null)
               argv.gateway = gateway;
             if (account != null)
@@ -96,7 +96,7 @@ export default class Cli {
           .demandOption('user')
           .check(argv => {
             const { timesheet, account, gateway } = argv;
-            new AccountSubId({ name: timesheet, account, gateway }).validate();
+            new AccountOwnedId({ name: timesheet, account, gateway }).validate();
             return true;
           }),
         argv => this.openCmd(argv)
@@ -169,7 +169,7 @@ export default class Cli {
    * @returns {Promise<{meld: import('@m-ld/m-ld').MeldClone, logFile: string}>}
    */
   async createMeldClone(config, principal) {
-    const tsId = AccountSubId.fromDomain(config['@domain']);
+    const tsId = AccountOwnedId.fromDomain(config['@domain']);
     const logFile = await this.setUpLogging(tsId.toPath());
     const dataDir = await this.env.readyPath('data', ...tsId.toPath());
     // noinspection JSCheckFunctionSignatures
@@ -229,14 +229,14 @@ export default class Cli {
 
   async listCmd() {
     for (let dir of await this.env.envDirs('data'))
-      this.console.log(AccountSubId.fromPath(dir).toString());
+      this.console.log(AccountOwnedId.fromPath(dir).toString());
   }
   /**
    * @param {*} argv.timesheet as tmId
    * @param {boolean} [argv.force]
    */
   async removeCmd(argv) {
-    const { name, account, gateway } = AccountSubId.fromString(argv.timesheet);
+    const { name, account, gateway } = AccountOwnedId.fromString(argv.timesheet);
     const pattern = new RegExp(
       `${account || '[\\w-]+'}/${name || '[\\w-]+'}@${gateway ||  '[\\w-.]*'}`,
       'g');
@@ -244,7 +244,7 @@ export default class Cli {
       this.console.info('If you use --force, ' +
         'these local timesheets will be deleted:');
     for (let path of await this.env.envDirs('data')) {
-      const tsId = AccountSubId.fromPath(path);
+      const tsId = AccountOwnedId.fromPath(path);
       if (tsId.toString().match(pattern)) {
         if (argv.force) {
           await this.env.delEnvDir('data', path, { force: true });

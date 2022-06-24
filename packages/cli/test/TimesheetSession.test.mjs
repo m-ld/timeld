@@ -1,5 +1,5 @@
 import { describe, expect, jest, test } from '@jest/globals';
-import DeadRemotes from 'timeld-common/test/DeadRemotes.mjs';
+import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
 import { clone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import TimesheetSession from '../lib/TimesheetSession.mjs';
@@ -130,6 +130,6 @@ describe('CLI Session', () => {
     await session.execute('add testing 1h', outLines, errLines);
     await session.execute('list', outLines, errLines);
     expect(outLines).toHaveBeenLastCalledWith(expect.stringMatching(
-      /This session, entry #1: testing/));
+      /Entry #1: testing/));
   });
 });

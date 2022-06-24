@@ -1,9 +1,40 @@
-import { Entry } from './Entry.mjs';
+import { Entry } from 'timeld-common';
 import stringify from 'json-stringify-pretty-compact';
+import { formatDate, formatDuration, formatTimeAgo } from './util.mjs';
+import { propertyValue } from '@m-ld/m-ld';
+
+export const ENTRY_FORMAT_OPTIONS = /**@type {{
+  describe: string,
+  choices: EntryFormatName[],
+  default: 'default'
+}}*/{
+  describe: 'Timesheet format to use',
+  choices: ['default', 'JSON-LD', 'json-ld', 'ld'],
+  default: 'default'
+};
 
 export const JSON_LD_GRAPH = {
   opening: '{ "@graph": [', closing: '] }', separator: ',\n', stringify
 };
+
+/**
+ * @typedef {import('@m-ld/m-ld').Subject} Subject
+ * @typedef {'default'|'JSON-LD'|'json-ld'|'ld'} EntryFormatName
+ * @typedef {(entry: Entry) => string | Subject | Promise<Subject>} GetSession
+ */
+
+/**
+ * @param {EntryFormatName} format
+ * @param {GetSession} [getSession]
+ * @returns {Format}
+ */
+export function getSubjectFormat(format, getSession) {
+  return {
+    'JSON-LD': JSON_LD_GRAPH,
+    'json-ld': JSON_LD_GRAPH,
+    ld: JSON_LD_GRAPH
+  }[format] || new DefaultFormat(getSession);
+}
 
 /**
  * @abstract
@@ -11,15 +42,24 @@ export const JSON_LD_GRAPH = {
  */
 class DisplayFormat {
   separator = '\n';
+
+  // noinspection JSCheckFunctionSignatures
+  /**
+   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @returns {string | Promise<string>}
+   */
+  async stringify(src) {
+    throw undefined;
+  }
 }
 
-export class DefaultEntryFormat extends DisplayFormat {
+export class DefaultFormat extends DisplayFormat {
   /**
-   * @param {import('./TimesheetSession.mjs').TimesheetSession} session
+   * @param {GetSession} [getSession]
    */
-  constructor(session) {
+  constructor(getSession) {
     super();
-    this.session = session;
+    this.getSession = getSession;
   }
 
   /**
@@ -28,12 +68,38 @@ export class DefaultEntryFormat extends DisplayFormat {
    */
   async stringify(src) {
     try {
-      const entry = Entry.fromJSON(src);
-      const prefix = entry.sessionId === this.session.id ? 'This session' :
-        await entry.sessionLabel(this.session.meld);
-      return `${prefix}, entry ${entry.toString()}`;
+      switch (src['@type']) {
+        case 'Entry':
+          const entry = Entry.fromJSON(src);
+          const sessionLabel = await this.sessionLabel(entry);
+          const qualifier = sessionLabel ? ` (in ${sessionLabel})` : '';
+          return `${src['@type']} ${(DefaultFormat.entryLabel(entry))}${qualifier}`;
+        default:
+          return `${src['@type']} ${src['@id']}`;
+      }
     } catch (e) {
-      return `${src['@id']}: *** Malformed entry: ${e} ***`;
+      return `${src['@id']}: *** Malformed ${src['@type']}: ${e} ***`;
+    }
+  }
+
+  /**
+   * @param {Entry} entry
+   * @returns {string}
+   */
+  static entryLabel(entry) {
+    return `#${entry.seqNo}: ${entry.activity} (${formatDate(entry.start)}` +
+      (entry.duration != null ? `, ${formatDuration(entry.duration)}` : '') + `)`;
+  }
+
+  async sessionLabel(entry) {
+    if (this.getSession != null) {
+      const session = await this.getSession(entry);
+      if (typeof session == 'object') {
+        // noinspection JSCheckFunctionSignatures
+        const start = propertyValue(session, 'start', Date);
+        return `Session ${formatTimeAgo(start)}`;
+      }
+      return session;
     }
   }
 }

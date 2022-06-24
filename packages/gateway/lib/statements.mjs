@@ -3,11 +3,11 @@
  */
 
 /**
- * @param {import('timeld-common').AccountSubId} tsId
+ * @param {import('timeld-common').AccountOwnedId} tsId
  * @returns {Where}
  */
 export const accountHasTimesheet = tsId => ({
-  '@id': tsId.account, timesheet: { '@id': tsId.toUrl(), '@type': 'Timesheet' }
+  '@id': tsId.account, timesheet: { '@id': tsId.toIri(), '@type': 'Timesheet' }
 });
 
 /**

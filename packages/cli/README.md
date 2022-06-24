@@ -42,7 +42,7 @@ timeld config --account your-account-name
 
 You can also use a different account for each timesheet you create, see below.
 
-## use
+## timesheeting
 
 `timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
 
@@ -58,6 +58,62 @@ To see all the entries you have added, use the `list` command.
 
 You can `exit` the session and return to the normal terminal. To re-open it, use `timeld open your-timesheet` (without the `--create` option).
 
+## admin
+
+_Only available with a Gateway._
+
+`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; and report on projects and timesheets.
+
+By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option. When the session is open you will see a prompt with the account name, e.g. `my-project>`.
+
+Then, for a user account, you can:
+
+- `list email` will show the email addresses for the user, which can be used to register new devices
+- `add email alice@ex.org` will add an email address to the account
+- `remove email alice@ex.org` will remove an email address from the account
+
+
+- `list organisation` will show the organisations that the user is an admin of
+- `add org my-org` will create an organisation called "my-org"
+- `remove org my-org` will delete the organisation "my-org"
+
+  ⚠️This will delete all projects and timesheets in the organisation!
+
+For organisation accounts, you can:
+
+- `list admin` will show the administrators of the account
+- `add admin alice` will add the user alice as an administrator to the organisation
+- `remove admin alice` will remove alice as an administrator from the organisation
+
+For **both** user and organisation accounts, you can:
+
+- `list timesheet` will show the timesheets owned by the account (typically, this means the account is working on the timesheet)
+- `add timesheet my-timesheet` will add a new empty timesheet "my-timesheet" to the account (which can then be opened with a timesheet session, see above)
+- `remove timesheet my-timesheet` will delete "my-timesheet" from the account
+ 
+  ⚠️ This will delete the timesheet and all its entries and links
+
+
+- `list project` will show all projects owned by the account (typically, this means the account is having someone work on these projects)
+- `add project my-project` will add a new empty project "my-project" to the account
+- `remove project my-project` will delete "my-project" (timesheets in the project will continue to exist)
+
+ 
+- `list link --project my-project` will list the timesheets that are linked to "my-project"
+- `list link --timesheet my-timesheet` will list the projects that are linked to "my-timesheet"
+- `add link my-timesheet --project my-project` will link the timesheet to the project. The project name can be prefixed with another account, such as `them/their-project`. This means that the owner of the project (e.g. "them") will be able to report on the timesheet.
+- `remove link my-timesheet --project my-project` will remove the link between the timesheet and the project. This means that the owner of the project will not be able to report on the timesheet (unless they own it anyway)
+
+
+- `report my-timesheet` will show the entries in "my-timesheet", if you have access to it. The name can be prefixed with another account, such as `them/their-timesheet`
+- `report my-project` will show all timesheets and their entries linked to "my-project"
+
+The output of all the `list` and `report` commands in a session can be piped to a file using `>`. For reporting, you may also specify a different output format, e.g.:
+
+```
+report my-project --format json-ld > my-project-report.json
+```
+
 ## help
 
 Every **timeld** command has a Help page describing what you can do. You can see it using the `--help` option. (It's also shown if **timeld** doesn't understand you.)
@@ -70,7 +126,7 @@ timeld --help
 timeld open --help
 ```
 
-In a timesheet session you can just press `<Enter>` to see the available commands. For each individual command use the `--help` option, e.g.:
+In a timesheet or admin session you can just press `<Enter>` to see the available commands. For each individual command use the `--help` option, e.g.:
 
 ```bash
 add --help
