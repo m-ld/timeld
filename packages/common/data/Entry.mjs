@@ -1,7 +1,21 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { dateJsonLd } from './util.mjs';
+import { dateJsonLd, isDate, isReference, mustBe } from '../lib/util.mjs';
 
 export default class Entry {
+  /** @type {import('jtd').Schema} */
+  static SCHEMA = {
+    properties : {
+      '@id': { type: 'string' },
+      '@type': mustBe('Entry'),
+      session: isReference,
+      activity: { type: 'string' },
+      'vf:provider': isReference,
+      start: isDate
+    },
+    optionalProperties: {
+      duration: { type: 'int16' }
+    }
+  }
   /**
    * @param {import('@m-ld/m-ld').GraphSubject} src
    */

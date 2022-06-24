@@ -228,7 +228,7 @@ export default class Gateway extends BaseGateway {
     return new Promise(async (resolve, reject) => {
       this.domain.read(async state => {
         try {
-          const owned = await state.get(ownedId.toUrl());
+          const owned = await state.get(ownedId.toIri());
           switch (owned?.['@type']) {
             case 'Timesheet':
               return resolve(await this.reportTimesheet(owned));

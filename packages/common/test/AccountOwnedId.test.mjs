@@ -6,11 +6,13 @@ describe('Timesheet Id', () => {
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
+    expect(tsId.isRelative).toBe(false);
     expect(tsId.toString()).toBe('org/ts@gw.net');
     expect(() => tsId.validate()).not.toThrow();
     expect(tsId.toPath()).toEqual(['net', 'gw', 'org', 'ts']);
     expect(tsId.toDomain()).toEqual('ts.org.gw.net');
-    expect(tsId.toUrl()).toEqual('http://gw.net/org/ts');
+    expect(tsId.toIri()).toEqual('http://gw.net/org/ts');
+    expect(tsId.toReference()).toEqual({ '@id': 'http://gw.net/org/ts' });
   });
 
   test('from only timesheet', () => {
@@ -27,6 +29,7 @@ describe('Timesheet Id', () => {
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBeUndefined();
+    expect(tsId.isRelative).toBe(true);
     expect(tsId.toString()).toBe('org/ts');
     expect(() => tsId.validate()).not.toThrow();
   });
@@ -45,16 +48,26 @@ describe('Timesheet Id', () => {
     expect(tsId.gateway).toBe('gw.net');
   });
 
-  test('from URL', () => {
-    let tsId = AccountOwnedId.fromUrl('https://gw.net/org/ts');
+  test('from relative IRI', () => {
+    const tsId = AccountOwnedId.fromIri('org/ts');
+    expect(tsId.name).toBe('ts');
+    expect(tsId.account).toBe('org');
+    expect(tsId.gateway).toBeUndefined();
+    expect(tsId.isRelative).toBe(true);
+    expect(tsId.toIri()).toBe('org/ts');
+    expect(() => tsId.validate()).not.toThrow();
+  });
+
+  test('from absolute IRI', () => {
+    let tsId = AccountOwnedId.fromIri('https://gw.net/org/ts');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
-    tsId = AccountOwnedId.fromUrl('org/ts', 'gw.net');
+    tsId = AccountOwnedId.fromIri('org/ts', 'gw.net');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
-    tsId = AccountOwnedId.fromUrl('http://gw.net:8080/org/ts/what');
+    tsId = AccountOwnedId.fromIri('http://gw.net:8080/org/ts/what');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');

@@ -1,7 +1,7 @@
 import { array, propertyValue } from '@m-ld/m-ld';
-import { AblyKey } from 'timeld-common';
+import { AblyKey, isReference } from 'timeld-common';
 import errors from 'restify-errors';
-import { isReference, isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
+import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
 import { verify } from './util.mjs';
 import { safeRefsIn } from 'timeld-common/lib/util.mjs';

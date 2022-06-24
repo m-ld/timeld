@@ -172,11 +172,11 @@ export default class AdminSession extends Repl {
   resolveId(owned) {
     if (owned) {
       // Projects share a namespace with timesheets
-      let { name, account, gateway } = AccountOwnedId.fromString(owned);
-      if (gateway && gateway !== this.gateway.domainName)
-        throw `Cannot write to ${gateway}`;
-      account ||= this.account;
-      return { account, ref: { '@id': `${account}/${name}` } };
+      let id = AccountOwnedId.fromString(owned);
+      if (id.gateway && id.gateway !== this.gateway.domainName)
+        throw `Cannot write to ${id.gateway}`;
+      id.account ||= this.account;
+      return id;
     }
   }
 
@@ -291,17 +291,17 @@ export default class AdminSession extends Repl {
       }
 
       update(verb) {
-        const { account, ref } = this.session.resolveId(owned);
-        const subject = { ...ref, '@type': type };
-        const where = this.session.userIsAdmin(account);
+        const ownedId = this.session.resolveId(owned);
+        const subject = { '@id': ownedId.toIri(), '@type': type };
+        const where = this.session.userIsAdmin(ownedId.account);
         if (verb === '@delete') {
           // Delete must delete the owned subject in full
           const allProps = { [any()]: any() };
           Object.assign(subject, allProps);
-          where[type.toLowerCase()] = { ...ref, ...allProps };
+          where[type.toLowerCase()] = { '@id': ownedId.toIri(), ...allProps };
         }
         return this.session.writeProc({
-          [verb]: { '@id': account, [type.toLowerCase()]: subject },
+          [verb]: { '@id': ownedId.account, [type.toLowerCase()]: subject },
           '@where': where
         });
       }
@@ -327,11 +327,11 @@ export default class AdminSession extends Repl {
             '@where': [{
               // I can see timesheets for projects that I admin
               ...this.session.userIsAdmin(this.project.account),
-              project: this.project.ref
+              project: this.project.toReference()
             }, {
               '@id': '?timesheet',
               '@type': 'Timesheet',
-              project: this.project.ref
+              project: this.project.toReference()
             }]
           }, new TableFormat('?timesheet'));
         } else if (this.timesheet) {
@@ -340,9 +340,9 @@ export default class AdminSession extends Repl {
             '@where': [{
               // I can see projects for timesheets that I admin
               ...this.session.userIsAdmin(this.timesheet.account),
-              timesheet: this.timesheet.ref
+              timesheet: this.timesheet.toReference()
             }, {
-              ...this.timesheet.ref,
+              ...this.timesheet.toReference(),
               '@type': 'Timesheet',
               project: { '@id': '?project' }
             }]
@@ -357,13 +357,13 @@ export default class AdminSession extends Repl {
           throw new RangeError('Timesheet or project missing');
         return this.session.writeProc({
           [verb]: {
-            ...this.timesheet.ref,
-            project: this.project.ref
+            ...this.timesheet.toReference(),
+            project: this.project.toReference()
           },
           '@where': {
             // The account must own the timesheet (not necessarily the project)
             ...this.session.userIsAdmin(this.timesheet.account),
-            timesheet: this.timesheet.ref
+            timesheet: this.timesheet.toReference()
           }
         });
       }

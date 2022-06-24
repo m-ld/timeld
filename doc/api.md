@@ -19,7 +19,6 @@ Data API access requires a _key_, which can be obtained using the Command Line I
 
 This end-point is equivalent to using `report` in an admin CLI session.
 
-
 The order of subjects will be:
 
 1. The project, if applicable.
@@ -56,7 +55,7 @@ The order of subjects will be:
   {"@id":"nJHsHgSKURAxKrVPm8ETf9/1","activity":"testing","duration":120,"session":{"@id":"nJHsHgSKURAxKrVPm8ETf9"},"start":{"@value":"2022-06-21T10:52:11.032Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"@type":"Entry","vf:provider":{"@id":"test"}}
   ```
   
-### timesheet live updates
+### timesheet updates
 
 ![coming soon](https://img.shields.io/badge/-coming%20soon-red)
   

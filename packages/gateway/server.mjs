@@ -1,7 +1,9 @@
 import restify from 'restify';
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { AccountOwnedId, clone, Env, ResultsReadable } from 'timeld-common';
+import {
+  AccountOwnedId, clone, Env, isTimeldType, ResultsReadable, timeldContext
+} from 'timeld-common';
 import AblyApi from './lib/AblyApi.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
@@ -153,6 +155,23 @@ async function sendStream(res, results) {
   res.status(200);
   await pipeline(new ResultsReadable(results, ND_JSON), res);
 }
+
+server.get('/context',
+  async (req, res, next) => {
+    res.sendRaw(Buffer.from(JSON.stringify({
+      '@base': `http://${gateway.domainName}/`,
+      ...timeldContext
+    })), {
+      'Content-Type': 'application/ld+json'
+    });
+    next();
+  });
+
+server.get('/jtd',
+  async (req, res, next) => {
+    res.send(isTimeldType);
+    next();
+  });
 
 server.listen(8080, function () {
   // noinspection JSUnresolvedVariable

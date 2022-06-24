@@ -12,7 +12,7 @@ export class DeadRemotes {
  * @param {number} n
  * @returns {object}
  */
-export const exampleEntryJson = (start, n = 1) => ({
+export const exampleEntryJson = (start = new Date, n = 1) => ({
   '@id': `session123/${n}`,
   '@type': 'Entry',
   'session': { '@id': 'session123' },
@@ -21,3 +21,14 @@ export const exampleEntryJson = (start, n = 1) => ({
   'start': dateJsonLd(start),
   'duration': 60
 });
+
+export const exampleProjectJson = {
+  '@id': 'test/pr1',
+  '@type': 'Project'
+};
+
+export const exampleTimesheetJson = {
+  '@id': 'test/ts1',
+  '@type': 'Timesheet',
+  project: [{ '@id': 'test/pr1' }]
+};

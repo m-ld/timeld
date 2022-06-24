@@ -7,7 +7,7 @@
  * @returns {Where}
  */
 export const accountHasTimesheet = tsId => ({
-  '@id': tsId.account, timesheet: { '@id': tsId.toUrl(), '@type': 'Timesheet' }
+  '@id': tsId.account, timesheet: { '@id': tsId.toIri(), '@type': 'Timesheet' }
 });
 
 /**
