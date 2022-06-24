@@ -109,15 +109,10 @@ export default class AdminSession extends Repl {
           this.getDetailHandler(argv).remove())
       )
       .command(
-        'report',
+        'report <id>',
         'Report on the time entries in a timesheet or project',
         yargs => yargs
-          .option('format', ENTRY_FORMAT_OPTIONS)
-          .check(argv => {
-            if (!argv.project && !argv.timesheet)
-              return 'Reporting requires a "--project" or "--timesheet"';
-            return true;
-          }),
+          .option('format', ENTRY_FORMAT_OPTIONS),
         argv => ctx.exec(
           () => this.reportEntriesProc(argv))
       );
@@ -159,13 +154,13 @@ export default class AdminSession extends Repl {
 
   /**
    * @param {EntryFormatName} format
-   * @param {string} timesheet exclusive with `project`
-   * @param {string} project exclusive with `timesheet`
+   * @param {string} id timesheet or project to report on
    * @returns {Proc}
    */
-  reportEntriesProc({ format, timesheet, project }) {
+  reportEntriesProc({ id, format }) {
+    const ownedId = this.resolveId(id);
     return new ResultsProc(
-      this.gateway.report(this.account, timesheet || project),
+      this.gateway.report(ownedId.account, ownedId.name),
       getSubjectFormat(format));
   }
 

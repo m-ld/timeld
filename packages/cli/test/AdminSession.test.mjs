@@ -2,6 +2,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
+import { consume } from 'rx-flowable/consume';
 
 describe('Administration session', () => {
   let gateway;
@@ -99,6 +100,16 @@ describe('Administration session', () => {
       await session.execute('add timesheet ts1', outLines, errLines);
       await expect(session.execute('add link ts1 --project pr1', outLines, errLines))
         .rejects.toThrow();
+    });
+
+    test('Reports on an owned ID', async () => {
+      gateway.report = jest.fn((account, name) =>
+        consume([{ '@id': `${account}/${name}`, '@type': 'Timesheet' }]));
+      await session.execute('report ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('Timesheet test/ts1');
+      outLines.mockReset();
+      await session.execute('report org1/ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('Timesheet org1/ts1');
     });
   });
 
