@@ -53,6 +53,11 @@ package "Account administration" {
     cascade create & delete
     of account property
   end note
+  note right of ownedAdmin
+    ≪constraint≫
+    timesheet provider is account
+    project client is account
+  end note
 
   User --> ([list | add | rm] timesheet project link)
   note right

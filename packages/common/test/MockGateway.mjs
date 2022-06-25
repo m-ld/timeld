@@ -39,7 +39,7 @@ export default class MockGateway extends BaseGateway {
     this.account = account;
     // noinspection JSCheckFunctionSignatures
     this.domain = await clone(new MeldMemDown(), DeadRemotes, {
-      '@id': uuid(), '@domain': this.domainName, genesis: true
+      '@id': uuid(), '@domain': this.domainName, genesis: true, logLevel: 'debug'
     });
     await this.domain.write(this.account.toJSON());
     return this;
@@ -54,15 +54,21 @@ export default class MockGateway extends BaseGateway {
    * @returns {Results} results
    */
   read(pattern) {
-    return consume(this.account.read(pattern)).pipe(flatMap(res => res));
+    return consume(this.account.read(json(pattern)))
+      .pipe(flatMap(res => res));
   }
 
   /**
    * @param {import('@m-ld/m-ld').Query} pattern
    */
   async write(pattern) {
-    return this.account.write(pattern);
+    return this.account.write(json(pattern));
   }
 
   initTimesheet = jest.fn();
+}
+
+/** Sanitisation of JSON */
+function json(pattern) {
+  return JSON.parse(JSON.stringify(pattern));
 }

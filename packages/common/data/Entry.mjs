@@ -1,5 +1,5 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { dateJsonLd, isDate, isReference, mustBe } from '../lib/util.mjs';
+import { dateJsonLd, isDate, isReference, mustBe, optionalPropertyValue } from '../lib/util.mjs';
 
 export default class Entry {
   /** @type {import('jtd').Schema} */
@@ -28,19 +28,8 @@ export default class Entry {
       activity: propertyValue(src, 'activity', String),
       providerId: propertyValue(src, 'vf:provider', Object)['@id'],
       start: propertyValue(src, 'start', Date),
-      // TODO: Array is the only way to do Optional fields until m-ld-js v0.9
-      duration: propertyValue(src, 'duration', Array, Number)[0]
+      duration: optionalPropertyValue(src, 'duration', Number)
     });
-  }
-
-  /**
-   * @param {Date} start
-   * @param {Date} end
-   * @returns {number} duration in fractional minutes
-   */
-  static durationFromInterval(start, end) {
-    // Round to the second then convert to minutes
-    return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
   }
 
   /**

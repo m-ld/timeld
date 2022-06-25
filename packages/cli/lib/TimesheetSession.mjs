@@ -4,7 +4,7 @@ import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
 import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
 import { ResultsProc } from './ResultsProc.mjs';
-import { parseDate, parseDuration } from './util.mjs';
+import { durationFromInterval, parseDate, parseDuration } from './util.mjs';
 import { Entry } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
@@ -149,7 +149,7 @@ export default class TimesheetSession extends Repl {
         if (start != null)
           entry.start = start;
         if (end != null && duration == null)
-          entry.duration = Entry.durationFromInterval(entry.start, end);
+          entry.duration = durationFromInterval(entry.start, end);
         if (duration != null)
           entry.duration = duration;
         proc.emit('message', DefaultFormat.entryLabel(entry));
@@ -190,7 +190,7 @@ export default class TimesheetSession extends Repl {
   addEntryProc({ activity, duration, start, end }) {
     // TODO: Replace use of console with proc 'message' events
     if (end != null && duration == null)
-      duration = Entry.durationFromInterval(start, end);
+      duration = durationFromInterval(start, end);
     const entry = new Entry({
       seqNo: `${this.nextEntryId++}`,
       sessionId: this.id,

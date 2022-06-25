@@ -105,8 +105,12 @@ export default class AccountOwnedId {
   }
 
   toIri() {
-    const path = `${this.account}/${this.name}`;
+    const path = this.toRelativeIri();
     return this.isRelative ? path : `http://${this.gateway}/${path}`;
+  }
+
+  toRelativeIri() {
+    return `${this.account}/${this.name}`;
   }
 
   toReference() {

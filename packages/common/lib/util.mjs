@@ -16,6 +16,19 @@ export function safeRefsIn(subject, property) {
 }
 
 /**
+ * @param {import('@m-ld/m-ld').Reference[]} refs
+ * @returns {Set<string>}
+ */
+export function idSet(refs) {
+  return new Set(refs.map(ref => ref['@id']));
+}
+
+export function optionalPropertyValue(src, property, type) {
+  // TODO: Array is the only way to do Optional fields until m-ld-js v0.9
+  return propertyValue(src, property, Array, type)[0];
+}
+
+/**
  * @param {Date} date
  * @returns {{'@value': string, '@type': string}}
  * @todo replace with normaliseValue in m-ld-js v0.9

@@ -66,13 +66,31 @@ describe('Administration session', () => {
     });
 
     test('Add project', async () => {
-      await session.execute('add project pr1', outLines, errLines);
+      await session.execute('add project pr1 --start now', outLines, errLines);
       await session.execute('ls project', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('test/pr1');
       outLines.mockReset();
       await session.execute('rm project pr1', outLines, errLines);
       await session.execute('ls project', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Add project duration & milestones', async () => {
+      await session.execute(
+        'add project pr1 --start now --duration 1w --milestone one 2',
+        outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+      await expect(gateway.domain.get('test/pr1'))
+        .resolves.toMatchObject({
+          '@id': 'test/pr1',
+          '@type': 'Project',
+          'start': {
+            '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+            '@value': expect.toBeISODateString(Date.now())
+          },
+          'duration': 10080, // Minutes in a week
+          'milestone': expect.arrayContaining(['one', '2'])
+        });
     });
 
     test('Add timesheet project link', async () => {

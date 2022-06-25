@@ -89,10 +89,10 @@ server.get('/api/cfg/:account/tsh/:timesheet',
     // account is the timesheet account (may not be user account)
     const { account, timesheet } = req.params;
     try {
-      const owned = gateway.ownedId(account, timesheet).validate();
+      const id = gateway.ownedId(account, timesheet).validate();
       try {
-        await new Authorization(req).verifyUser(gateway, owned);
-        res.json(await gateway.timesheetConfig(owned));
+        await new Authorization(req).verifyUser(gateway, { id, forWrite: true });
+        res.json(await gateway.timesheetConfig(id));
       } catch (e) {
         next(e);
       }
@@ -135,9 +135,9 @@ server.get('/api/rpt/:account/own/:owned',
   async (req, res, next) => {
     const { account, owned } = req.params;
     try {
-      const ownedId = gateway.ownedId(account, owned).validate();
-      await new Authorization(req).verifyUser(gateway, ownedId);
-      await sendStream(res, await gateway.report(ownedId));
+      const id = gateway.ownedId(account, owned).validate();
+      await new Authorization(req).verifyUser(gateway, { id });
+      await sendStream(res, await gateway.report(id));
       next();
     } catch (e) {
       next(e);

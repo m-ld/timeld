@@ -21,6 +21,16 @@ export function parseDuration(durationStr) {
 }
 
 /**
+ * @param {Date} start
+ * @param {Date} end
+ * @returns {number} duration in fractional minutes
+ */
+export function durationFromInterval(start, end) {
+  // Round to the second then convert to minutes
+  return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
+}
+
+/**
  * @param {string | string[]} dateStr human date, can be an array of words
  * @returns {Date}
  */

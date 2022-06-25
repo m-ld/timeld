@@ -3,9 +3,10 @@ import { ResultsProc } from './ResultsProc.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { ENTRY_FORMAT_OPTIONS, getSubjectFormat, TableFormat } from './DisplayFormat.mjs';
 import isEmail from 'validator/lib/isEmail.js';
-import { AccountOwnedId } from 'timeld-common';
+import { AccountOwnedId, dateJsonLd } from 'timeld-common';
 import { EMPTY } from 'rxjs';
 import { any } from '@m-ld/m-ld';
+import { durationFromInterval, parseDate, parseDuration } from './util.mjs';
 
 /**
  * @typedef {object} DetailArgs
@@ -85,6 +86,25 @@ export default class AdminSession extends Repl {
           .positional('value', {
             type: 'string',
             describe: this.describeValueParam
+          })
+          .option('start', {
+            describe: 'The project start date/time',
+            type: 'array',
+            coerce: parseDate
+          })
+          .option('end', {
+            describe: 'The project end date & time',
+            type: 'array',
+            coerce: parseDate
+          })
+          .option('duration', {
+            describe: 'The project duration, e.g. 1w',
+            type: 'string',
+            coerce: parseDuration
+          })
+          .option('milestone', {
+            describe: 'Project milestones',
+            type: 'array'
           }),
         argv => ctx.exec(() =>
           this.getDetailHandler(argv).add())
@@ -272,10 +292,18 @@ export default class AdminSession extends Repl {
 
   /**
    * @param {string} owned
+   * @param {Date} [start]
+   * @param {Date} [end]
+   * @param {number} [duration]
+   * @param {string[]} [milestone]
    * @param {'Timesheet'|'Project'} type
    * @returns {AccountDetail}
    */
-  ownedDetail({ value: owned }, type) {
+  ownedDetail({
+    value: owned,
+    start, end, duration,
+    milestone
+  }, type) {
     return new class extends AccountDetail {
       list() {
         return this.session.listProc({
@@ -285,16 +313,43 @@ export default class AdminSession extends Repl {
         }, new TableFormat('?owned'));
       }
 
-      update(verb) {
-        const ownedId = this.session.resolveId(owned);
-        const subject = { '@id': ownedId.toIri(), '@type': type };
-        const where = this.session.userIsAdmin(ownedId.account);
-        if (verb === '@delete') {
+      add() {
+        return this.updateOwned('@insert', subject => {
+          if (type === 'Project') {
+            // Fill out project properties
+            if (start != null) {
+              subject.start = dateJsonLd(start);
+              if (end != null && duration == null)
+                duration = durationFromInterval(start, end);
+              if (duration != null)
+                subject.duration = duration;
+            } else if (duration != null) {
+              throw 'Please specify a start date';
+            }
+            subject.milestone = milestone?.map(m => `${m}`);
+          }
+        });
+      }
+
+      remove() {
+        return this.updateOwned('@delete', (subject, where) => {
           // Delete must delete the owned subject in full
           const allProps = { [any()]: any() };
           Object.assign(subject, allProps);
-          where[type.toLowerCase()] = { '@id': ownedId.toIri(), ...allProps };
-        }
+          where[type.toLowerCase()] = { '@id': subject['@id'], ...allProps };
+        });
+      }
+
+      /**
+       * @param {'@insert'|'@delete'} verb update key
+       * @param {(subject: object, where: object) => void} complete
+       * @returns {PromiseProc}
+       */
+      updateOwned(verb, complete) {
+        const ownedId = this.session.resolveId(owned);
+        const subject = { '@id': ownedId.toIri(), '@type': type };
+        const where = this.session.userIsAdmin(ownedId.account);
+        complete(subject, where);
         return this.session.writeProc({
           [verb]: { '@id': ownedId.account, [type.toLowerCase()]: subject },
           '@where': where
