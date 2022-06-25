@@ -4,7 +4,6 @@ import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
 import { AccountOwnedId, BaseGateway, timeldContext } from 'timeld-common';
 import Account from '../lib/Account.mjs';
-import jsonwebtoken from 'jsonwebtoken';
 
 /**
  * NB: Account reads and writes are tested in the Gateway tests because they
@@ -45,14 +44,14 @@ describe('Gateway account', () => {
     expect(acc.keyids).toEqual(new Set(['keyid']));
     expect(acc.admins).toEqual(new Set(['user1']));
     expect(acc.timesheets).toEqual([{ '@id': 'test/ts1' }]);
-    expect([...acc.tsIds()].map(tsId => tsId.toString())).toEqual(['test/ts1@ex.org']);
     expect(acc.toJSON()).toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: ['test@ex.org'],
       'vf:primaryAccountable': [{ '@id': 'user1' }],
       keyid: ['keyid'],
-      timesheet: [{ '@id': 'test/ts1' }]
+      timesheet: [{ '@id': 'test/ts1' }],
+      project: []
     });
   });
 
@@ -78,18 +77,31 @@ describe('Gateway account', () => {
     });
   });
 
-  test('verify account JWT', async () => {
-    const acc = new Account(gateway, {
-      name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
+  test('authorise user for no particular owned object', async () => {
+    await gateway.domain.write({
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
     });
-    const jwt = jsonwebtoken.sign({}, 'secret', {
-      expiresIn: '1m', keyid: 'keyid', subject: 'test'
-    });
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
-      .resolves.toMatchObject({});
+    await expect(acc.authorise('keyid')).resolves.toMatchObject({});
+    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
+      capability: { 'ex.org:notify': ['subscribe'] }
+    });
+  });
+
+  test('authorise new timesheet in user account', async () => {
+    await gateway.domain.write({
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    });
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+    })).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
         'ex.org:notify': ['subscribe'],
@@ -97,48 +109,209 @@ describe('Gateway account', () => {
       }
     });
   });
-  test('reject account JWT if not registered keyid', async () => {
+
+  test('authorise existing timesheet in user account', async () => {
+    await gateway.domain.write({
+      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      timesheet: [
+        { '@id': 'test/ts1', '@type': 'Timesheet' },
+        { '@id': 'test/ts2', '@type': 'Timesheet' }
+      ]
+    });
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+    })).resolves.toMatchObject({});
+    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
+      capability: {
+        'ex.org:notify': ['subscribe'],
+        'ts2.test.ex.org:*': ['publish', 'subscribe', 'presence'],
+        'ts1.test.ex.org:*': ['publish', 'subscribe', 'presence']
+      }
+    });
+  });
+
+  test('authorise new timesheet in organisation account', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+    })).resolves.toMatchObject({});
+    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
+      capability: {
+        'ex.org:notify': ['subscribe'],
+        'ts1.org1.ex.org:*': ['publish', 'subscribe', 'presence']
+      }
+    });
+  });
+
+  test('authorise existing timesheet in organisation account', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
+      timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet' }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+    })).resolves.toMatchObject({});
+    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
+      capability: {
+        'ex.org:notify': ['subscribe'],
+        'ts1.test.ex.org:*': ['publish', 'subscribe', 'presence'],
+        'ts1.org1.ex.org:*': ['publish', 'subscribe', 'presence']
+      }
+    });
+  });
+
+  test('authorise to read organisation timesheet in user project', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      project: { '@id': 'test/pr1', '@type': 'Project' }
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
+      timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org')
+    })).resolves.toMatchObject({});
+  });
+
+  test('authorise to read organisation timesheet in organisation project', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
+      project: { '@id': 'org1/pr1', '@type': 'Project' }
+    }, {
+      '@id': 'org2', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
+      timesheet: { '@id': 'org2/ts1', '@type': 'Timesheet', project: { '@id': 'org1/pr1' } }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org2/ts1@ex.org')
+    })).resolves.toMatchObject({});
+  });
+
+  test('unauthorised to write timesheet in organisation project', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      project: { '@id': 'test/pr1', '@type': 'Project' }
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
+      timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+    })).rejects.toThrowError();
+  });
+
+  test('unauthorised if not an organisation admin', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' },
+      timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet' }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+    })).rejects.toThrowError();
+  });
+
+  test('unauthorised for create if not an organisation admin', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+    })).rejects.toThrowError();
+  });
+
+  test('unauthorised if not registered keyid', async () => {
     const acc = new Account(gateway, {
       name: 'test', keyids: [], timesheets: [{ '@id': 'test/ts1' }]
     });
-    const jwt = jsonwebtoken.sign({}, 'secret', {
-      expiresIn: '1m', keyid: 'keyid'
-    });
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
-      .rejects.toThrowError();
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+    })).rejects.toThrowError();
   });
 
-  test('reject account JWT if Ably has no keyid', async () => {
+  test('unauthorised if Ably has no keyid', async () => {
     const acc = new Account(gateway, {
       name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
-    });
-    const jwt = jsonwebtoken.sign({}, 'secret', {
-      expiresIn: '1m', keyid: 'keyid'
     });
     gateway.ablyApi.updateAppKey.mockImplementation(() => Promise.reject('Not Found'));
-    await expect(acc.verifyJwt(jwt, AccountOwnedId.fromString('test/ts1@ex.org')))
-      .rejects.toThrowError();
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+    })).rejects.toThrowError();
   });
 
-
-  test('verify account key', async () => {
-    const acc = new Account(gateway, {
-      name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
+  test('authorise project for read in user account', async () => {
+    await gateway.domain.write({
+      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      project: { '@id': 'test/pr1', '@type': 'Project' }
     });
-    const key = 'appid.keyid:secret';
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
-    await expect(acc.verifyKey(key, AccountOwnedId.fromString('test/ts1@ex.org')))
-      .resolves.not.toThrow();
-    expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
-      capability: {
-        'ex.org:notify': ['subscribe'],
-        'ts1.test.ex.org:*': ['publish', 'subscribe', 'presence']
-      }
-    });
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/pr1@ex.org')
+    })).resolves.toMatchObject({});
+  });
+
+  test('authorise project for read in organisation account', async () => {
+    await gateway.domain.write([{
+      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+    }, {
+      '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
+      project: { '@id': 'org1/pr1', '@type': 'Project' }
+    }]);
+    const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('org1/pr1@ex.org')
+    })).resolves.toMatchObject({});
   });
 });

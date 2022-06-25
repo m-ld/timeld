@@ -12,6 +12,7 @@ describe('Timesheet Id', () => {
     expect(tsId.toPath()).toEqual(['net', 'gw', 'org', 'ts']);
     expect(tsId.toDomain()).toEqual('ts.org.gw.net');
     expect(tsId.toIri()).toEqual('http://gw.net/org/ts');
+    expect(tsId.toRelativeIri()).toEqual('org/ts');
     expect(tsId.toReference()).toEqual({ '@id': 'http://gw.net/org/ts' });
   });
 

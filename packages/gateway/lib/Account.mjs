@@ -1,11 +1,10 @@
 import { array, propertyValue } from '@m-ld/m-ld';
-import { AblyKey, isReference, isTimeldType } from 'timeld-common';
+import { AccountOwnedId, isReference, isTimeldType } from 'timeld-common';
 import errors from 'restify-errors';
 import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
-import { verify } from './util.mjs';
-import { safeRefsIn } from 'timeld-common/lib/util.mjs';
-import { accountHasTimesheet, Ask, userIsAdmin } from './statements.mjs';
+import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
+import { accountHasTimesheet, Ask, timesheetHasProject, userIsAdmin } from './statements.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -22,8 +21,9 @@ export default class Account {
       name: src['@id'],
       emails: propertyValue(src, 'email', Set, String),
       keyids: propertyValue(src, 'keyid', Set, String),
-      admins: safeRefsIn(src, 'vf:primaryAccountable').map(ref => ref['@id']),
-      timesheets: safeRefsIn(src, 'timesheet')
+      admins: idSet(safeRefsIn(src, 'vf:primaryAccountable')),
+      timesheets: safeRefsIn(src, 'timesheet'),
+      projects: safeRefsIn(src, 'project')
     });
   }
 
@@ -34,13 +34,15 @@ export default class Account {
    * @param {Iterable<string>} keyids per-device keys
    * @param {Iterable<string>} admins admin (primary accountable) IRIs
    * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet Id Refs
+   * @param {import('@m-ld/m-ld').Reference[]} projects project Id Refs
    */
   constructor(gateway, {
     name,
     emails = [],
     keyids = [],
     admins = [],
-    timesheets = []
+    timesheets = [],
+    projects = []
   }) {
     this.gateway = gateway;
     this.name = name;
@@ -48,6 +50,7 @@ export default class Account {
     this.keyids = new Set([...keyids ?? []]);
     this.admins = new Set([...admins ?? []]);
     this.timesheets = timesheets ?? [];
+    this.projects = projects ?? [];
   }
 
   /**
@@ -71,53 +74,91 @@ export default class Account {
   }
 
   /**
-   * Verifies the given JWT for this account.
-   *
-   * @param {string} jwt a JWT containing a keyid associated with this Account
-   * @param {AccountOwnedId} [ownedId] a timesheet or project ID for which access is requested
-   * @returns {Promise<import('jsonwebtoken').JwtPayload>}
+   * @param {string} keyid user key ID
+   * @param {AccessRequest|undefined} [access] request
+   * @returns {Promise<AblyKeyDetail>}
+   * @throws {import('restify-errors').DefinedHttpError}
    */
-  async verifyJwt(jwt, ownedId) {
-    // Verify the JWT against its declared keyid
-    const payload = await verify(jwt, async header => {
-      const { key } = await this.authorise(header.kid, ownedId);
-      return new AblyKey(key).secret;
+  async authorise(keyid, access) {
+    if (!this.keyids.has(keyid))
+      throw new errors.UnauthorizedError(
+        `Key ${keyid} does not belong to account ${this.name}`);
+
+    return new Promise(async (resolve, reject) => {
+      this.gateway.domain.read(async state => {
+        try {
+          const writableTimesheets = await this.allOwned(state, 'timesheet');
+          if (access != null)
+            await this.checkAccess(state, access, writableTimesheets);
+          // Update the capability of the key to include the timesheet.
+          // This also serves as a check that the key exists.
+          const authorisedTsIds = [...writableTimesheets].map(iri =>
+            AccountOwnedId.fromIri(iri, this.gateway.domainName));
+          try {
+            return resolve(await this.gateway.ablyApi.updateAppKey(keyid, {
+              capability: this.keyCapability(...authorisedTsIds)
+            }));
+          } catch (e) {
+            // TODO: Assuming this is a Not Found
+            return reject(new errors.UnauthorizedError(e));
+          }
+        } catch (e) {
+          return reject(e instanceof errors.HttpError ?
+            e : new errors.InternalServerError(e));
+        }
+      });
     });
-    if (payload.sub !== this.name)
-      throw new errors.UnauthorizedError('JWT does not correspond to user');
-    return payload;
   }
 
   /**
-   * Verifies the given JWT for this account.
-   *
-   * @param {string} key an Ably key associated with this Account
-   * @param {AccountOwnedId} [ownedId] a timesheet or project ID for which access is requested
+   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {AccessRequest} access request
+   * @param {Set<string>} writableTimesheets may be mutated if timesheet is new
    * @returns {Promise<void>}
    */
-  async verifyKey(key, ownedId) {
-    const ablyKey = new AblyKey(key);
-    const { key: actualKey } = await this.authorise(ablyKey.keyid, ownedId);
-    if (key !== actualKey)
-      throw new errors.UnauthorizedError();
+  async checkAccess(state, access, writableTimesheets) {
+    const ask = new Ask(state);
+    const iri = access.id.toRelativeIri();
+    if (access.forWrite && !(await ask.exists({ '@id': iri }))) {
+      // Creating; check write access to account
+      if (access.id.account !== this.name &&
+        !(await ask.exists(userIsAdmin(this.name, access.id.account))))
+        throw new errors.ForbiddenError();
+      // Otherwise OK to create
+      writableTimesheets.add(iri);
+    } else if (!writableTimesheets.has(iri)) {
+      if (access.forWrite) {
+        // TODO: This method only supports timesheets for write access checking
+        throw new errors.ForbiddenError();
+      } else {
+        // Check id is owned, or readable through a project
+        const readProjects = await this.allOwned(state, 'project');
+        if (!readProjects.has(iri)) {
+          // Finally check for a readable timesheet through one of the projects
+          if (!(await Promise.all([...readProjects].map(project =>
+            ask.exists(timesheetHasProject(iri, project))))).includes(true))
+            throw new errors.ForbiddenError();
+        }
+      }
+    }
   }
 
   /**
-   * @param {string} keyid user key ID
-   * @param {AccountOwnedId} ownedId account owned ID being accessed
-   * @returns {Promise<AblyKeyDetail>}
+   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {'timesheet'|'project'} type
+   * @returns {Promise<Set<string>>}
    */
-  async authorise(keyid, ownedId) {
-    // TODO: Check for write access to the owned ID
-    if (!this.keyids.has(keyid))
-      throw new Error(`Key ${keyid} does not belong to account ${this.name}`);
-    // Update the capability of the key to include the timesheet.
-    // This also serves as a check that the key exists.
-    // TODO: Include access via projects
-    const authorisedTsIds = [...this.tsIds()].concat(ownedId ?? []);
-    return this.gateway.ablyApi.updateAppKey(keyid, {
-      capability: this.keyCapability(...authorisedTsIds)
-    });
+  async allOwned(state, type) {
+    const owned = idSet(type === 'timesheet' ? this.timesheets : this.projects);
+    await state.read({
+      '@select': '?owned',
+      '@where': ({
+        '@type': 'Account',
+        'vf:primaryAccountable': { '@id': this.name },
+        [type]: '?owned'
+      })
+    }).forEach(result => owned.add(result['?owned']['@id']));
+    return owned;
   }
 
   get allowedReadPatterns() {
@@ -242,7 +283,7 @@ export default class Account {
     const isOwned = (type, verb) => ({
       ...isTimeldType.mapping[type],
       additionalProperties: verb === '@delete' // ?p ?o
-    })
+    });
     const matchOwned = {
       properties: { '@id': { type: 'string' } },
       additionalProperties: true // ?p ?o
@@ -446,14 +487,6 @@ export default class Account {
   }
 
   /**
-   * @returns the Timesheet IDs provided by this account
-   */
-  *tsIds() {
-    for (let tsRef of this.timesheets)
-      yield this.gateway.ownedRefAsId(tsRef);
-  }
-
-  /**
    * @param {AccountOwnedId} tsIds
    * @returns {object}
    */
@@ -473,7 +506,8 @@ export default class Account {
       'email': [...this.emails],
       'keyid': [...this.keyids],
       'vf:primaryAccountable': [...this.admins].map(iri => ({ '@id': iri })),
-      'timesheet': this.timesheets
+      'timesheet': this.timesheets,
+      'project': this.projects
     };
   }
 }

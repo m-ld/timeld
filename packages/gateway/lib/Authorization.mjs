@@ -1,5 +1,12 @@
-import { AccountOwnedId } from 'timeld-common';
+import { AblyKey, AccountOwnedId } from 'timeld-common';
 import errors from 'restify-errors';
+import { verify } from './util.mjs';
+
+/**
+ * @typedef {object} AccessRequest
+ * @property {AccountOwnedId} id a timesheet or project ID for which access is requested
+ * @property {boolean} [forWrite] permission requested
+ */
 
 export default class Authorization {
   /**
@@ -15,11 +22,19 @@ export default class Authorization {
       case 'Bearer':
         if (!req.authorization.credentials)
           throw new errors.UnauthorizedError();
+        /**
+         * a JWT containing a keyid associated with this Account
+         * @type {string}
+         */
         this.jwt = req.authorization.credentials;
         break;
       case 'Basic':
         if (!req.authorization.basic?.password)
           throw new errors.UnauthorizedError();
+        /**
+         * an Ably key associated with this Account
+         * @type {string}
+         */
         this.key = req.authorization.basic.password;
         break;
       default:
@@ -29,20 +44,26 @@ export default class Authorization {
 
   /**
    * @param {Gateway} gateway
-   * @param {AccountOwnedId} [ownedId]
+   * @param {AccessRequest} [access] a timesheet or project access request
    * @returns {Promise<void>}
    */
-  async verifyUser(gateway, ownedId) {
+  async verifyUser(gateway, access) {
     const userAcc = await gateway.account(this.user);
     if (userAcc == null)
-      throw new errors.NotFoundError('Not found: %s', this.user);
-    try {
-      if (this.jwt)
-        await userAcc.verifyJwt(this.jwt, ownedId);
-      else
-        await userAcc.verifyKey(this.key, ownedId);
-    } catch (e) {
-      throw new errors.ForbiddenError(e);
+      throw new errors.UnauthorizedError('Not found: %s', this.user);
+    if (this.jwt) {
+      // Verify the JWT against its declared keyid
+      const payload = await verify(this.jwt, async header => {
+        const { key } = await userAcc.authorise(header.kid, access);
+        return new AblyKey(key).secret;
+      });
+      if (payload.sub !== this.user)
+        throw new errors.UnauthorizedError('JWT does not correspond to user');
+    } else {
+      const ablyKey = new AblyKey(this.key);
+      const { key: actualKey } = await userAcc.authorise(ablyKey.keyid, access);
+      if (this.key !== actualKey)
+        throw new errors.UnauthorizedError();
     }
   }
 }
