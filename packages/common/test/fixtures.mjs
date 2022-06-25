@@ -22,10 +22,13 @@ export const exampleEntryJson = (start = new Date, n = 1) => ({
   'duration': 60
 });
 
-export const exampleProjectJson = {
+export const exampleProjectJson = (start = new Date) => ({
   '@id': 'test/pr1',
-  '@type': 'Project'
-};
+  '@type': 'Project',
+  'start': dateJsonLd(start),
+  'duration': 60,
+  'milestone': ['1', '2']
+});
 
 export const exampleTimesheetJson = {
   '@id': 'test/ts1',

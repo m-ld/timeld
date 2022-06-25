@@ -26,7 +26,8 @@ describe('Timesheet entry', () => {
   testTimeldType(Entry, exampleEntryJson());
 
   test('from JSON', () => {
-    const entry = Entry.fromJSON(exampleEntryJson(new Date('2022-05-06T10:24:22.139Z')));
+    const entry = Entry.fromJSON(
+      exampleEntryJson(new Date('2022-05-06T10:24:22.139Z')));
     expect(entry.seqNo).toBe('1');
     expect(entry.sessionId).toBe('session123');
     expect(entry.activity).toBe('testing');
@@ -37,11 +38,15 @@ describe('Timesheet entry', () => {
 });
 
 describe('Project', () => {
-  testTimeldType(Project, exampleProjectJson);
+  testTimeldType(Project, exampleProjectJson());
 
   test('from JSON', () => {
-    const project = Project.fromJSON(exampleProjectJson);
+    const project = Project.fromJSON(
+      exampleProjectJson(new Date('2022-05-06T10:24:22.139Z')));
     expect(project.id.toString()).toBe('test/pr1');
+    expect(project.start.toISOString()).toBe('2022-05-06T10:24:22.139Z');
+    expect(project.duration).toBe(60);
+    expect(project.milestones).toEqual(['1', '2'])
   });
 });
 

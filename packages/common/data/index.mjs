@@ -13,7 +13,7 @@ export const timeldContext = {
 
 /** @typedef {import('jtd').SchemaFormProperties['properties']} JtdProperties */
 
-/** @type {import('jtd').Schema} */
+/** @type {import('jtd').SchemaFormDiscriminator} */
 export const isTimeldType = {
   discriminator: '@type',
   mapping: {

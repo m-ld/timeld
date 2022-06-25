@@ -6,7 +6,9 @@ export default class Timesheet {
   static SCHEMA = {
     properties: {
       '@id': { type: 'string' },
-      '@type': mustBe('Timesheet'),
+      '@type': mustBe('Timesheet')
+    },
+    optionalProperties: {
       // TODO: loading from data also allows single reference
       project: { elements: isReference }
     }

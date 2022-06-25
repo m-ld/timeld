@@ -15,6 +15,11 @@ export function safeRefsIn(subject, property) {
   }
 }
 
+export function optionalPropertyValue(src, property, type) {
+  // TODO: Array is the only way to do Optional fields until m-ld-js v0.9
+  return propertyValue(src, property, Array, type)[0];
+}
+
 /**
  * @param {Date} date
  * @returns {{'@value': string, '@type': string}}

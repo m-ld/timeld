@@ -1,5 +1,5 @@
 import { array, propertyValue } from '@m-ld/m-ld';
-import { AblyKey, isReference } from 'timeld-common';
+import { AblyKey, isReference, isTimeldType } from 'timeld-common';
 import errors from 'restify-errors';
 import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
@@ -103,8 +103,8 @@ export default class Account {
   }
 
   /**
-   * @param keyid user key ID
-   * @param ownedId account owned ID being accessed
+   * @param {string} keyid user key ID
+   * @param {AccountOwnedId} ownedId account owned ID being accessed
    * @returns {Promise<AblyKeyDetail>}
    */
   async authorise(keyid, ownedId) {
@@ -240,9 +240,9 @@ export default class Account {
      * @param {'@insert'|'@delete'} verb
      */
     const isOwned = (type, verb) => ({
-      properties: { '@id': { type: 'string' }, '@type': { enum: [type] } },
+      ...isTimeldType.mapping[type],
       additionalProperties: verb === '@delete' // ?p ?o
-    });
+    })
     const matchOwned = {
       properties: { '@id': { type: 'string' } },
       additionalProperties: true // ?p ?o

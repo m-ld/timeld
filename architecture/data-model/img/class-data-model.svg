@@ -1,20 +1,19 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="605px" preserveAspectRatio="none" style="width:589px;height:605px;background:#FFFFFF;" version="1.1" viewBox="0 0 589 605" width="589px" zoomAndPan="magnify"><defs><filter height="300%" id="f11tne0uyyabo6" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[aa9aa478b513889dc0a7f0c6069e4c16]
-cluster ts--><polygon fill="#FFFFFF" filter="url(#f11tne0uyyabo6)" points="16,6,36,6,43,28.4883,572,28.4883,572,598,16,598,16,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="16" x2="43" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="14" x="20" y="21.5352">ts</text><!--MD5=[0c2e12f724a2bba325ddf189ef351421]
-class Timesheet--><rect codeLine="6" fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="53.0879" id="Timesheet" style="stroke:#A80036;stroke-width:1.5;" width="112" x="444" y="200.5"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="60" x="470" y="217.1016">Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="445" x2="555" y1="224.6328" y2="224.6328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="100" x="450" y="239.2676">project : Project [*]</text><line style="stroke:#A80036;stroke-width:1.5;" x1="445" x2="555" y1="245.5879" y2="245.5879"/><!--MD5=[2ca1536628238a7dc78c5d90808014f9]
-class Session--><rect codeLine="10" fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="66.043" id="Session" style="stroke:#A80036;stroke-width:1.5;" width="128" x="233" y="41"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="42" x="276" y="57.6016">Session</text><line style="stroke:#A80036;stroke-width:1.5;" x1="234" x2="360" y1="65.1328" y2="65.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="106" x="239" y="79.7676">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="116" x="239" y="92.7227">timesheet : Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="234" x2="360" y1="99.043" y2="99.043"/><!--MD5=[96293e8b231702a792e4ba32419ac2da]
-class Entry--><rect codeLine="17" fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="117.8633" id="Entry" style="stroke:#A80036;stroke-width:1.5;" width="137" x="32.5" y="168"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="29" x="86.5" y="184.6016">Entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="33.5" x2="168.5" y1="192.1328" y2="192.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="91" x="38.5" y="206.7676">session : Session</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="102" x="38.5" y="219.7227">activity : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="38.5" y="232.6777">hourlyRate : hourlyRate</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="38.5" y="245.6328">vf:provider : foaf:Agent</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="106" x="38.5" y="258.5879">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="119" x="38.5" y="271.543">duration : xsd:decimal</text><line style="stroke:#A80036;stroke-width:1.5;" x1="33.5" x2="168.5" y1="277.8633" y2="277.8633"/><path d="M205,168.5 L205,184.8105 L163.5,228.5205 L205,192.8105 L205,209.1211 A0,0 0 0 0 205,209.1211 L328,209.1211 A0,0 0 0 0 328,209.1211 L328,178.5 L318,168.5 L205,168.5 A0,0 0 0 0 205,168.5 " fill="#FBFB77" filter="url(#f11tne0uyyabo6)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M318,168.5 L318,178.5 L328,178.5 L318,168.5 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="95" x="211" y="186.0684">hourlyRate still</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="102" x="211" y="201.3789">to be elaborated</text><path d="M205,219.1211 L205,243.0869 L157.5,267.3857 L205,251.0869 L205,275.0527 A0,0 0 0 0 205,275.0527 L409,275.0527 A0,0 0 0 0 409,275.0527 L409,229.1211 L399,219.1211 L205,219.1211 A0,0 0 0 0 205,219.1211 " fill="#FBFB77" filter="url(#f11tne0uyyabo6)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M399,219.1211 L399,229.1211 L409,229.1211 L399,219.1211 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="115" x="211" y="236.6895">fractional minutes</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="183" x="211" y="252">could also be a sub-property</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="211" y="267.3105">of vf:effortQuantity</text><!--MD5=[e66c67d430336d46da75a5fc9d9d1b7c]
-class vf:Action--><rect fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="40.1328" id="vf:Action" style="stroke:#A80036;stroke-width:1.5;" width="55" x="44.5" y="379.5"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="49" x="47.5" y="396.1016">vf:Action</text><line style="stroke:#A80036;stroke-width:1.5;" x1="45.5" x2="98.5" y1="403.6328" y2="403.6328"/><line style="stroke:#A80036;stroke-width:1.5;" x1="45.5" x2="98.5" y1="411.6328" y2="411.6328"/><!--MD5=[84612bed34b900519fce1dd1c39e16c2]
-class foaf:Agent--><rect codeLine="53" fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="53.0879" id="foaf:Agent" style="stroke:#A80036;stroke-width:1.5;" width="129" x="112.5" y="529"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="59" x="147.5" y="545.6016">foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="113.5" x2="240.5" y1="553.1328" y2="553.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="118.5" y="567.7676">foaf:name : xsd:string</text><line style="stroke:#A80036;stroke-width:1.5;" x1="113.5" x2="240.5" y1="574.0879" y2="574.0879"/><!--MD5=[79d378210367c0c6ec62ef762ddfbd1b]
-class Project--><rect codeLine="43" fill="#FEFECE" filter="url(#f11tne0uyyabo6)" height="104.9082" id="Project" style="stroke:#A80036;stroke-width:1.5;" width="142" x="177" y="347"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="40" x="228" y="363.6016">Project</text><line style="stroke:#A80036;stroke-width:1.5;" x1="178" x2="318" y1="371.1328" y2="371.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="130" x="183" y="385.7676">startDate : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="119" x="183" y="398.7227">duration : xsd:decimal</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="116" x="183" y="411.6777">milestone : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="183" y="424.6328">client : foaf:Agent [0..1]</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="183" y="437.5879">vf:provider : foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="178" x2="318" y1="443.9082" y2="443.9082"/><path d="M354,374 L354,390.3105 L308,420.4756 L354,398.3105 L354,414.6211 A0,0 0 0 0 354,414.6211 L556,414.6211 A0,0 0 0 0 556,414.6211 L556,384 L546,374 L354,374 A0,0 0 0 0 354,374 " fill="#FBFB77" filter="url(#f11tne0uyyabo6)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M546,374 L546,384 L556,384 L546,374 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="137" x="360" y="391.5684">client property is also</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="181" x="360" y="406.8789">a sub-property of vf:receiver</text><!--MD5=[1ff2cad5b06ffeafd56335cddeccaf9d]
-reverse link Session to Entry--><path codeLine="15" d="M244.86,115.17 C221.87,132.88 194.53,153.94 169.89,172.93 " fill="none" id="Session-backto-Entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="255.43,107.02,248.2356,107.5102,245.921,114.3397,253.1154,113.8495,255.43,107.02" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="238.4584" y="127.5921">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="177.3037" y="164.172">*</text><!--MD5=[82bde99b90173856d1b53a5f7332f595]
-link Entry to Entry$$$RIGHT--><!--MD5=[889c94e4919196ae8d870bf39295b876]
-link Entry to vf:Action--><path codeLine="37" d="M91.1,286.2 C86.99,310.38 82.32,337.81 78.63,359.5 " fill="none" id="Entry-to-vf:Action" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="85.52,360.76,75.27,379.3,71.72,358.41,85.52,360.76" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[40e47b055a33d05f09d872b96785d165]
-reverse link Entry to foaf:Agent--><path codeLine="39" d="M116.07,298.77 C127.94,353.57 145.24,431.28 162,499 C164.42,508.79 167.27,519.49 169.83,528.86 " fill="none" id="Entry-backto-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#FFFFFF" points="113.32,286.05,110.6768,292.7592,115.8533,297.7796,118.4965,291.0704,113.32,286.05" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="159.1073" y="518.1339">1</text><!--MD5=[addc1e9e0750174350b69c33eadbb040]
-link Session to Timesheet--><path codeLine="41" d="M343.13,107.15 C368.17,124.81 399.53,147.28 427,168 C437.17,175.67 447.98,184.1 458.08,192.1 " fill="none" id="Session-to-Timesheet" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="468.29,200.24,466.0882,193.3732,458.9029,192.7646,461.1046,199.6313,468.29,200.24" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="345.3517" y="127.4928">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="452.0321" y="189.9115">1</text><!--MD5=[f916e162bce7c7efe9a8de5f08f8c74c]
-link Timesheet to Project--><path codeLine="51" d="M469.32,253.61 C456.49,263.99 441.27,275.9 427,286 C392.4,310.5 352.59,335.8 319.31,356.18 " fill="none" id="Timesheet-Project" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="455.5315" y="274.092">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="326.9732" y="348.5283">*</text><!--MD5=[57885c9b417812a9a829c42dfbf510e9]
-link Project to foaf:Agent--><path codeLine="57" d="M191.2,452.32 C184.18,461.48 178.06,471.48 174,482 C168.28,496.81 168.92,514.6 171.04,528.86 " fill="none" id="Project-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="35" x="175" y="495.5684">client</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="177.5381" y="472.6426">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="24" x="172.5123" y="518.1339">0..1</text><!--MD5=[57885c9b417812a9a829c42dfbf510e9]
-link Project to foaf:Agent--><path codeLine="58" d="M233.66,452.2 C228.6,467.61 222.31,484.31 215,499 C209.9,509.25 203.14,519.78 196.73,528.88 " fill="none" id="Project-foaf:Agent-1" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="68" x="223" y="495.5684">vf:provider</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="225.4383" y="472.5073">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="202.2704" y="518.1587">*</text><!--MD5=[411c2a8c6e7ae06fe3feeb6aed81b2dc]
-link Project to Project$$$RIGHT--><!--MD5=[a3d15e7819ed5eea5f9e3784d940b7fd]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="514px" preserveAspectRatio="none" style="width:815px;height:514px;background:#FFFFFF;" version="1.1" viewBox="0 0 815 514" width="815px" zoomAndPan="magnify"><defs><filter height="300%" id="flwr8d7bsd3rp" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[aa9aa478b513889dc0a7f0c6069e4c16]
+cluster ts--><polygon fill="#FFFFFF" filter="url(#flwr8d7bsd3rp)" points="16,6,36,6,43,28.4883,798,28.4883,798,507,16,507,16,6" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="16" x2="43" y1="28.4883" y2="28.4883"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="14" x="20" y="21.5352">ts</text><!--MD5=[0c2e12f724a2bba325ddf189ef351421]
+class Timesheet--><rect codeLine="6" fill="#FEFECE" filter="url(#flwr8d7bsd3rp)" height="66.043" id="Timesheet" style="stroke:#A80036;stroke-width:1.5;" width="136" x="417" y="41"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="60" x="455" y="57.6016">Timesheet</text><line style="stroke:#A80036;stroke-width:1.5;" x1="418" x2="552" y1="65.1328" y2="65.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="100" x="423" y="79.7676">project : Project [*]</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="423" y="92.7227">vf:provider : foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="418" x2="552" y1="99.043" y2="99.043"/><path d="M588.5,41 L588.5,64.9658 L547,88.5654 L588.5,72.9658 L588.5,96.9316 A0,0 0 0 0 588.5,96.9316 L767.5,96.9316 A0,0 0 0 0 767.5,96.9316 L767.5,51 L757.5,41 L588.5,41 A0,0 0 0 0 588.5,41 " fill="#FBFB77" filter="url(#flwr8d7bsd3rp)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M757.5,41 L757.5,51 L767.5,51 L757.5,41 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="143" x="594.5" y="58.5684">in Timeld, the provider</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="107" x="594.5" y="73.8789">is entailed as the</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="158" x="594.5" y="89.1895">timesheet account owner</text><!--MD5=[96293e8b231702a792e4ba32419ac2da]
+class Entry--><rect codeLine="19" fill="#FEFECE" filter="url(#flwr8d7bsd3rp)" height="104.9082" id="Entry" style="stroke:#A80036;stroke-width:1.5;" width="137" x="271.5" y="212"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="29" x="325.5" y="228.6016">Entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="272.5" x2="407.5" y1="236.1328" y2="236.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="102" x="277.5" y="250.7676">activity : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="277.5" y="263.7227">hourlyRate : hourlyRate</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="277.5" y="276.6777">vf:provider : foaf:Agent</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="106" x="277.5" y="289.6328">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="119" x="277.5" y="302.5879">duration : xsd:decimal</text><line style="stroke:#A80036;stroke-width:1.5;" x1="272.5" x2="407.5" y1="308.9082" y2="308.9082"/><path d="M32,206 L32,246.6211 A0,0 0 0 0 32,246.6211 L155,246.6211 A0,0 0 0 0 155,246.6211 L155,230.3105 L275.5,259.5654 L155,222.3105 L155,216 L145,206 L32,206 A0,0 0 0 0 32,206 " fill="#FBFB77" filter="url(#flwr8d7bsd3rp)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M145,206 L145,216 L155,216 L145,206 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="95" x="38" y="223.5684">hourlyRate still</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="102" x="38" y="238.8789">to be elaborated</text><path d="M32,256.6211 L32,312.5527 A0,0 0 0 0 32,312.5527 L236,312.5527 A0,0 0 0 0 236,312.5527 L236,288.5869 L275.5,298.4307 L236,280.5869 L236,266.6211 L226,256.6211 L32,256.6211 A0,0 0 0 0 32,256.6211 " fill="#FBFB77" filter="url(#flwr8d7bsd3rp)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M226,256.6211 L226,266.6211 L236,266.6211 L226,256.6211 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="115" x="38" y="274.1895">fractional minutes</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="183" x="38" y="289.5">could also be a sub-property</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="38" y="304.8105">of vf:effortQuantity</text><!--MD5=[e66c67d430336d46da75a5fc9d9d1b7c]
+class vf:Action--><rect fill="#FEFECE" filter="url(#flwr8d7bsd3rp)" height="40.1328" id="vf:Action" style="stroke:#A80036;stroke-width:1.5;" width="55" x="312.5" y="54"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="49" x="315.5" y="70.6016">vf:Action</text><line style="stroke:#A80036;stroke-width:1.5;" x1="313.5" x2="366.5" y1="78.1328" y2="78.1328"/><line style="stroke:#A80036;stroke-width:1.5;" x1="313.5" x2="366.5" y1="86.1328" y2="86.1328"/><!--MD5=[84612bed34b900519fce1dd1c39e16c2]
+class foaf:Agent--><rect codeLine="67" fill="#FEFECE" filter="url(#flwr8d7bsd3rp)" height="53.0879" id="foaf:Agent" style="stroke:#A80036;stroke-width:1.5;" width="129" x="370.5" y="438"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="59" x="405.5" y="454.6016">foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="371.5" x2="498.5" y1="462.1328" y2="462.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="376.5" y="476.7676">foaf:name : xsd:string</text><line style="stroke:#A80036;stroke-width:1.5;" x1="371.5" x2="498.5" y1="483.0879" y2="483.0879"/><!--MD5=[79d378210367c0c6ec62ef762ddfbd1b]
+class Project--><rect codeLine="42" fill="#FEFECE" filter="url(#flwr8d7bsd3rp)" height="104.9082" id="Project" style="stroke:#A80036;stroke-width:1.5;" width="137" x="443.5" y="212"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="40" x="492" y="228.6016">Project</text><line style="stroke:#A80036;stroke-width:1.5;" x1="444.5" x2="579.5" y1="236.1328" y2="236.1328"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="106" x="449.5" y="250.7676">start : xsd:dateTime</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="119" x="449.5" y="263.7227">duration : xsd:decimal</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="116" x="449.5" y="276.6777">milestone : xsd:string</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="449.5" y="289.6328">client : foaf:Agent [0..1]</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="449.5" y="302.5879">vf:provider : foaf:Agent</text><line style="stroke:#A80036;stroke-width:1.5;" x1="444.5" x2="579.5" y1="308.9082" y2="308.9082"/><path d="M616,168 L616,222.5869 L574.5,285.4756 L616,230.5869 L616,285.1738 A0,0 0 0 0 616,285.1738 L782,285.1738 A0,0 0 0 0 782,285.1738 L782,178 L772,168 L616,168 A0,0 0 0 0 616,168 " fill="#FBFB77" filter="url(#flwr8d7bsd3rp)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M772,168 L772,178 L782,178 L772,168 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="107" x="622" y="185.5684">client property is</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="125" x="622" y="200.8789">also a sub-property</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="82" x="622" y="216.1895">of vf:receiver</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="0" x="626" y="231.5"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="145" x="622" y="246.8105">in Timeld, it is entailed</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="142" x="622" y="262.1211">as the owning account</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="142" x="622" y="277.4316">(and so, always exists)</text><path d="M616,295.1738 L616,319.1396 L573.5,298.4307 L616,327.1396 L616,351.1055 A0,0 0 0 0 616,351.1055 L779,351.1055 A0,0 0 0 0 779,351.1055 L779,305.1738 L769,295.1738 L616,295.1738 A0,0 0 0 0 616,295.1738 " fill="#FBFB77" filter="url(#flwr8d7bsd3rp)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M769,295.1738 L769,305.1738 L779,305.1738 L769,295.1738 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="134" x="622" y="312.7422">only timesheets from</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="142" x="622" y="328.0527">these providers can be</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="131" x="622" y="343.3633">added to this project</text><!--MD5=[f59287a37ea7426887cc54bb6a33788a]
+link Timesheet to Timesheet$$$RIGHT--><!--MD5=[9fb479e981d38c7d45cea0a3de079dbd]
+reverse link Timesheet to Entry--><path codeLine="17" d="M451.93,118 C430.52,145.82 402.53,182.21 379.9,211.63 " fill="none" id="Timesheet-backto-Entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="460.07,107.4,453.2405,109.7146,452.7503,116.909,459.5798,114.5944,460.07,107.4" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="446.736" y="127.534">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="378.8584" y="201.1132">*</text><!--MD5=[c437f673c281c7b045719cb4870db9cd]
+link Entry$$$LEFT to Entry--><!--MD5=[e793f0bed39436c636a80cadd69c331c]
+reverse link vf:Action to Entry--><path codeLine="38" d="M340,114.26 C340,142.52 340,180.92 340,211.69 " fill="none" id="vf:Action-backto-Entry" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="333,114.11,340,94.11,347,114.11,333,114.11" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[40e47b055a33d05f09d872b96785d165]
+reverse link Entry to foaf:Agent--><path codeLine="40" d="M370.56,329.2 C388.28,366.12 409.6,410.57 422.73,437.93 " fill="none" id="Entry-backto-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#FFFFFF" points="364.71,317.01,363.6927,324.149,369.8912,327.8338,370.9085,320.6948,364.71,317.01" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="8" x="410.7642" y="427.2209">1</text><!--MD5=[411c2a8c6e7ae06fe3feeb6aed81b2dc]
+link Project to Project$$$RIGHT--><!--MD5=[f916e162bce7c7efe9a8de5f08f8c74c]
+link Timesheet to Project--><path codeLine="65" d="M489.64,107.4 C493.74,136.04 499.8,178.3 504.57,211.63 " fill="none" id="Timesheet-Project" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="483.9424" y="127.534">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="497.1685" y="201.1132">*</text><!--MD5=[57885c9b417812a9a829c42dfbf510e9]
+link Project to foaf:Agent--><path codeLine="71" d="M469.69,317.19 C454.7,338.67 439.67,364.71 432,391 C427.59,406.12 428.2,423.76 429.98,437.85 " fill="none" id="Project-foaf:Agent" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="35" x="433" y="404.5684">client</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="457.8847" y="337.496">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="24" x="431.6814" y="427.1214">0..1</text><!--MD5=[57885c9b417812a9a829c42dfbf510e9]
+link Project to foaf:Agent--><path codeLine="72" d="M502.25,317.07 C495.94,344.81 486.37,379.14 473,408 C468.24,418.28 461.63,428.74 455.26,437.76 " fill="none" id="Project-foaf:Agent-1" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="68" x="480" y="404.5684">vf:provider</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="494.6164" y="337.3606">*</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="6" x="460.6389" y="427.4361">*</text><!--MD5=[9993d9e70b8d2d0a1bde231d086126dc]
 @startuml
 'https://plantuml.com/class-diagram
 
@@ -23,17 +22,18 @@ hide circle
 package ts {
     class Timesheet {
         project : Project [*]
+        vf:provider : foaf:Agent
     }
 
-    class Session {
-        start : xsd:dateTime
-        timesheet : Timesheet
-    }
+    note right of Timesheet::vf:provider
+      in Timeld, the provider
+      is entailed as the
+      timesheet account owner
+    end note
 
-    Session "1" *- - "*" Entry
+    Timesheet "1" *- - "*" Entry
 
     class Entry {
-        session : Session
         activity : xsd:string
         hourlyRate : hourlyRate
         vf:provider : foaf:Agent
@@ -41,30 +41,43 @@ package ts {
         duration : xsd:decimal
     }
 
-    note right of Entry::hourlyRate
+    note left of Entry::hourlyRate
         hourlyRate still
         to be elaborated
     end note
 
-    note right of Entry::duration
+    note left of Entry::duration
         fractional minutes
         could also be a sub-property
         of vf:effortQuantity
     end note
 
-    Entry - -|> "vf:Action"
+    "vf:Action" <|- - Entry
 
     Entry o- - "1" "foaf:Agent"
 
-    Session "*" - -* "1" Timesheet
-
     class Project {
-        startDate : xsd:dateTime
+        start : xsd:dateTime
         duration : xsd:decimal
         milestone : xsd:string
         client : foaf:Agent [0..1]
         vf:provider : foaf:Agent
     }
+    note right of Project::client
+      client property is
+      also a sub-property
+      of vf:receiver
+
+      in Timeld, it is entailed
+      as the owning account
+      (and so, always exists)
+    end note
+
+    note right of Project::vf:provider
+      only timesheets from
+      these providers can be
+      added to this project
+    end note
 
     Timesheet "*" - - "*" Project
 
@@ -74,11 +87,6 @@ package ts {
 
     Project "*" - - "0..1" "foaf:Agent": client
     Project "*" - - "*" "foaf:Agent": vf:provider
-
-    note right of Project::client
-    client property is also
-    a sub-property of vf:receiver
-    end note
 }
 
 @enduml
@@ -90,17 +98,18 @@ hide circle
 package ts {
     class Timesheet {
         project : Project [*]
+        vf:provider : foaf:Agent
     }
 
-    class Session {
-        start : xsd:dateTime
-        timesheet : Timesheet
-    }
+    note right of Timesheet::vf:provider
+      in Timeld, the provider
+      is entailed as the
+      timesheet account owner
+    end note
 
-    Session "1" *- - "*" Entry
+    Timesheet "1" *- - "*" Entry
 
     class Entry {
-        session : Session
         activity : xsd:string
         hourlyRate : hourlyRate
         vf:provider : foaf:Agent
@@ -108,30 +117,43 @@ package ts {
         duration : xsd:decimal
     }
 
-    note right of Entry::hourlyRate
+    note left of Entry::hourlyRate
         hourlyRate still
         to be elaborated
     end note
 
-    note right of Entry::duration
+    note left of Entry::duration
         fractional minutes
         could also be a sub-property
         of vf:effortQuantity
     end note
 
-    Entry - -|> "vf:Action"
+    "vf:Action" <|- - Entry
 
     Entry o- - "1" "foaf:Agent"
 
-    Session "*" - -* "1" Timesheet
-
     class Project {
-        startDate : xsd:dateTime
+        start : xsd:dateTime
         duration : xsd:decimal
         milestone : xsd:string
         client : foaf:Agent [0..1]
         vf:provider : foaf:Agent
     }
+    note right of Project::client
+      client property is
+      also a sub-property
+      of vf:receiver
+
+      in Timeld, it is entailed
+      as the owning account
+      (and so, always exists)
+    end note
+
+    note right of Project::vf:provider
+      only timesheets from
+      these providers can be
+      added to this project
+    end note
 
     Timesheet "*" - - "*" Project
 
@@ -141,11 +163,6 @@ package ts {
 
     Project "*" - - "0..1" "foaf:Agent": client
     Project "*" - - "*" "foaf:Agent": vf:provider
-
-    note right of Project::client
-    client property is also
-    a sub-property of vf:receiver
-    end note
 }
 
 @enduml

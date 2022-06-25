@@ -6,17 +6,18 @@ hide circle
 package ts {
     class Timesheet {
         project : Project [*]
+        vf:provider : foaf:Agent
     }
 
-    class Session {
-        start : xsd:dateTime
-        timesheet : Timesheet
-    }
+    note right of Timesheet::vf:provider
+      in Timeld, the provider
+      is entailed as the
+      timesheet account owner
+    end note
 
-    Session "1" *-- "*" Entry
+    Timesheet "1" *-- "*" Entry
 
     class Entry {
-        session : Session
         activity : xsd:string
         hourlyRate : hourlyRate
         vf:provider : foaf:Agent
@@ -24,30 +25,43 @@ package ts {
         duration : xsd:decimal
     }
 
-    note right of Entry::hourlyRate
+    note left of Entry::hourlyRate
         hourlyRate still
         to be elaborated
     end note
 
-    note right of Entry::duration
+    note left of Entry::duration
         fractional minutes
         could also be a sub-property
         of vf:effortQuantity
     end note
 
-    Entry --|> "vf:Action"
+    "vf:Action" <|-- Entry
 
     Entry o-- "1" "foaf:Agent"
 
-    Session "*" --* "1" Timesheet
-
     class Project {
-        startDate : xsd:dateTime
+        start : xsd:dateTime
         duration : xsd:decimal
         milestone : xsd:string
         client : foaf:Agent [0..1]
         vf:provider : foaf:Agent
     }
+    note right of Project::client
+      client property is
+      also a sub-property
+      of vf:receiver
+
+      in Timeld, it is entailed
+      as the owning account
+      (and so, always exists)
+    end note
+
+    note right of Project::vf:provider
+      only timesheets from
+      these providers can be
+      added to this project
+    end note
 
     Timesheet "*" -- "*" Project
 
@@ -57,11 +71,6 @@ package ts {
 
     Project "*" -- "0..1" "foaf:Agent": client
     Project "*" -- "*" "foaf:Agent": vf:provider
-
-    note right of Project::client
-    client property is also
-    a sub-property of vf:receiver
-    end note
 }
 
 @enduml
