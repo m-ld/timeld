@@ -13,7 +13,8 @@ export default class Entry {
       start: isDate
     },
     optionalProperties: {
-      duration: { type: 'int16' }
+      duration: { type: 'int16' },
+      external: isReference
     }
   }
   /**
@@ -28,7 +29,8 @@ export default class Entry {
       activity: propertyValue(src, 'activity', String),
       providerId: propertyValue(src, 'vf:provider', Object)['@id'],
       start: propertyValue(src, 'start', Date),
-      duration: optionalPropertyValue(src, 'duration', Number)
+      duration: optionalPropertyValue(src, 'duration', Number),
+      externalId: optionalPropertyValue(src, 'external', Object)?.['@id']
     });
   }
 
@@ -39,6 +41,7 @@ export default class Entry {
    * @param {string} spec.providerId
    * @param {Date} spec.start
    * @param {number} [spec.duration] entry duration in minutes
+   * @param {string} [spec.externalId] entry duration in minutes
    */
   constructor(spec) {
     this.seqNo = spec.seqNo;
@@ -47,17 +50,19 @@ export default class Entry {
     this.providerId = spec.providerId;
     this.start = spec.start;
     this.duration = spec.duration;
+    this.externalId = spec.externalId;
   }
 
   toJSON() {
     return {
       '@id': `${this.sessionId}/${this.seqNo}`,
       '@type': 'Entry',
-      'session': { '@id': `${this.sessionId}` },
+      'session': { '@id': this.sessionId },
       'activity': this.activity,
-      'vf:provider': { '@id': `${this.providerId}` },
+      'vf:provider': { '@id': this.providerId },
       'start': dateJsonLd(this.start),
-      'duration': this.duration
+      'duration': this.duration,
+      'external': this.externalId ? { '@id': this.externalId } : undefined
     };
   }
 }

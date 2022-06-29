@@ -3,6 +3,9 @@ import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
 import { consume } from 'rx-flowable/consume';
+import { toBeISODateString } from 'timeld-common/test/fixtures.mjs';
+
+expect.extend({ toBeISODateString });
 
 describe('Administration session', () => {
   let gateway;
@@ -197,6 +200,7 @@ describe('Administration session', () => {
         name: 'fred', emails: ['fred@ex.org']
       });
       await gateway.domain.write(fredAccount.toJSON());
+      // noinspection JSCheckFunctionSignatures
       await fredAccount.write({
         '@insert': { '@id': 'fred', timesheet: { '@id': 'fred/ts1', '@type': 'Timesheet' } },
         '@where': { '@id': 'fred', '@type': 'Account' }

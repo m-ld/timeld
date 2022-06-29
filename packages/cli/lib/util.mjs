@@ -1,6 +1,8 @@
 import _humanizeDuration from 'humanize-duration';
 import _parseDuration from 'parse-duration';
 import { parseDate as _parseDate } from 'chrono-node';
+import isURL from 'validator/lib/isURL.js';
+import { AccountOwnedId } from 'timeld-common';
 
 /**
  * @param {number} duration in fractional minutes
@@ -17,6 +19,11 @@ export { format as formatTimeAgo } from 'timeago.js';
  * @return {number} duration in fractional minutes
  */
 export function parseDuration(durationStr) {
+  // Capture an unqualified number to mean minutes
+  // noinspection JSCheckFunctionSignatures isNaN does accept strings
+  if (!isNaN(durationStr))
+    return Number(durationStr);
+  // Otherwise interpret as minutes
   return _parseDuration(durationStr, 'm');
 }
 
@@ -44,4 +51,52 @@ export function parseDate(dateStr) {
  */
 export function formatDate(date) {
   return date.toLocaleString();
+}
+
+/**
+ * Convert just about any JSON value into a duration
+ * @param {*} value
+ * @returns {number}
+ * @throws {RangeError} if not interpretable
+ */
+export function toDuration(value) {
+  if (typeof value == 'string')
+    value = parseDuration(value);
+  if (typeof value != 'number' || isNaN(value))
+    throw new RangeError(`Cannot interpret ${value} as a duration`);
+  return value;
+}
+
+/**
+ * Convert just about any JSON value into an IRI string
+ * @param {*} id
+ * @returns {string|null}
+ * @throws {RangeError} if not interpretable
+ */
+export function toIri(id) {
+  if (typeof id == 'object' && id?.['@id'] != null)
+    return id['@id'];
+  if (id != null) {
+    if (typeof id != 'string' ||
+      !(isURL(id) || AccountOwnedId.isComponentId(id)))
+      throw new RangeError('ID must be a URL or an identifier');
+  }
+  return id ?? null;
+}
+
+/**
+ * Convert just about any JSON value into a Date
+ * @param {*} value
+ * @returns {Date}
+ * @throws {RangeError} if not interpretable
+ */
+export function toDate(value) {
+  if (value instanceof Date)
+    return value;
+  else if (typeof value == 'string')
+    return toDate(parseDate(value)); // Parse may return null
+  else if (value != null && typeof value == 'object')
+    return toDate(parseDate(value['@value'])); // Parse may return null
+  else
+    throw new RangeError(`Cannot interpret ${value} as a Date`);
 }

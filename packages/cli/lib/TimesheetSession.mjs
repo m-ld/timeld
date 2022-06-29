@@ -1,14 +1,17 @@
 import { Repl } from '@m-ld/m-ld-cli/lib/Repl.js';
-import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
+import { JsonSinkProc, SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import fileCmd from '@m-ld/m-ld-cli/cmd/repl/file.js';
 import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
 import { ResultsProc } from './ResultsProc.mjs';
-import { durationFromInterval, parseDate, parseDuration } from './util.mjs';
+import {
+  durationFromInterval, parseDate, parseDuration, toDate, toDuration, toIri
+} from './util.mjs';
 import { Entry } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { dateJsonLd } from 'timeld-common/lib/util.mjs';
+import { Writable } from 'stream';
 
 export default class TimesheetSession extends Repl {
   /**
@@ -104,8 +107,8 @@ export default class TimesheetSession extends Repl {
           () => this.modifyEntryProc(argv))
       )
       .command(
-        ['list [selector]', 'ls'],
-        'List a selection of entries',
+        ['report [selector]', 'list', 'ls'],
+        'Report on a selection of time entries',
         yargs => yargs
           .positional('selector', {
             describe: 'A time range, like "today" or "this month"',
@@ -114,7 +117,34 @@ export default class TimesheetSession extends Repl {
           })
           .option('format', ENTRY_FORMAT_OPTIONS),
         argv => ctx.exec(
-          () => this.listEntriesProc(argv))
+          () => this.reportEntriesProc(argv))
+      )
+      .command(
+        'import [path]',
+        'Import time entries.\n' +
+        'Used with piped input, see examples',
+        yargs => yargs
+          .example([
+            ['entries.json > $0', 'Import from a JSON-LD file containing an array'],
+            ['entry.json > $0 $', 'Import from a file containing just one entry'],
+            ['$0 --data \'{"activity": "trying it out", "start": "now"}\'', 'Import data'],
+            ['fetch my-time-tracker > $0', 'Import from another system (coming soon!)']
+          ])
+          .positional('path', {
+            default: '*',
+            describe: 'JSONPath to pick out data from the input.\n' +
+              'For example, to transact just one entry, use "$"'
+          })
+          .option('data', {
+            describe: 'literal data to import',
+            type: 'string'
+          })
+          .option('dry-run', {
+            describe: 'Just read the first few entries and echo them',
+            type: 'boolean'
+          }),
+        argv => ctx.exec(
+          () => this.importEntriesProc(ctx.stdin, argv))
       );
   }
 
@@ -123,16 +153,21 @@ export default class TimesheetSession extends Repl {
    * @param {EntryFormatName} format
    * @returns {Proc}
    */
-  listEntriesProc({ selector, format }) {
+  reportEntriesProc({ selector, format }) {
     // TODO: selectors
     return new ResultsProc(
       this.meld.read({
         '@describe': '?entry',
         '@where': { '@id': '?entry', '@type': 'Entry' }
       }).consume,
-      getSubjectFormat(format, async entry =>
-        entry.sessionId === this.id ? 'This session' : this.meld.get(entry.sessionId)));
+      getSubjectFormat(format, this.getSession));
   }
+
+  /**
+   * @type {GetSession}
+   */
+  getSession = entry =>
+    entry.sessionId === this.id ? 'This session' : this.meld.get(entry.sessionId);
 
   /**
    * @param {string | number} selector Entry to modify, using a number or a activity name
@@ -181,30 +216,80 @@ export default class TimesheetSession extends Repl {
   }
 
   /**
-   * @param {string} activity
-   * @param {number} [duration] in minutes
-   * @param {Date} start
-   * @param {Date} [end]
+   * Tries to construct a valid entry from the given object. Accepts valid entry
+   * JSON-LD and also looser constructs; see implementation for details.
+   *
+   * @param {*} activity
+   * @param {*} provider
+   * @param {*} start
+   * @param {*} [duration]
+   * @param {*} [end]
+   * @param {*} [external]
+   * @returns {Entry}
+   */
+  toEntry({ activity, provider, start, duration, end, external }) {
+    if (typeof activity != 'string')
+      throw new RangeError('Activity must be a string');
+    start = toDate(start);
+    if (duration != null)
+      duration = toDuration(duration);
+    else if (end != null)
+      duration = durationFromInterval(start, toDate(end));
+    return new Entry({
+      seqNo: `${this.nextEntryId++}`, sessionId: this.id,
+      providerId: toIri(provider) ?? this.providerId,
+      activity, start, duration,
+      externalId: toIri(external)
+    });
+  }
+
+  /**
+   * @param {Entry} entry
+   * @returns {Promise<Entry>}
+   */
+  async addEntry(entry) {
+    await this.meld.write({
+      '@graph': [entry.toJSON(), this.toJSON()]
+    });
+    return entry;
+  }
+
+  /**
+   * @param {object} argv
    * @returns {Proc}
    */
-  addEntryProc({ activity, duration, start, end }) {
-    // TODO: Replace use of console with proc 'message' events
-    if (end != null && duration == null)
-      duration = durationFromInterval(start, end);
-    const entry = new Entry({
-      seqNo: `${this.nextEntryId++}`,
-      sessionId: this.id,
-      activity,
-      providerId: this.providerId,
-      start,
-      duration
-    });
-    const proc = new PromiseProc(this.meld.write({
-      '@graph': [entry.toJSON(), this.toJSON()]
-    }).then(() => {
+  addEntryProc(argv) {
+    const proc = new PromiseProc(this.addEntry(this.toEntry(argv)).then(entry => {
       proc.emit('message', DefaultFormat.entryLabel(entry));
       proc.emit('message', 'Use a "modify" command if this is wrong.');
     }));
+    return proc;
+  }
+
+  /**
+   * @param {import('stream').Readable} stdin
+   * @param {string} path JSONPath path into the input stream or data
+   * @param {string} [data] literal data (overrides stdin)
+   * @param {boolean} [dryRun] just echo some entries
+   * @returns {Proc}
+   */
+  importEntriesProc(stdin, { path, data, dryRun }) {
+    const echo = new DefaultFormat(this.getSession);
+    const proc = new JsonSinkProc(new Writable({
+      objectMode: true,
+      write: async (object, encoding, callback) => {
+        try {
+          const entry = this.toEntry(object);
+          if (dryRun)
+            proc.emit('message', echo.entryDescription(entry));
+          else
+            await this.addEntry(entry);
+          callback();
+        } catch (e) {
+          callback(e);
+        }
+      }
+    }), path, stdin, data);
     return proc;
   }
 
