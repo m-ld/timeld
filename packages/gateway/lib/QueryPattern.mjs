@@ -1,6 +1,7 @@
 import { validate } from 'jtd';
 
 /**
+ * @typedef {import('@m-ld/m-ld').MeldReadState} MeldReadState
  * @typedef {import('@m-ld/m-ld').Query} Query
  * @typedef {import('jtd').Schema} Schema
  */
@@ -44,7 +45,7 @@ export class QueryPattern {
    * This method is deliberately named to match m-ld constraint checks, which
    * have a similar role.
    *
-   * @param {import('@m-ld/m-ld').MeldReadState}state the current domain state
+   * @param {MeldReadState} state the current domain state
    * @param {Query} query the query to check
    * @returns {Query | Promise<Query>} the (maybe modified) query to execute
    * @throws {import('restify-errors').ForbiddenError} if query not allowed

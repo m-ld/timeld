@@ -3,19 +3,51 @@
 There are two ways to manipulate the data in **timeld**.
 
 - The Gateway server HTTP API – import and export of timesheets and projects
-- [**m-ld**](https://m-ld.org/) – live read/write sharing of timesheet content
+- [**m-ld**](https://m-ld.org/) – live read/write sharing of timesheet content ![coming soon](https://img.shields.io/badge/-coming%20soon-red)
 
 ## pre
 
 Data API access requires a _key_, which can be obtained using the Command Line Interface (CLI).
 
 1. [Install and configure](https://www.npmjs.com/package/timeld-cli#install) the CLI.
-2. Open an [administration session](https://www.npmjs.com/package/timeld-cli#admin) and follow the instructions to register the local device. When done, type `exit` ⏎ to leave the admin session.
-3. Use `timeld config` (no options) to display the configuration. Your key is found here: `"ably" : { "key": "{your.key}"`
+2. Open an [administration session](https://www.npmjs.com/package/timeld-cli#admin) and follow the instructions to register the local device.
+3. Type `key` ⏎ and your API access key will be displayed.
+4. Type `exit` ⏎ to leave the admin session.
 
-## http api
+The key provided is specific to your user account, and has the same access rights as you do.
 
-### timesheet/project export
+## http api for timesheets & projects
+
+### import
+
+This end-point allows you to import any number of projects, timesheets and timesheet entries from another system.
+
+- **Request**
+  ```
+  POST /api/import
+  Authorization: Basic {base_64(user, key)}
+  Content-Type: application/x-ndjson
+  ```
+  The import data should be provided as [new-line delimited JSON (NDJSON)](http://ndjson.org/). Each line is a [JSON-LD](https://json-ld.org/) subject. The JSON-LD context can be obtained from https://timeld.org/context. [JSON Type Definitions](https://jsontypedef.com/) for valid subjects (including full property documentation) can be found at https://timeld.org/jtd.
+
+  It is highly recommended that each subject include the `external` property, specifying a URI which uniquely identifies the data in the source system, see below for examples. For Projects and Timesheets, you must also specify the target `@id` of the subject in **timeld**. For timesheet Entries, you **must not** include this field, as it will be generated. If you later want to overwrite an existing external timesheet entry, use the same `external` property value.
+
+  The `session` property of a Timesheet Entry must identify the Timesheet.
+
+  
+- **Example Request Body**
+  ```ndjson
+  {"@type":"Project","@id":"org1/pr1","external":{"@id":"http://ex.org/project/1"}}
+  {"@type":"Timesheet","@id":"org1/ts1","project":[{"@id":"org1/pr1"}],"external":{"@id":"http://ex.org/timesheet/1"}}
+  {"@type":"Entry","session":{"@id":"org1/ts1"},"activity":"orging","duration":60,"start":{"@value":"2022-06-22T16:40:55.946Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"vf:provider":{"@id":"test"},"external":{"@id":"http://ex.org/timesheet/1/entry/1"}}
+  ```
+
+- **Response**
+  ```
+  Status: 200
+  ```
+
+### report
 
 This end-point is equivalent to using `report` in an admin CLI session.
 
@@ -34,18 +66,10 @@ The order of subjects will be:
   Transfer-Encoding: chunked
   Content-Type: application/x-ndjson
   ```
-  The results are streamed as [new-line delimited JSON (NDJSON)](http://ndjson.org/). Each line is a JSON-LD subject. The JSON-LD context of the Subjects is:
-  <!-- TODO: end-point for this -->
+  The results are streamed as [new-line delimited JSON (NDJSON)](http://ndjson.org/). Each line is a JSON-LD subject. The JSON-LD context can be obtained from https://timeld.org/context.
+
   
-  ```json
-  {
-    "@base": "http://{gateway}/",
-    "@vocab": "http://timeld.org/#",
-    "foaf": "http://xmlns.com/foaf/0.1/",
-    "vf": "https://w3id.org/valueflows#"
-  }
-  ```
-- **Example**
+- **Example Response Body**
   ```ndjson
   {"@id":"org1/pr1","@type":"Project"}
   {"@id":"org1/ts1","project":{"@id":"org1/pr1"},"@type":"Timesheet"}
@@ -54,14 +78,6 @@ The order of subjects will be:
   {"@id":"nJHsHgSKURAxKrVPm8ETf9/1","activity":"testing","duration":120,"session":{"@id":"nJHsHgSKURAxKrVPm8ETf9"},"start":{"@value":"2022-06-21T10:52:11.032Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"@type":"Entry","vf:provider":{"@id":"test"}}
   ```
   
-### timesheet updates
-
-![coming soon](https://img.shields.io/badge/-coming%20soon-red)
-  
-### timesheet import
-
-![coming soon](https://img.shields.io/badge/-coming%20soon-red)
-  
-## m-ld api
+## m-ld api for timesheets
 
 ![coming soon](https://img.shields.io/badge/-coming%20soon-red)

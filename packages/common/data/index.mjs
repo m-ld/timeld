@@ -1,8 +1,9 @@
 import Entry from './Entry.mjs';
 import Project from './Project.mjs';
 import Timesheet from './Timesheet.mjs';
+import Session from './Session.mjs';
 
-export { Entry, Project, Timesheet };
+export { Entry, Project, Timesheet, Session };
 
 export const timeldContext = {
   '@vocab': 'http://timeld.org/#',
@@ -13,7 +14,7 @@ export const timeldContext = {
 /** @typedef {import('jtd').SchemaFormProperties['properties']} JtdProperties */
 
 /** @type {import('jtd').SchemaFormDiscriminator} */
-export const isTimeldType = {
+export const isDomainEntity = {
   discriminator: '@type',
   mapping: {
     'Entry': Entry.SCHEMA,

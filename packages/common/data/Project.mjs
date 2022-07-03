@@ -1,8 +1,9 @@
-import { dateJsonLd, isDate, mustBe, optionalPropertyValue } from '../lib/util.mjs';
+import { dateJsonLd, isDate, mustBe, optionalPropertyValue, withDoc } from '../lib/util.mjs';
 import { AccountOwnedId } from '../index.mjs';
 import { propertyValue } from '@m-ld/m-ld';
+import DomainEntity from './DomainEntity.mjs';
 
-export default class Project {
+export default class Project extends DomainEntity {
   /** @type {import('jtd').Schema} */
   static SCHEMA = {
     properties: {
@@ -11,8 +12,12 @@ export default class Project {
     },
     optionalProperties: {
       start: isDate,
-      duration: { type: 'int16' },
-      milestone: { elements: { type: 'string' } }
+      duration: {
+        ...withDoc('The project duration, in minutes'),
+        type: 'int16'
+      },
+      milestone: { elements: { type: 'string' } },
+      ...DomainEntity.SCHEMA.optionalProperties
     }
   };
 
@@ -22,10 +27,11 @@ export default class Project {
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
     return new Project({
-      id: AccountOwnedId.fromIri(src['@id']),
+      id: AccountOwnedId.fromReference(src),
       start: optionalPropertyValue(src, 'start', Date),
       duration: optionalPropertyValue(src, 'duration', Number),
-      milestones: propertyValue(src, 'milestone', Array, String)
+      milestones: propertyValue(src, 'milestone', Array, String),
+      ...DomainEntity.specFromJson(src)
     });
   }
 
@@ -34,8 +40,10 @@ export default class Project {
    * @param {Date} [spec.start]
    * @param {number} [spec.duration]
    * @param {string[]} [spec.milestones]
+   * @param {string} [spec.externalId]
    */
   constructor(spec) {
+    super(spec);
     this.id = spec.id;
     this.start = spec.start;
     this.duration = spec.duration;
@@ -48,7 +56,8 @@ export default class Project {
       '@type': 'Project',
       'start': dateJsonLd(this.start),
       'duration': this.duration,
-      'milestone': this.milestones
+      'milestone': this.milestones,
+      ...super.toJSON()
     };
   }
 }

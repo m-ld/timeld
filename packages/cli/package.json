@@ -22,6 +22,7 @@
   "homepage": "https://github.com/m-ld/timeld/tree/main/packages/cli#readme",
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
+    "@m-ld/m-ld": "^0.8.2",
     "@m-ld/m-ld-cli": "^0.1.0-1",
     "@zeit/fetch": "^6.0.0",
     "chrono-node": "^2.3.8",

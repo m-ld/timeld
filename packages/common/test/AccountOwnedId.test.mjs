@@ -6,6 +6,7 @@ describe('Timesheet Id', () => {
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBe('org');
     expect(tsId.gateway).toBe('gw.net');
+    expect(tsId.isValid).toBe(true);
     expect(tsId.isRelative).toBe(false);
     expect(tsId.toString()).toBe('org/ts@gw.net');
     expect(() => tsId.validate()).not.toThrow();
@@ -16,12 +17,18 @@ describe('Timesheet Id', () => {
     expect(tsId.toReference()).toEqual({ '@id': 'http://gw.net/org/ts' });
   });
 
+  test('invalid', () => {
+    expect(AccountOwnedId.fromIri('org./ts').isValid).toBe(false);
+    expect(AccountOwnedId.fromIri('org/ts!').isValid).toBe(false);
+  });
+
   test('from only timesheet', () => {
     const tsId = AccountOwnedId.fromString('ts');
     expect(tsId.name).toBe('ts');
     expect(tsId.account).toBeUndefined();
     expect(tsId.gateway).toBeUndefined();
     expect(tsId.toString()).toBe('ts');
+    expect(tsId.isValid).toBe(false);
     expect(() => tsId.validate()).toThrow();
   });
 
@@ -57,6 +64,11 @@ describe('Timesheet Id', () => {
     expect(tsId.isRelative).toBe(true);
     expect(tsId.toIri()).toBe('org/ts');
     expect(() => tsId.validate()).not.toThrow();
+  });
+
+  test('from reference', () => {
+    const tsId = AccountOwnedId.fromReference({ '@id': 'org/ts' });
+    expect(tsId).toEqual(AccountOwnedId.fromIri('org/ts'));
   });
 
   test('from absolute IRI', () => {

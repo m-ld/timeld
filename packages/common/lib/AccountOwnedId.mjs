@@ -56,6 +56,15 @@ export default class AccountOwnedId {
   }
 
   /**
+   * @param {object} ref
+   * @param {string} [gateway]
+   * @returns {AccountOwnedId}
+   */
+  static fromReference(ref, gateway) {
+    return this.fromIri(ref['@id'], gateway);
+  }
+
+  /**
    * @param {string} name
    * @param {string} [account]
    * @param {string} [gateway] dot-separated gateway "domain name"
@@ -68,6 +77,11 @@ export default class AccountOwnedId {
 
   get isRelative() {
     return typeof this.gateway != 'string';
+  }
+
+  get isValid() {
+    return (this.isRelative || this.gateway.split('.').every(AccountOwnedId.isComponentId))
+      && AccountOwnedId.isComponentId(this.account) && AccountOwnedId.isComponentId(this.name);
   }
 
   /** Validates this Id */
@@ -86,7 +100,7 @@ export default class AccountOwnedId {
   }
 
   static isComponentId(id) {
-    return id != null && !!id.match(/[\w-]+/g);
+    return id != null && /^[\w-]+$/.test(id);
   }
 
   /**

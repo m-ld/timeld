@@ -16,7 +16,7 @@ test('interpret duration', () => {
 
 test('interpret IRI', () => {
   expect(toIri('test')).toBe('test');
-  expect(toIri('http://ex.org.#test')).toBe('http://ex.org.#test');
+  expect(toIri('http://ex.org/#test')).toBe('http://ex.org/#test');
   expect(toIri({ '@id': 'test' })).toBe('test');
   expect(toIri(null)).toBeNull();
   expect(() => toIri({})).toThrowError(RangeError);

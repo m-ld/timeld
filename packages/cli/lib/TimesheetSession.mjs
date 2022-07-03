@@ -7,10 +7,9 @@ import { ResultsProc } from './ResultsProc.mjs';
 import {
   durationFromInterval, parseDate, parseDuration, toDate, toDuration, toIri
 } from './util.mjs';
-import { Entry } from 'timeld-common';
+import { Entry, Session } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
-import { dateJsonLd } from 'timeld-common/lib/util.mjs';
 import { Writable } from 'stream';
 
 export default class TimesheetSession extends Repl {
@@ -24,13 +23,11 @@ export default class TimesheetSession extends Repl {
    */
   constructor(spec) {
     super({ logLevel: spec.logLevel, prompt: `${(spec.timesheet)}>` });
-    this.id = spec.id;
+    this.session = new Session(spec.id);
     this.name = spec.timesheet;
     this.providerId = spec.providerId;
     this.meld = spec.meld;
     this.logFile = spec.logFile;
-    this.startTime = new Date;
-    this.nextEntryId = 1;
   }
 
   buildCommands(yargs, ctx) {
@@ -167,7 +164,7 @@ export default class TimesheetSession extends Repl {
    * @type {GetSession}
    */
   getSession = entry =>
-    entry.sessionId === this.id ? 'This session' : this.meld.get(entry.sessionId);
+    entry.sessionId === this.session.id ? 'This session' : this.meld.get(entry.sessionId);
 
   /**
    * @param {string | number} selector Entry to modify, using a number or a activity name
@@ -194,7 +191,7 @@ export default class TimesheetSession extends Repl {
         });
       }
       if (typeof selector == 'number') {
-        const src = await state.get(`${this.id}/${selector}`);
+        const src = await state.get(`${this.session.id}/${selector}`);
         if (src != null)
           await updateEntry(src);
         else
@@ -236,7 +233,8 @@ export default class TimesheetSession extends Repl {
     else if (end != null)
       duration = durationFromInterval(start, toDate(end));
     return new Entry({
-      seqNo: `${this.nextEntryId++}`, sessionId: this.id,
+      seqNo: `${this.session.claimEntryId()}`,
+      sessionId: this.session.id,
       providerId: toIri(provider) ?? this.providerId,
       activity, start, duration,
       externalId: toIri(external)
@@ -249,7 +247,7 @@ export default class TimesheetSession extends Repl {
    */
   async addEntry(entry) {
     await this.meld.write({
-      '@graph': [entry.toJSON(), this.toJSON()]
+      '@graph': [entry.toJSON(), this.session.toJSON()]
     });
     return entry;
   }
@@ -309,14 +307,6 @@ export default class TimesheetSession extends Repl {
     } else {
       return new SyncProc(createReadStream(this.logFile));
     }
-  }
-
-  toJSON() {
-    return {
-      '@id': this.id,
-      '@type': 'Session',
-      start: dateJsonLd(this.startTime)
-    };
   }
 
   async close() {
