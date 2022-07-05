@@ -52,13 +52,16 @@ export default class Authorization {
     if (userAcc == null)
       throw new errors.UnauthorizedError('Not found: %s', this.user);
     if (this.jwt) {
-      // Verify the JWT against its declared keyid
-      const payload = await verify(this.jwt, async header => {
-        const { key } = await userAcc.authorise(header.kid, access);
-        return new AblyKey(key).secret;
-      });
-      if (payload.sub !== this.user)
-        throw new errors.UnauthorizedError('JWT does not correspond to user');
+      try { // Verify the JWT against its declared keyid
+        const payload = await verify(this.jwt, async header => {
+          const { key } = await userAcc.authorise(header.kid, access);
+          return new AblyKey(key).secret;
+        });
+        if (payload.sub !== this.user)
+          return Promise.reject(new errors.UnauthorizedError('JWT does not correspond to user'));
+      } catch (e) {
+        throw new errors.UnauthorizedError(e);
+      }
     } else {
       const ablyKey = new AblyKey(this.key);
       const { key: actualKey } = await userAcc.authorise(ablyKey.keyid, access);
