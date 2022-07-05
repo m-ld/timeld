@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.2.1-1",
+  "version": "0.2.1",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
