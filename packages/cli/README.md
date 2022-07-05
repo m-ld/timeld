@@ -6,7 +6,7 @@
 
 You need an Apple Mac, Windows PC or a Linux device.
 
-If not using a [**timeld gateway**](https://github.com/m-ld/timeld#gateway), the manager of your timesheets (maybe just you) needs an account with the global messaging provider Ably. Whoever led you here may have an Ably "key" for you; otherwise sign up for a [free Ably account here](https://ably.com/signup).
+- **If not using a [timeld Gateway](https://github.com/m-ld/timeld#gateway)**, the manager of your timesheets (maybe just you) needs an account with the global messaging provider Ably. Whoever led you here may have an Ably "key" for you; otherwise sign up for a [free Ably account here](https://ably.com/signup).
 
 ## install
 
@@ -20,19 +20,20 @@ npm install timeld-cli -g
 
 ## configure
 
-If using a Gateway:
+- **If using a Gateway**:
 
-```bash
-timeld config --gateway gateway-domain-or-url --user my-name
-```
+  ```bash
+  timeld config --gateway gateway-domain-or-url --user my-name
+  ```
+  
+  The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`. The user name you provide may be registered with the Gateway when you first work on a timesheet.
 
-The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`. The user name you provide may be registered with the Gateway when you first work on a timesheet.
 
-If not using a Gateway, you need to provide your ably key, and the user as a URI, such as your favourite social media profile page:
-
-```bash
-timeld config --ably.key your-ably-key --user http://you.example.org/#profile
-```
+- **If not using a Gateway**, you need to provide your ably key, and the user as a URI, such as your favourite social media profile page:
+  
+  ```bash
+  timeld config --ably.key your-ably-key --user http://you.example.org/#profile
+  ```
 
 When creating timesheets, their identity will have two parts: an 'account' name and a timesheet name. You can set up a default account name:
 
@@ -46,15 +47,22 @@ You can also use a different account for each timesheet you create, see below.
 
 `timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
 
-In the session, you can add new time entries like this: `add your-activity`. (If your activity name has spaces in it, put it in quotes e.g. `add "your activity"`.) **timeld** will confirm what you have added.
+In the session, you can add new time entries like this:
+- `add the-activity`
 
-If you want the activity to have an end, you can set a duration using a time unit e.g. `add the-activity 1h`.
+  (If your activity name has spaces in it, put it in quotes e.g. `add "the activity"`.)
 
-You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`.
+  **timeld** will confirm what you have added.
+  
+  If you want the activity to have an end, you can set a duration using a time unit e.g. `add the-activity 1h`.
 
-Once you've added an entry, you can always modify it e.g. `modify the-activity --end now`.
+  You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`.
 
-To see all the entries you have added, use the `list` command.
+Once you've added an entry, you can always modify it e.g.
+- `modify the-activity --end now`
+
+To see all the entries you have added, use
+- `list`
 
 You can `exit` the session and return to the normal terminal. To re-open it, use `timeld open your-timesheet` (without the `--create` option).
 
@@ -64,7 +72,7 @@ _Only available with a Gateway._
 
 `timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; and report on projects and timesheets.
 
-By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option. When the session is open you will see a prompt with the account name, e.g. `my-project>`.
+By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option. When the session is open you will see a prompt with the account name, e.g. `my-org>`.
 
 Then, for a user account, you can:
 
