@@ -1,12 +1,12 @@
 import Entry from './Entry.mjs';
 import Project from './Project.mjs';
 import Timesheet from './Timesheet.mjs';
+import Session from './Session.mjs';
 
-export { Entry, Project, Timesheet };
+export { Entry, Project, Timesheet, Session };
 
 export const timeldContext = {
   '@vocab': 'http://timeld.org/#',
-  'om2': 'http://www.ontology-of-units-of-measure.org/resource/om-2/',
   'foaf': 'http://xmlns.com/foaf/0.1/',
   'vf': 'https://w3id.org/valueflows#'
 };
@@ -14,11 +14,11 @@ export const timeldContext = {
 /** @typedef {import('jtd').SchemaFormProperties['properties']} JtdProperties */
 
 /** @type {import('jtd').SchemaFormDiscriminator} */
-export const isTimeldType = {
+export const isDomainEntity = {
   discriminator: '@type',
   mapping: {
-    Entry: Entry.SCHEMA,
-    Project: Project.SCHEMA,
-    Timesheet: Timesheet.SCHEMA
+    'Entry': Entry.SCHEMA,
+    'Project': Project.SCHEMA,
+    'Timesheet': Timesheet.SCHEMA
   }
 };

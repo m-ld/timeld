@@ -19,7 +19,7 @@ export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
-   * @param {import('timeld-common').clone} clone m-ld clone creation function
+   * @param {import('timeld-common')['clone']} clone m-ld clone creation function
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
@@ -182,8 +182,7 @@ export default class Gateway extends BaseGateway {
       // Use m-ld write locking to guard against API race conditions
       await this.domain.write(async state => {
         // Genesis if the timesheet is not already in the account
-        const genesis = !(await new Ask(state).exists(accountHasTimesheet(tsId)));
-        await this.initTimesheet(tsId, genesis);
+        await this.initTimesheet(tsId, await this.isGenesisTs(state, tsId));
         // Ensure the timesheet is in the domain
         await state.write(accountHasTimesheet(tsId));
       });
@@ -194,6 +193,15 @@ export default class Gateway extends BaseGateway {
       '@domain': tsId.toDomain(),
       ably: { key: false } // Remove our secret
     }), { genesis: false }); // Definitely not genesis
+  }
+
+  /**
+   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {AccountOwnedId} tsId
+   * @returns {Promise<boolean>}
+   */
+  async isGenesisTs(state, tsId) {
+    return !(await new Ask(state).exists(accountHasTimesheet(tsId)));
   }
 
   /**

@@ -5,7 +5,7 @@ import { verify } from './util.mjs';
 /**
  * @typedef {object} AccessRequest
  * @property {AccountOwnedId} id a timesheet or project ID for which access is requested
- * @property {boolean} [forWrite] permission requested
+ * @property {'Timesheet'|'Project'} [forWrite] permission requested
  */
 
 export default class Authorization {
@@ -17,7 +17,7 @@ export default class Authorization {
       throw new errors.UnauthorizedError();
     this.user = req.params.user || req.authorization.basic?.username;
     if (!AccountOwnedId.isComponentId(this.user))
-      throw new errors.BadRequestError('Bad user %s', this.user);
+      throw new errors.UnauthorizedError('Bad user %s', this.user);
     switch (req.authorization.scheme) {
       case 'Bearer':
         if (!req.authorization.credentials)
@@ -45,7 +45,7 @@ export default class Authorization {
   /**
    * @param {Gateway} gateway
    * @param {AccessRequest} [access] a timesheet or project access request
-   * @returns {Promise<void>}
+   * @returns {Promise<Account>}
    */
   async verifyUser(gateway, access) {
     const userAcc = await gateway.account(this.user);
@@ -65,5 +65,6 @@ export default class Authorization {
       if (this.key !== actualKey)
         throw new errors.UnauthorizedError();
     }
+    return userAcc;
   }
 }

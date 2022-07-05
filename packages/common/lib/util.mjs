@@ -60,3 +60,12 @@ export const isDate = {
     '@value': { type: 'timestamp' }
   }
 };
+
+/**
+ * Shorthand for description metadata
+ * @param {string} doc
+ * @returns {{ metadata: { description: string } }}
+ */
+export const withDoc = doc => ({
+  metadata: { description: doc }
+});

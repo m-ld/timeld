@@ -7,6 +7,8 @@ import { AccountOwnedId, dateJsonLd } from 'timeld-common';
 import { EMPTY } from 'rxjs';
 import { any } from '@m-ld/m-ld';
 import { durationFromInterval, parseDate, parseDuration } from './util.mjs';
+import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
+import { Readable } from 'stream';
 
 /**
  * @typedef {object} DetailArgs
@@ -64,6 +66,13 @@ export default class AdminSession extends Repl {
           return 'Link requires a "--project" or "--timesheet"';
         return true;
       })
+      .command(
+        'key',
+        'Show your API access key',
+      yargs => yargs,
+        () => ctx.exec(() =>
+          new SyncProc(Readable.from([this.gateway.ablyKey.toString()])))
+      )
       .command(
         ['list <detail>', 'ls'],
         'List details of this account',

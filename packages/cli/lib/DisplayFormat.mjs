@@ -3,25 +3,24 @@ import stringify from 'json-stringify-pretty-compact';
 import { formatDate, formatDuration, formatTimeAgo } from './util.mjs';
 import { propertyValue } from '@m-ld/m-ld';
 
-export const ENTRY_FORMAT_OPTIONS = /**@type {{
-  describe: string,
-  choices: EntryFormatName[],
-  default: 'default'
-}}*/{
-  describe: 'Timesheet format to use',
-  choices: ['default', 'JSON-LD', 'json-ld', 'ld'],
-  default: 'default'
-};
-
-export const JSON_LD_GRAPH = {
-  opening: '{ "@graph": [', closing: '] }', separator: ',\n', stringify
-};
-
 /**
  * @typedef {import('@m-ld/m-ld').Subject} Subject
  * @typedef {'default'|'JSON-LD'|'json-ld'|'ld'} EntryFormatName
  * @typedef {(entry: Entry) => string | Subject | Promise<Subject>} GetSession
  */
+
+export const ENTRY_FORMAT_OPTIONS = {
+  describe: 'Timesheet format to use',
+  choices: /**@type {EntryFormatName[]}*/['default', 'JSON-LD', 'json-ld', 'ld'],
+  default: 'default'
+};
+
+/** @type {Format} */
+export const JSON_LD_GRAPH = {
+  opening: '{ "@graph": [', closing: '] }',
+  separator: ',\n',
+  stringify
+};
 
 /**
  * @param {EntryFormatName} format
@@ -70,16 +69,19 @@ export class DefaultFormat extends DisplayFormat {
     try {
       switch (src['@type']) {
         case 'Entry':
-          const entry = Entry.fromJSON(src);
-          const sessionLabel = await this.sessionLabel(entry);
-          const qualifier = sessionLabel ? ` (in ${sessionLabel})` : '';
-          return `${src['@type']} ${(DefaultFormat.entryLabel(entry))}${qualifier}`;
+          return await this.entryDescription(Entry.fromJSON(src));
         default:
           return `${src['@type']} ${src['@id']}`;
       }
     } catch (e) {
       return `${src['@id']}: *** Malformed ${src['@type']}: ${e} ***`;
     }
+  }
+
+  async entryDescription(entry) {
+    const sessionLabel = await this.sessionLabel(entry);
+    const qualifier = sessionLabel ? ` (in ${sessionLabel})` : '';
+    return `Entry ${(DefaultFormat.entryLabel(entry))}${qualifier}`;
   }
 
   /**

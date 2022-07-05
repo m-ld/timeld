@@ -1,7 +1,8 @@
 import { isReference, mustBe, safeRefsIn } from '../lib/util.mjs';
 import { AccountOwnedId } from '../index.mjs';
+import DomainEntity from './DomainEntity.mjs';
 
-export default class Timesheet {
+export default class Timesheet extends DomainEntity {
   /** @type {import('jtd').Schema} */
   static SCHEMA = {
     properties: {
@@ -10,7 +11,8 @@ export default class Timesheet {
     },
     optionalProperties: {
       // TODO: loading from data also allows single reference
-      project: { elements: isReference }
+      project: { elements: isReference },
+      ...DomainEntity.SCHEMA.optionalProperties
     }
   };
 
@@ -20,16 +22,19 @@ export default class Timesheet {
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
     return new Timesheet({
-      id: AccountOwnedId.fromIri(src['@id']),
-      projects: safeRefsIn(src, 'project')
+      id: AccountOwnedId.fromReference(src),
+      projects: safeRefsIn(src, 'project'),
+      ...DomainEntity.specFromJson(src)
     });
   }
 
   /**
    * @param {AccountOwnedId} spec.id
    * @param {import('@m-ld/m-ld').Reference[]} spec.projects
+   * @param {string} [spec.externalId]
    */
   constructor(spec) {
+    super(spec);
     this.id = spec.id;
     this.projects = spec.projects ?? [];
   }
@@ -38,7 +43,8 @@ export default class Timesheet {
     return {
       '@id': this.id.toIri(),
       '@type': 'Timesheet',
-      project: this.projects
+      project: this.projects,
+      ...super.toJSON()
     };
   }
 }

@@ -13,5 +13,5 @@ export {
   ResultsReadable,
   BaseGateway
 };
-export { timeldContext, isTimeldType, Entry, Project, Timesheet } from './data/index.mjs';
+export { timeldContext, isDomainEntity, Entry, Project, Timesheet, Session } from './data/index.mjs';
 export { dateJsonLd, safeRefsIn, mustBe, isReference } from './lib/util.mjs';

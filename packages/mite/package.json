@@ -1,0 +1,24 @@
+{
+  "name": "timeld-mite",
+  "version": "0.0.0",
+  "description": "timeld - mite.yo.lk integration",
+  "main": "index.mjs",
+  "devDependencies": {},
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timeld",
+    "mite",
+    "time"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme"
+}

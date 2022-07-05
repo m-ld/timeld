@@ -28,7 +28,7 @@ describe('Authorization helper', () => {
     expect(auth.jwt).toBe(jwt);
 
     account.authorise.mockImplementation(() => ({ key: 'appid.keyid:secret' }));
-    const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: true };
+    const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
     await auth.verifyUser(gateway, access);
     expect(account.authorise).toBeCalledWith('keyid', access);
   });
@@ -48,7 +48,7 @@ describe('Authorization helper', () => {
     expect(auth.key).toBe('appid.keyid:secret');
 
     account.authorise.mockImplementation(() => ({ key: 'appid.keyid:secret' }));
-    const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: true };
+    const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
     await auth.verifyUser(gateway, access);
     expect(account.authorise).toBeCalledWith('keyid', access);
   });

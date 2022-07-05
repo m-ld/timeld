@@ -1,4 +1,4 @@
-import { Entry, isTimeldType, Project, Timesheet } from '..';
+import { Entry, isDomainEntity, Project, Timesheet } from '..';
 import { isPropertiesForm, isSchema, isValidSchema, validate } from 'jtd';
 import { exampleEntryJson, exampleProjectJson, exampleTimesheetJson } from './fixtures.mjs';
 
@@ -18,7 +18,7 @@ function testTimeldType(Class, exampleJson) {
   });
 
   test('validates as Timeld type', () => {
-    expect(validate(isTimeldType, exampleJson)).toEqual([]);
+    expect(validate(isDomainEntity, exampleJson)).toEqual([]);
   });
 }
 

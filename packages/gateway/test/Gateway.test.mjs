@@ -4,7 +4,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import Gateway from '../lib/Gateway.mjs';
-import { Env, timeldContext } from 'timeld-common';
+import { dateJsonLd, Env, timeldContext } from 'timeld-common';
 import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
@@ -12,6 +12,8 @@ import Cryptr from 'cryptr';
 import { DeadRemotes, exampleEntryJson } from 'timeld-common/test/fixtures.mjs';
 import { existsSync } from 'fs';
 import { drain } from 'rx-flowable';
+import { consume } from 'rx-flowable/consume';
+import errors from 'restify-errors';
 
 describe('Gateway', () => {
   let env;
@@ -31,6 +33,7 @@ describe('Gateway', () => {
   });
 
   afterEach(async () => {
+    // noinspection JSUnresolvedFunction
     tmpDir.removeCallback();
   });
 
@@ -251,7 +254,7 @@ describe('Gateway', () => {
         .rejects.toThrowError();
     });
 
-    describe('Remote account reads and writes', () => {
+    describe('with account', () => {
       let /**@type {Account}*/acc;
 
       beforeEach(async () => {
@@ -263,159 +266,353 @@ describe('Gateway', () => {
         acc = await gateway.account('test');
       });
 
-      test('reads from user account', async () => {
-        expect(await drain(await acc.read({
-          '@select': '?e', '@where': { '@id': 'test', '@type': 'Account', email: '?e' }
-        }))).toMatchObject([{ '?e': 'test@ex.org' }]);
-      });
-
-      test('refuses unauthorised write', async () => {
-        await expect(acc.write({ foo: 'bar' }))
-          .rejects.toThrowError();
-        await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
-          .rejects.toThrowError();
-      });
-
-      test('writes email to existing user account', async () => {
-        await acc.write({
-          '@insert': { '@id': 'test', email: 'test2@ex.org' },
-          '@where': { '@id': 'test', '@type': 'Account' }
+      describe('reads and writes', () => {
+        test('reads from user account', async () => {
+          expect(await drain(await acc.read({
+            '@select': '?e', '@where': { '@id': 'test', '@type': 'Account', email: '?e' }
+          }))).toMatchObject([{ '?e': 'test@ex.org' }]);
         });
-        expect((await gateway.account('test')).emails)
-          .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
-      });
 
-      test('adds timesheet to user account', async () => {
-        await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+        test('refuses unauthorised write', async () => {
+          await expect(acc.write({ foo: 'bar' }))
+            .rejects.toThrowError();
+          await expect(acc.write({ '@id': 'bob', email: 'bob@bob.com' }))
+            .rejects.toThrowError();
         });
-        expect((await gateway.account('test')).timesheets)
-          .toEqual([{ '@id': 'test/ts1' }]);
-        expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeDefined();
-      });
 
-      test('removes timesheet from user account', async () => {
-        await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+        test('writes email to existing user account', async () => {
+          await acc.write({
+            '@insert': { '@id': 'test', email: 'test2@ex.org' },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          expect((await gateway.account('test')).emails)
+            .toEqual(new Set(['test@ex.org', 'test2@ex.org']));
         });
-        await acc.write({
-          '@delete': {
-            '@id': 'test',
-            timesheet: { '@id': 'test/ts1', '@type': 'Timesheet', '?p': '?o' }
-          },
-          '@where': {
-            '@id': 'test', '@type': 'Account',
-            timesheet: { '@id': 'test/ts1', '?p': '?o' }
-          }
-        });
-        expect((await gateway.account('test')).timesheets)
-          .toEqual([]);
-        expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
-      });
 
-      test('cannot orphan timesheet', async () => {
-        await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+        test('adds timesheet to user account', async () => {
+          await acc.write({
+            '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          expect((await gateway.account('test')).timesheets)
+            .toEqual([{ '@id': 'test/ts1' }]);
+          expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeDefined();
         });
-        await expect(acc.write({
-          '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } },
-          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
-        })).rejects.toThrow();
-      });
 
-      test('writes a new organisation', async () => {
-        await acc.write({
-          '@id': 'org1',
-          '@type': 'Account',
-          'vf:primaryAccountable': { '@id': 'test' }
+        test('removes timesheet from user account', async () => {
+          await acc.write({
+            '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          await acc.write({
+            '@delete': {
+              '@id': 'test',
+              timesheet: { '@id': 'test/ts1', '@type': 'Timesheet', '?p': '?o' }
+            },
+            '@where': {
+              '@id': 'test', '@type': 'Account',
+              timesheet: { '@id': 'test/ts1', '?p': '?o' }
+            }
+          });
+          expect((await gateway.account('test')).timesheets)
+            .toEqual([]);
+          expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
         });
-        await expect(gateway.account('org1'))
-          .resolves.toBeDefined();
-        // Cannot re-create an existing org
-        await expect(acc.write({
-          '@id': 'org1',
-          '@type': 'Account',
-          'vf:primaryAccountable': { '@id': 'test' }
-        })).rejects.toThrowError();
-      });
 
-      test('removes an organisation', async () => {
-        await acc.write({
-          '@id': 'org1',
-          '@type': 'Account',
-          'vf:primaryAccountable': { '@id': 'test' }
+        test('cannot orphan timesheet', async () => {
+          await acc.write({
+            '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          await expect(acc.write({
+            '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1' } },
+            '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+          })).rejects.toThrow();
         });
-        await acc.write({
-          '@delete': { '@id': 'org1' },
-          '@where': {
+
+        test('writes a new organisation', async () => {
+          await acc.write({
             '@id': 'org1',
             '@type': 'Account',
             'vf:primaryAccountable': { '@id': 'test' }
-          }
-        });
-        await expect(gateway.account('org1'))
-          .resolves.toBeUndefined();
-      });
-
-      test.todo('cascade deletes projects & timesheets');
-
-      test('inserts an organisation detail', async () => {
-        await acc.write({
-          '@id': 'org1',
-          '@type': 'Account',
-          'vf:primaryAccountable': { '@id': 'test' }
-        });
-        await acc.write({
-          '@insert': {
-            '@id': 'org1',
-            'vf:primaryAccountable': { '@id': 'other' }
-          },
-          '@where': {
+          });
+          await expect(gateway.account('org1'))
+            .resolves.toBeDefined();
+          // Cannot re-create an existing org
+          await expect(acc.write({
             '@id': 'org1',
             '@type': 'Account',
             'vf:primaryAccountable': { '@id': 'test' }
-          }
+          })).rejects.toThrowError();
         });
-        expect((await gateway.account('org1')).admins)
-          .toEqual(new Set(['test', 'other']));
+
+        test('removes an organisation', async () => {
+          await acc.write({
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          });
+          await acc.write({
+            '@delete': { '@id': 'org1' },
+            '@where': {
+              '@id': 'org1',
+              '@type': 'Account',
+              'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          await expect(gateway.account('org1'))
+            .resolves.toBeUndefined();
+        });
+
+        test.todo('cascade deletes projects & timesheets');
+
+        test('inserts an organisation detail', async () => {
+          await acc.write({
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          });
+          await acc.write({
+            '@insert': {
+              '@id': 'org1',
+              'vf:primaryAccountable': { '@id': 'other' }
+            },
+            '@where': {
+              '@id': 'org1',
+              '@type': 'Account',
+              'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          expect((await gateway.account('org1')).admins)
+            .toEqual(new Set(['test', 'other']));
+        });
+
+        test('cannot insert project if not exists', async () => {
+          await acc.write({
+            '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          await expect(acc.write({
+            '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+            '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+          })).rejects.toThrow();
+        });
+
+        test('writes timesheet projects', async () => {
+          // Inserting the timesheet
+          await acc.write({
+            '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          // Inserting the project
+          await acc.write({
+            '@insert': { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
+            '@where': { '@id': 'test', '@type': 'Account' }
+          });
+          // Inserting project link into timesheet
+          await acc.write({
+            '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+            '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+          });
+          expect(await drain(await acc.read({
+            '@select': '?t', '@where': [
+              { '@id': 'test', '@type': 'Account', project: { '@id': 'test/pr1' } },
+              { '@id': '?t', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
+            ]
+          }))).toMatchObject([{ '?t': { '@id': 'test/ts1' } }]);
+        });
       });
 
-      test('cannot insert project if not exists', async () => {
-        await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+      describe('import', () => {
+        test('inserts timesheet', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('test')).resolves.toMatchObject({
+            timesheet: { '@id': 'test/ts1' }
+          });
+          await expect(gateway.domain.get('test/ts1')).resolves.toMatchObject({
+            '@type': 'Timesheet'
+          });
         });
-        await expect(acc.write({
-          '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
-          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
-        })).rejects.toThrow();
-      });
 
-      test('writes timesheet projects', async () => {
-        // Inserting the timesheet
-        await acc.write({
-          '@insert': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+        test('updates timesheet', async () => {
+          await acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }]));
+          // Re-get the account because of the change to its data
+          acc = await gateway.account('test');
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet', project: [{ '@id': 'test/pr1' }]
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('test/ts1')).resolves.toMatchObject({
+            '@type': 'Timesheet', project: { '@id': 'test/pr1' }
+          });
         });
-        // Inserting the project
-        await acc.write({
-          '@insert': { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
-          '@where': { '@id': 'test', '@type': 'Account' }
+
+        test('rejects malformed timesheet', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'ts1', '@type': 'Timesheet'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1!', '@type': 'Timesheet'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Garbage'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet', project: 'garbage'
+          }]))).rejects.toThrowError(errors.BadRequestError);
         });
-        // Inserting project link into timesheet
-        await acc.write({
-          '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
-          '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
+
+        test('rejects unauthorised timesheet', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'org/ts1', '@type': 'Timesheet'
+          }]))).rejects.toThrowError(errors.ForbiddenError);
         });
-        expect(await drain(await acc.read({
-          '@select': '?t', '@where': [
-            { '@id': 'test', '@type': 'Account', project: { '@id': 'test/pr1' } },
-            { '@id': '?t', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
-          ]
-        }))).toMatchObject([{ '?t': { '@id': 'test/ts1' } }]);
+
+        test.todo('rejects change to external timesheet ID');
+
+        test('inserts project', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'test/pr1', '@type': 'Project'
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('test')).resolves.toMatchObject({
+            project: { '@id': 'test/pr1' }
+          });
+          await expect(gateway.domain.get('test/pr1')).resolves.toMatchObject({
+            '@type': 'Project'
+          });
+        });
+
+        test('updates project', async () => {
+          await gateway.domain.write({
+            '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' }
+          });
+          // Re-get the account because of the change to its data
+          acc = await gateway.account('test');
+          await expect(acc.import(consume([{
+            '@id': 'test/pr1', '@type': 'Project', duration: 10
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('test/pr1')).resolves.toMatchObject({
+            '@type': 'Project', duration: 10
+          });
+        });
+
+        test('rejects malformed project', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'pr1', '@type': 'Project'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/pr1!', '@type': 'Project'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+          await expect(acc.import(consume([{
+            '@id': 'test/pr1', '@type': 'Project', duration: 'garbage'
+          }]))).rejects.toThrowError(errors.BadRequestError);
+        });
+
+        test('rejects unauthorised project', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'org/pr1', '@type': 'Project'
+          }]))).rejects.toThrowError(errors.ForbiddenError);
+        });
+
+        test.todo('rejects change external project ID');
+
+        test('inserts entries', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }, {
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' },
+            activity: 'testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date)
+          }]))).resolves.not.toThrow();
+          const report = await gateway.report(gateway.ownedId('test', 'ts1'));
+          await expect(drain(report)).resolves.toMatchObject([
+            { '@id': 'test/ts1', '@type': 'Timesheet' },
+            {
+              '@id': expect.stringMatching(/\w+\/1/),
+              '@type': 'Entry',
+              session: { '@id': expect.stringMatching(/\w+/) }
+            } // Plus a lot more
+          ]);
+        });
+
+        test('rejects malformed entry', async () => {
+          await acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }]));
+          // Missing details
+          await expect(acc.import(consume([{
+            '@type': 'Entry'
+          }]))).rejects.toThrow();
+          // Malformed date
+          await expect(acc.import(consume([{
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' },
+            activity: 'testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date)['@value']
+          }]))).rejects.toThrow();
+        });
+
+        test('rejects orphaned entry', async () => {
+          await expect(acc.import(consume([{
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' }, // Does not exist
+            activity: 'testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date)
+          }]))).rejects.toThrow();
+        });
+
+        test('cannot specify entry ID', async () => {
+          await expect(acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }, {
+            '@id': 'garbage',
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' },
+            activity: 'testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date)
+          }]))).rejects.toThrow();
+        });
+
+        test('merges using external ID', async () => {
+          await acc.import(consume([{
+            '@id': 'test/ts1', '@type': 'Timesheet'
+          }, {
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' },
+            activity: 'testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date),
+            external: { '@id': 'http://ex.org/ts/entry/1' }
+          }]));
+          await acc.import(consume([{
+            '@type': 'Entry',
+            session: { '@id': 'test/ts1' },
+            activity: 'more testing',
+            'vf:provider': { '@id': 'test' },
+            start: dateJsonLd(new Date),
+            external: { '@id': 'http://ex.org/ts/entry/1' }
+          }]));
+          const report = await gateway.report(gateway.ownedId('test', 'ts1'));
+          await expect(drain(report)).resolves.toMatchObject([
+            { '@id': 'test/ts1', '@type': 'Timesheet' },
+            {
+              '@id': expect.stringMatching(/\w+\/1/),
+              '@type': 'Entry',
+              activity: 'more testing'
+            } // Plus a lot more
+          ]);
+        });
       });
     });
   });

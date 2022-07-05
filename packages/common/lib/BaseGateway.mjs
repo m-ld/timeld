@@ -19,7 +19,7 @@ export default class BaseGateway {
    */
   ownedRefAsId(tsRef) {
     // A timesheet reference may be relative to the domain base
-    return AccountOwnedId.fromIri(tsRef['@id'], this.domainName);
+    return AccountOwnedId.fromReference(tsRef, this.domainName);
   }
 
   ownedId(account, name) {

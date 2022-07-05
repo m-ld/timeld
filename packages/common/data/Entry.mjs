@@ -1,21 +1,44 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { dateJsonLd, isDate, isReference, mustBe, optionalPropertyValue } from '../lib/util.mjs';
+import {
+  dateJsonLd, isDate, isReference, mustBe, optionalPropertyValue, withDoc
+} from '../lib/util.mjs';
+import DomainEntity from './DomainEntity.mjs';
 
-export default class Entry {
+export default class Entry extends DomainEntity {
   /** @type {import('jtd').Schema} */
   static SCHEMA = {
-    properties : {
-      '@id': { type: 'string' },
+    properties: {
       '@type': mustBe('Entry'),
-      session: isReference,
-      activity: { type: 'string' },
-      'vf:provider': isReference,
+      session: {
+        ...withDoc('The timekeeping session. ' +
+          'When importing and exporting, this should be the timesheet ID'),
+        ...isReference
+      },
+      activity: {
+        ...withDoc('The activity description'),
+        type: 'string'
+      },
+      'vf:provider': {
+        ...withDoc('The entry provider, either as an account name ' +
+          'e.g. `alice`, or an absolute URI, e.g. `http://alice.ex.org/#profile`'),
+        ...isReference
+      },
       start: isDate
     },
     optionalProperties: {
-      duration: { type: 'int16' }
+      '@id': {
+        ...withDoc('The generated entry identity. ' +
+          'When importing, do not set this field.'),
+        type: 'string'
+      },
+      duration: {
+        ...withDoc('The entry duration, in minutes'),
+        type: 'int16'
+      },
+      ...DomainEntity.SCHEMA.optionalProperties
     }
-  }
+  };
+
   /**
    * @param {import('@m-ld/m-ld').GraphSubject} src
    */
@@ -28,7 +51,8 @@ export default class Entry {
       activity: propertyValue(src, 'activity', String),
       providerId: propertyValue(src, 'vf:provider', Object)['@id'],
       start: propertyValue(src, 'start', Date),
-      duration: optionalPropertyValue(src, 'duration', Number)
+      duration: optionalPropertyValue(src, 'duration', Number),
+      ...DomainEntity.specFromJson(src)
     });
   }
 
@@ -39,8 +63,10 @@ export default class Entry {
    * @param {string} spec.providerId
    * @param {Date} spec.start
    * @param {number} [spec.duration] entry duration in minutes
+   * @param {string} [spec.externalId]
    */
   constructor(spec) {
+    super(spec);
     this.seqNo = spec.seqNo;
     this.sessionId = spec.sessionId;
     this.activity = spec.activity;
@@ -53,11 +79,12 @@ export default class Entry {
     return {
       '@id': `${this.sessionId}/${this.seqNo}`,
       '@type': 'Entry',
-      'session': { '@id': `${this.sessionId}` },
+      'session': { '@id': this.sessionId },
       'activity': this.activity,
-      'vf:provider': { '@id': `${this.providerId}` },
+      'vf:provider': { '@id': this.providerId },
       'start': dateJsonLd(this.start),
-      'duration': this.duration
+      'duration': this.duration,
+      ...super.toJSON()
     };
   }
 }

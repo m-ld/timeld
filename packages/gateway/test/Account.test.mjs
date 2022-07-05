@@ -100,7 +100,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
@@ -123,7 +123,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
@@ -145,7 +145,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
@@ -168,7 +168,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
       capability: {
@@ -228,7 +228,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
   });
 
@@ -244,7 +244,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
   });
 
@@ -259,7 +259,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
   });
 
@@ -271,7 +271,7 @@ describe('Gateway account', () => {
       id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
     }));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
   });
 
@@ -281,7 +281,7 @@ describe('Gateway account', () => {
     });
     gateway.ablyApi.updateAppKey.mockImplementation(() => Promise.reject('Not Found'));
     await expect(acc.authorise('keyid', {
-      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: true
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
   });
 
