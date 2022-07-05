@@ -436,6 +436,23 @@ describe('Gateway', () => {
           });
         });
 
+        test('inserts timesheet to org', async () => {
+          await acc.write({
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          });
+          await expect(acc.import(consume([{
+            '@id': 'org1/ts1', '@type': 'Timesheet'
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('org1')).resolves.toMatchObject({
+            timesheet: { '@id': 'org1/ts1' }
+          });
+          await expect(gateway.domain.get('org1/ts1')).resolves.toMatchObject({
+            '@type': 'Timesheet'
+          });
+        });
+
         test('updates timesheet', async () => {
           await acc.import(consume([{
             '@id': 'test/ts1', '@type': 'Timesheet'
