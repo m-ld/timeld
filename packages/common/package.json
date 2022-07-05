@@ -1,6 +1,6 @@
 {
   "name": "timeld-common",
-  "version": "0.1.0-12",
+  "version": "0.1.0",
   "description": "timeld library",
   "type": "module",
   "main": "index.mjs",

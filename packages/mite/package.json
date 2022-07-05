@@ -1,11 +1,10 @@
 {
   "name": "timeld-mite",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "timeld - mite.yo.lk integration",
   "main": "index.mjs",
   "devDependencies": {},
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/m-ld/timeld.git"
