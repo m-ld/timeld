@@ -5,6 +5,7 @@ import AblyApi from './lib/AblyApi.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
+import gracefulShutdown from 'http-graceful-shutdown';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -42,9 +43,10 @@ server.listen(8080, function () {
   console.log('%s listening at %s', server.name, server.url);
 });
 
-process.on('beforeExit', async () => {
-  LOG.info('Gateway shutting down...');
-  await gateway.close();
-  LOG.info('Gateway shut down');
+gracefulShutdown(server, {
+  async onShutdown() {
+    LOG.info('Gateway shutting down...');
+    await gateway.close();
+    LOG.info('Gateway shut down');
+  }
 });
-

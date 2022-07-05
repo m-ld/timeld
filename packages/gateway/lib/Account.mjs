@@ -261,7 +261,7 @@ export default class Account {
         await this.gateway.initTimesheet(id, true);
       return state.write({
         '@delete': { '@id': src['@id'] },
-        '@insert': { '@id': this.name, [src['@type'].toLowerCase()]: src }
+        '@insert': { '@id': id.account, [src['@type'].toLowerCase()]: src }
       });
     });
   }

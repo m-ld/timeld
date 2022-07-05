@@ -219,6 +219,11 @@ describe('Gateway', () => {
       ]);
     });
 
+    test('reports on non-existent timesheet', async () => {
+      const tsId = gateway.ownedId('test', 'garbage');
+      await expect(gateway.report(tsId)).rejects.toThrowError(errors.NotFoundError);
+    });
+
     test('reports on a project', async () => {
       await gateway.timesheetConfig(gateway.ownedId('test', 'ts1'));
       await gateway.timesheetConfig(gateway.ownedId('test', 'ts2'));
@@ -432,6 +437,23 @@ describe('Gateway', () => {
             timesheet: { '@id': 'test/ts1' }
           });
           await expect(gateway.domain.get('test/ts1')).resolves.toMatchObject({
+            '@type': 'Timesheet'
+          });
+        });
+
+        test('inserts timesheet to org', async () => {
+          await acc.write({
+            '@id': 'org1',
+            '@type': 'Account',
+            'vf:primaryAccountable': { '@id': 'test' }
+          });
+          await expect(acc.import(consume([{
+            '@id': 'org1/ts1', '@type': 'Timesheet'
+          }]))).resolves.not.toThrow();
+          await expect(gateway.domain.get('org1')).resolves.toMatchObject({
+            timesheet: { '@id': 'org1/ts1' }
+          });
+          await expect(gateway.domain.get('org1/ts1')).resolves.toMatchObject({
             '@type': 'Timesheet'
           });
         });

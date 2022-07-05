@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.2.0",
+  "version": "0.2.1-1",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
@@ -28,6 +28,7 @@
     "@m-ld/m-ld": "^0.8.2",
     "@trycourier/courier": "^3.13.1",
     "cryptr": "^6.0.3",
+    "http-graceful-shutdown": "^3.1.7",
     "jsonwebtoken": "^8.5.1",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.0",
