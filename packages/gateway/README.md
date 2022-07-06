@@ -6,6 +6,22 @@ The timeld Gateway is a service to manage timeld accounts and persist timesheets
 
 ## Fly.io Deployment Notes
 
+### prerequisites
+
+```bash
+git clone https://github.com/m-ld/timeld
+cd timeld
+cd packages/gateway
+```
+
+Install `flyctl` from https://fly.io and create a fly.io account (requires a creditcard).
+
+Sign up for Ably, create an app in the Ably dashboard, and look for the root key and the api key.
+
+Sign up for Courier and copy the authorization token that gets generated.
+
+Paste your Ably and Courier tokens into your `.env` file as described below.
+
 ### volumes
 
 A volume is required for clone persistence (Gateway and Timesheet domains).
@@ -13,6 +29,17 @@ A volume is required for clone persistence (Gateway and Timesheet domains).
 ```bash
 flyctl volumes create timeld_data --region lhr
 ```
+
+The first time you run this command, it will output:
+```
+Error Could not find App "timeld"
+```
+
+Run `flyctl launch`, that will complain:
+```
+Error Mounts source volume "timeld_data" does not exist
+```
+Now you can create the volume by running and then `flyctl deploy`.
 
 > A volume is directly associated with only one app and exists in only one region.
 
@@ -42,7 +69,7 @@ flyctl deploy
 The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
 
 ```bash
-flyctl deploy --env TIMELD_GATEWAY_GENESIS=true --env TIMELD_GATEWAY_GATEWAY=timeld.org
+flyctl deploy --env TIMELD_GATEWAY_GENESIS=true --env TIMELD_GATEWAY_GATEWAY=<your-app-id>.fly.dev
 ```
 
 ### random
