@@ -1,12 +1,14 @@
 import { propertyValue } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, Session } from 'timeld-common';
-import errors from 'restify-errors';
 import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
 import { accountHasTimesheet, Ask, timesheetHasProject, userIsAdmin } from './statements.mjs';
 import ReadPatterns from './ReadPatterns.mjs';
 import WritePatterns from './WritePatterns.mjs';
 import { each } from 'rx-flowable';
 import { validate } from 'jtd';
+import {
+  BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
+} from '../rest/errors.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -89,7 +91,7 @@ export default class Account {
    */
   async authorise(keyid, access) {
     if (!this.keyids.has(keyid))
-      throw new errors.UnauthorizedError(
+      throw new UnauthorizedError(
         `Key ${keyid} does not belong to account ${this.name}`);
 
     return new Promise(async (resolve, reject) => {
@@ -107,11 +109,10 @@ export default class Account {
             }));
           } catch (e) {
             // TODO: Assuming this is a Not Found
-            return reject(new errors.UnauthorizedError(e));
+            return reject(new UnauthorizedError(e));
           }
         } catch (e) {
-          return reject(e instanceof errors.HttpError ?
-            e : new errors.InternalServerError(e));
+          return reject(toHttpError(e));
         }
       });
     });
@@ -133,17 +134,17 @@ export default class Account {
       // Creating; check write access to account
       if (access.id.account !== this.name &&
         !(await ask.exists(userIsAdmin(this.name, access.id.account))))
-        throw new errors.ForbiddenError();
+        throw new ForbiddenError();
       // Otherwise OK to create
       writable[access.forWrite].add(iri);
     } else if (!writable['Timesheet'].has(iri) && !writable['Project'].has(iri)) {
       if (access.forWrite) {
-        throw new errors.ForbiddenError();
+        throw new ForbiddenError();
       } else {
         // Finally check for a readable timesheet through one of the projects
         if (!(await Promise.all([...writable['Project']].map(project =>
           ask.exists(timesheetHasProject(iri, project))))).includes(true))
-          throw new errors.ForbiddenError();
+          throw new ForbiddenError();
       }
     }
   }
@@ -177,7 +178,7 @@ export default class Account {
     // Check that the given pattern matches a permitted query
     const matchingPattern = new ReadPatterns(this.name).matchPattern(query);
     if (matchingPattern == null)
-      throw new errors.ForbiddenError('Unrecognised read pattern: %j', query);
+      throw new ForbiddenError('Unrecognised read pattern: %j', query);
     return new Promise((resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
@@ -200,10 +201,10 @@ export default class Account {
       const tsId = this.gateway.ownedRefAsId(tsRef);
       const ask = new Ask(state);
       if (await ask.exists(accountHasTimesheet(tsId)))
-        throw new errors.ConflictError('Timesheet already exists');
+        throw new ConflictError('Timesheet already exists');
       if (this.name !== tsId.account &&
         !(await ask.exists(userIsAdmin(this.name, tsId.account))))
-        throw new errors.UnauthorizedError('No access to timesheet');
+        throw new UnauthorizedError('No access to timesheet');
       await this.gateway.initTimesheet(tsId, true);
     }
   };
@@ -215,7 +216,7 @@ export default class Account {
     const matchingPattern =
       new WritePatterns(this.name, this.onInsertTimesheet).matchPattern(query);
     if (matchingPattern == null)
-      throw new errors.ForbiddenError('Unrecognised write pattern: %j', query);
+      throw new ForbiddenError('Unrecognised write pattern: %j', query);
     await this.gateway.domain.write(async state => {
       await state.write(await matchingPattern.check(state, query));
     });
@@ -231,7 +232,7 @@ export default class Account {
       // Validate schema observance
       const validation = validate(isDomainEntity, src);
       if (validation.length > 0)
-        throw new errors.BadRequestError(
+        throw new BadRequestError(
           'Malformed domain entity %j', validation);
       switch (src['@type']) {
         case 'Timesheet':
@@ -240,7 +241,7 @@ export default class Account {
         case 'Entry':
           return this.importEntry(src, sessions);
         default:
-          throw new errors.BadRequestError(
+          throw new BadRequestError(
             'Unknown entity type %s for %s', src['@type'], src['@id']);
       }
     });
@@ -253,7 +254,7 @@ export default class Account {
   async importOwned(src) {
     const id = this.gateway.ownedRefAsId(src);
     if (!id.isValid)
-      throw new errors.BadRequestError(
+      throw new BadRequestError(
         'Malformed entity identity %s', src['@id']);
     await this.gateway.domain.write(async state => {
       await this.checkAccess(state, { id, forWrite: src['@type'] });
@@ -274,13 +275,13 @@ export default class Account {
   async importEntry(src, sessions) {
     // Check @id not provided
     if (src['@id'])
-      throw new errors.BadRequestError(
+      throw new BadRequestError(
         'Imported Timesheet entry should not include ID');
     const tsId = this.gateway.ownedRefAsId(src['session']);
     await this.gateway.domain.write(async state => {
       await this.checkAccess(state, { id: tsId, forWrite: 'Timesheet' });
       if (await this.gateway.isGenesisTs(state, tsId))
-        throw new errors.BadRequestError('Timesheet not found: %s', tsId);
+        throw new BadRequestError('Timesheet not found: %s', tsId);
       const tsClone = await this.gateway.initTimesheet(tsId, false);
       await tsClone.write(async state => {
         const tsIri = tsId.toIri();
