@@ -10,7 +10,7 @@ You need an Apple Mac, Windows PC or a Linux device.
 
 ## install
 
-Install [Node.js](https://nodejs.org/). Then, in a terminal:
+Install version 16 or higher of [Node.js](https://nodejs.org/). Then, in a terminal:
 
 ```bash
 npm install timeld-cli -g
