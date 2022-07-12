@@ -1,12 +1,12 @@
 import restify from 'restify';
 import { AccountOwnedId, isDomainEntity, ResultsReadable, timeldContext } from 'timeld-common';
-import errors from 'restify-errors';
 import isEmail from 'validator/lib/isEmail.js';
 import Authorization from '../lib/Authorization.mjs';
 import { pipeline } from 'stream/promises';
 import LOG from 'loglevel';
 import { consume } from 'rx-flowable/consume';
 import ndjson from 'ndjson';
+import { BadRequestError, toHttpError } from './errors.mjs';
 
 /**
  * @param {Format} format
@@ -64,16 +64,16 @@ export default function rest({ gateway, notifier }) {
     async (req, res, next) => {
       const { user, email } = req.params;
       if (!AccountOwnedId.isComponentId(user))
-        return next(new errors.BadRequestError('Bad user %s', user));
+        return next(new BadRequestError('Bad user %s', user));
       if (!email || !isEmail(email))
-        return next(new errors.BadRequestError('Bad email %s', email));
+        return next(new BadRequestError('Bad email %s', email));
       try {
         const { jwe, code } = await gateway.activation(user, email);
         await notifier.sendActivationCode(email, code);
         res.json({ jwe });
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 
@@ -83,13 +83,13 @@ export default function rest({ gateway, notifier }) {
         const auth = new Authorization(req);
         const { email } = gateway.verify(auth.jwt);
         if (!email || !isEmail(email))
-          return next(new errors.BadRequestError('Bad email %s', email));
+          return next(new BadRequestError('Bad email %s', email));
         const acc = await gateway.account(auth.user, { orCreate: true });
         const key = await acc.activate(email);
         res.json({ key });
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 
@@ -104,12 +104,12 @@ export default function rest({ gateway, notifier }) {
             gateway, { id, forWrite: 'Timesheet' });
           res.json(await gateway.timesheetConfig(id));
         } catch (e) {
-          next(e);
+          next(toHttpError(e));
         }
         next();
       } catch (e) {
         // TimesheetId.validate throw strings
-        return next(new errors.BadRequestError(
+        return next(new BadRequestError(
           'Bad timesheet %s/%s', account, timesheet));
       }
     });
@@ -121,7 +121,7 @@ export default function rest({ gateway, notifier }) {
         await sendStream(res, await acc.read(req.body));
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 
@@ -133,7 +133,7 @@ export default function rest({ gateway, notifier }) {
         res.send(200);
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 
@@ -146,7 +146,7 @@ export default function rest({ gateway, notifier }) {
         await sendStream(res, await gateway.report(id));
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 
@@ -158,7 +158,7 @@ export default function rest({ gateway, notifier }) {
         res.send(200);
         next();
       } catch (e) {
-        next(e);
+        next(toHttpError(e));
       }
     });
 

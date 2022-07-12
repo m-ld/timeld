@@ -95,8 +95,8 @@ export default class Cli {
           .demandOption('account')
           .demandOption('user')
           .check(argv => {
-            const { timesheet, account, gateway } = argv;
-            new AccountOwnedId({ name: timesheet, account, gateway }).validate();
+            const { timesheet, account } = argv;
+            new AccountOwnedId({ name: timesheet, account }).validate();
             return true;
           }),
         argv => this.openCmd(argv)

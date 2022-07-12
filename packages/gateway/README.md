@@ -30,6 +30,7 @@ Where the .env file contains:
 - `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
 - `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
 - `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN={your courier auth token}`
+- `TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE={courier activation email template ID}`
 
 ### deploy
 

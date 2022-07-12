@@ -2,7 +2,7 @@ import { array } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, isReference } from 'timeld-common';
 import { QueryPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
-import errors from 'restify-errors';
+import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
 
 /**
  * @typedef {import('@m-ld/m-ld').Reference} Reference
@@ -84,6 +84,7 @@ export default class WritePatterns {
     const timesheetDetail = {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
+    // noinspection JSValidateTypes
     /** @type {QueryPattern[]} */
     this.patterns = [
       // Add details to user account
@@ -119,7 +120,7 @@ export default class WritePatterns {
           // Organisation must not already exist
           // TODO: Use ask in m-ld-js@edge
           if ((await state.get(query['@id'])) != null)
-            throw new errors.ForbiddenError('Organisation already exists');
+            throw new ForbiddenError('Organisation already exists');
           return query;
         }
       }(thisAccountIsAdmin()),
@@ -164,12 +165,12 @@ export default class WritePatterns {
               };
             } catch (e) {
               if (e instanceof EmptyError)
-                throw new errors.NotFoundError(`${orgId} not found`);
+                throw new NotFoundError(`${orgId} not found`);
               throw e;
             }
           } else {
             if (query['@delete']['vf:primaryAccountable']?.['@id'] === accountName)
-              throw new errors.ForbiddenError('Cannot remove yourself as an admin');
+              throw new ForbiddenError('Cannot remove yourself as an admin');
             return query;
           }
         }
@@ -191,10 +192,10 @@ export default class WritePatterns {
             // TODO Use ask in m-ld-js@edge
             const ts = await state.get(insert['@id'], '@type');
             if (ts == null)
-              throw new errors.NotFoundError('Timesheet does not exist');
+              throw new NotFoundError('Timesheet does not exist');
             const project = await state.get(insert.project['@id'], '@type');
             if (project == null)
-              throw new errors.NotFoundError('Project does not exist');
+              throw new NotFoundError('Project does not exist');
           }
           return query;
         }

@@ -6,10 +6,10 @@ import { AblyKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-com
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import errors from 'restify-errors';
 import { accountHasTimesheet, Ask } from './statements.mjs';
 import { concat } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
+import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
 
 /**
  * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
@@ -34,7 +34,7 @@ export default class Gateway extends BaseGateway {
     LOG.debug('Gateway domain is', this.domainName);
     this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
-    this.ablyApi = ablyApi;
+    this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
   }
 
@@ -145,7 +145,7 @@ export default class Gateway extends BaseGateway {
     // If the account exists, check the email is registered
     const acc = await this.account(account);
     if (acc != null && !acc.emails.has(email))
-      throw new errors.UnauthorizedError(
+      throw new UnauthorizedError(
         'Email %s not registered to account %s', email, account);
     // Construct a JWT with the email, using our Ably key
     const { secret, keyid } = this.ablyKey;
@@ -214,7 +214,7 @@ export default class Gateway extends BaseGateway {
       return this.timesheetDomains[tsId.toDomain()];
     // If genesis, check that this timesheet has not existed before
     if (genesis && await this.tsTombstoneExists(tsId))
-      throw new errors.ConflictError();
+      throw new ConflictError();
     const ts = await this.cloneTimesheet(tsId, genesis);
     // Ensure that the clone is online to avoid race with the client
     await ts.status.becomes({ online: true });
@@ -249,7 +249,7 @@ export default class Gateway extends BaseGateway {
               const tsFlows = await Promise.all(timesheets.map(this.reportTimesheet));
               return resolve(concat(consume([owned]), ...tsFlows));
             default:
-              return reject(new errors.NotFoundError('%s not found', ownedId));
+              return reject(new NotFoundError('%s not found', ownedId));
           }
         } catch (e) {
           return reject(e);
