@@ -83,7 +83,7 @@ describe('Gateway account', () => {
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid')).resolves.toMatchObject({});
     expect(gateway.ablyApi.updateAppKey).toBeCalledWith('keyid', {
@@ -97,7 +97,7 @@ describe('Gateway account', () => {
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -120,7 +120,7 @@ describe('Gateway account', () => {
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -142,7 +142,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -165,7 +165,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -189,7 +189,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org')
@@ -208,7 +208,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org2/ts1@ex.org')
@@ -225,7 +225,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -241,7 +241,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -256,7 +256,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -268,7 +268,7 @@ describe('Gateway account', () => {
       name: 'test', keyids: [], timesheets: [{ '@id': 'test/ts1' }]
     });
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -285,6 +285,18 @@ describe('Gateway account', () => {
     })).rejects.toThrowError();
   });
 
+  test('unauthorised if Ably key revoked', async () => {
+    const acc = new Account(gateway, {
+      name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
+    });
+    gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 1
+    }));
+    await expect(acc.authorise('keyid', {
+      id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
+    })).rejects.toThrowError();
+  });
+
   test('authorise project for read in user account', async () => {
     await gateway.domain.write({
       '@id': 'test', '@type': 'Account', keyid: 'keyid',
@@ -292,7 +304,7 @@ describe('Gateway account', () => {
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/pr1@ex.org')
@@ -308,7 +320,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability
+      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', capability, status: 0
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/pr1@ex.org')

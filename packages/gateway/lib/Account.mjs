@@ -104,9 +104,11 @@ export default class Account {
           const authorisedTsIds = [...await this.allOwned(state, 'Timesheet')]
             .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName));
           try {
-            return resolve(await this.gateway.ablyApi.updateAppKey(keyid, {
+            const keyDetail = await this.gateway.ablyApi.updateAppKey(keyid, {
               capability: this.keyCapability(...authorisedTsIds)
-            }));
+            });
+            return keyDetail.status === 0 ? resolve(keyDetail) :
+              reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
             // TODO: Assuming this is a Not Found
             return reject(new UnauthorizedError(e));

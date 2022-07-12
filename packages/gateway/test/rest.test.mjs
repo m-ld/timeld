@@ -25,7 +25,7 @@ describe('Gateway REST API', () => {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn().mockImplementation(
         (keyid, { capability }) => Promise.resolve({
-          id: keyid, key: `app.${keyid}:secret`, name: 'test@ex.org', capability
+          id: keyid, key: `app.${keyid}:secret`, name: 'test@ex.org', capability, status: 0
         }))
     };
     gateway = new Gateway(env, {

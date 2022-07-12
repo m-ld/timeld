@@ -34,7 +34,7 @@ export default class Gateway extends BaseGateway {
     LOG.debug('Gateway domain is', this.domainName);
     this.ablyKey = new AblyKey(config.ably.key);
     this.clone = clone;
-    this.ablyApi = ablyApi;
+    this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
   }
 

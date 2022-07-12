@@ -2,10 +2,11 @@ import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
 
 /**
  * @typedef {object} AblyKeyDetail
- * @property {string} id
- * @property {string} name
- * @property {string} key
- * @property {object} capability
+ * @property {string} id The key ID.
+ * @property {string} name The name for your API key. This is a friendly name for your reference.
+ * @property {0|1} status The status of the key. 0 is enabled, 1 is revoked.
+ * @property {string} key The complete API key including API secret.
+ * @property {object} capability The capabilities that this key has.
  */
 
 export default class AblyApi {
