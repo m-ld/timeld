@@ -1,6 +1,7 @@
-# fly.toml file generated for timeld on 2022-05-10T15:25:11+01:00
-
-app = "timeld"
+################################################################################
+# Omitting `app` to ensure all uses of this config knowingly specify it, because
+# the app name should correspond to a deployment environment
+# See ./deploy.sh
 
 kill_signal = "SIGINT"
 kill_timeout = 5

@@ -6,24 +6,37 @@ The timeld Gateway is a service to manage timeld accounts and persist timesheets
 
 ## Fly.io Deployment Notes
 
+### app
+
+Decide your app name.
+
+```shell
+flyctl apps create timeld
+```
+
+If developing off the `main` branch, the deploy script (below) will use your current branch name as a suffix; in preparation you should run the above command with the suffixed name e.g. `timeld-edge`.
+
 ### volumes
 
 A volume is required for clone persistence (Gateway and Timesheet domains).
 
-```bash
-flyctl volumes create timeld_data --region lhr
+_NB: The `-a` parameter must match your app name._
+
+```shell
+flyctl volumes create timeld_data --region lhr -a timeld
 ```
 
-> A volume is directly associated with only one app and exists in only one region.
 
-Each _instance_ of an app must have dedicated storage. So we can either:
-- [x] set `fly scale ... --max-per-region=1` (limits scaling), or
-- [ ] create a directory under `/data` per [allocation ID](https://fly.io/docs/reference/runtime-environment/#fly_alloc_id) – (creates a garbage collection problem with rolling redeploy)
+> NB: "A volume is directly associated with only one app and exists in only one region."
+>
+> Each _instance_ of an app must have dedicated storage. So we can either:
+> - [x] set `fly scale ... --max-per-region=1` (limits scaling), or
+> - [ ] create a directory under `/data` per [allocation ID](https://fly.io/docs/reference/runtime-environment/#fly_alloc_id) – (creates a garbage collection problem with rolling redeploy)
 
 ### secrets
 
-```bash
-flyctl secrets import < .env
+```shell
+flyctl secrets import < .env -a timeld
 ```
 
 Where the .env file contains:
@@ -34,17 +47,21 @@ Where the .env file contains:
 
 ### deploy
 
-_If you have made any changes to timeld-common, it needs to be published first._
+_NB: If you have made any changes to timeld-common, it needs to be published first._
 
-```bash
-flyctl deploy
+A script is provided to generate, and optionally run, the correct deploy command.
+
+```shell
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
+`deploy.sh` takes three optional arguments:
+1. app name (root); defaults to `timeld`
+2. app name suffix; defaults to git branch name e.g. `timeld-edge`. If `main`, no suffix is used, i.e. just `timeld`.
+3. `genesis` (if used, the 1st two arguments must also be given)
 
-```bash
-flyctl deploy --env TIMELD_GATEWAY_GENESIS=true --env TIMELD_GATEWAY_GATEWAY=timeld.org
-```
+The first deployment of a new Gateway **must** be started with the `genesis` flag.
 
 ### random
 
