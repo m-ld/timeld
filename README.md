@@ -18,7 +18,7 @@
 - Quickly record tasks in a timesheet, as you work on them, or with a start and end time, or a duration
 - See and edit your tasks on any device
 
-The [desktop tool](https://www.npmjs.com/package/timeld-cli) can be used on MacOS, Windows and Linux.
+The [desktop tool](https://www.npmjs.com/package/timeld-cli) (called **timeld-cli**) is used to create and edit timesheets, and works on on MacOS, Windows and Linux.
 
 ## gateway
 
