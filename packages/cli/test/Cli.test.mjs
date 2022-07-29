@@ -36,4 +36,18 @@ describe('CLI', () => {
     expect(mockWrite).toHaveBeenCalledWith(
       { test: 'Tested', more: 'Written' })
   });
+
+  test('sets config using un-abbreviated keys', async () => {
+    const mockWrite = jest.fn();
+    const env = new class extends Env {
+      readConfig = async () => ({ test: 'Tested' });
+      writeConfig = mockWrite;
+    }();
+    await new Cli(env, {
+      args: ['config', '--acc', 'my-account'], console
+    }).start();
+    expect(logSpy).not.toHaveBeenCalled();
+    expect(mockWrite).toHaveBeenCalledWith(
+      { test: 'Tested', account: 'my-account' })
+  });
 });

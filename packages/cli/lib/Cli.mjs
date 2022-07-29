@@ -30,22 +30,7 @@ export default class Cli {
   }
 
   async start() {
-    return (await this.env.yargs(this.args))
-      .option('account', {
-        alias: 'acc',
-        type: 'string',
-        describe: 'The default account for creating timesheets or admin'
-      })
-      .option('gateway', {
-        alias: 'gw',
-        /*no type, allows --no-gateway*/
-        describe: 'The timeld Gateway, as a URL or domain name'
-      })
-      .option('user', {
-        alias: 'u',
-        type: 'string',
-        describe: 'The user account, as a URL or a name'
-      })
+    return this.addOptions(await this.env.yargs(this.args))
       .command(
         ['config', 'cfg'],
         'Inspect or set local configuration',
@@ -119,6 +104,29 @@ export default class Cli {
       .strictCommands()
       .help()
       .parseAsync();
+  }
+
+  /**
+   * @param {yargs.Argv<{}>} argv
+   * @returns {yargs.Argv<{}>} provided yargs with options added
+   */
+  addOptions(argv) {
+    return argv
+      .option('account', {
+        alias: 'acc',
+        type: 'string',
+        describe: 'The default account for creating timesheets or admin'
+      })
+      .option('gateway', {
+        alias: 'gw',
+        /*no type, allows --no-gateway*/
+        describe: 'The timeld Gateway, as a URL or domain name'
+      })
+      .option('user', {
+        alias: 'u',
+        type: 'string',
+        describe: 'The user account, as a URL or a name'
+      });
   }
 
   /**
@@ -200,7 +208,7 @@ export default class Cli {
    * @private
    */
   async setUpLogging(path) {
-    // Substitute the global console so we don't get m-ld logging
+    // Substitute the global console, so we don't get m-ld logging
     const logFile = `${await this.env.readyPath('log', ...path)}.log`;
     const logStream = createWriteStream(logFile, { flags: 'a' });
     await once(logStream, 'open');
@@ -214,7 +222,7 @@ export default class Cli {
    */
   async configCmd(argv) {
     // Determine what the options would be without env and config
-    const cliArgv = this.env.baseYargs(this.args).argv;
+    const cliArgv = this.addOptions(this.env.baseYargs(this.args)).argv;
     if (Object.keys(cliArgv).some(Env.isConfigKey)) {
       // Setting one or more config options
       await this.env.updateConfig(cliArgv);
