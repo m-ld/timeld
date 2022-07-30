@@ -1,15 +1,47 @@
 import Cli from '../lib/Cli.mjs';
 import { Env } from 'timeld-common';
 import { describe, expect, jest, test } from '@jest/globals';
+import { createWriteStream } from 'fs';
 
 describe('CLI', () => {
   let console;
   let logSpy;
 
   beforeEach(() => {
-    console = new global.console.Console(process.stdout);
+    console = new global.console.Console(createWriteStream('/dev/null'));
     // noinspection JSCheckFunctionSignatures
     logSpy = jest.spyOn(console, 'log');
+  });
+
+  test('open validates user option', async () => {
+    const env = new class extends Env {
+      // User should not include special chars
+      readConfig = async () => ({ user: 'user@m-ld.org', account: 'user' });
+    }();
+    let cli = new class extends Cli {
+      addOptions(argv) {
+        return super.addOptions(argv).exitProcess(false);
+      }
+    }(env, { args: ['open', 'ts1'], console });
+    cli.openCmd = jest.fn();
+    await expect(cli.start()).rejects.toMatch(/user@m-ld\.org/);
+  });
+
+  test('admin validates user option', async () => {
+    const env = new class extends Env {
+      // User should not include special chars
+      readConfig = async () => ({
+        user: 'user@m-ld.org', // User should not include special chars
+        account: 'user', gateway: 'timeld.org'
+      });
+    }();
+    let cli = new class extends Cli {
+      addOptions(argv) {
+        return super.addOptions(argv).exitProcess(false);
+      }
+    }(env, { args: ['admin'], console });
+    cli.adminCmd = jest.fn();
+    await expect(cli.start()).rejects.toMatch(/user@m-ld\.org/);
   });
 
   test('can inspect config', async () => {
@@ -34,7 +66,7 @@ describe('CLI', () => {
     }).start();
     expect(logSpy).not.toHaveBeenCalled();
     expect(mockWrite).toHaveBeenCalledWith(
-      { test: 'Tested', more: 'Written' })
+      { test: 'Tested', more: 'Written' });
   });
 
   test('sets config using un-abbreviated keys', async () => {
@@ -48,6 +80,6 @@ describe('CLI', () => {
     }).start();
     expect(logSpy).not.toHaveBeenCalled();
     expect(mockWrite).toHaveBeenCalledWith(
-      { test: 'Tested', account: 'my-account' })
+      { test: 'Tested', account: 'my-account' });
   });
 });

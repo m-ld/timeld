@@ -82,6 +82,7 @@ export default class Cli {
           .check(argv => {
             const { timesheet, account } = argv;
             new AccountOwnedId({ name: timesheet, account }).validate();
+            AccountOwnedId.checkComponentId(argv.user);
             return true;
           }),
         argv => this.openCmd(argv)
@@ -97,7 +98,12 @@ export default class Cli {
           }, true)
           .demandOption('gateway')
           .demandOption('account')
-          .demandOption('user'),
+          .demandOption('user')
+          .check(argv => {
+            AccountOwnedId.checkComponentId(argv.account);
+            AccountOwnedId.checkComponentId(argv.user);
+            return true;
+          }),
         argv => this.adminCmd(argv)
       )
       .demandCommand()
