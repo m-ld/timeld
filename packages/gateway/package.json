@@ -25,7 +25,7 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
-    "@m-ld/m-ld": "^0.8.2",
+    "@m-ld/m-ld": "^0.9.0-5",
     "@trycourier/courier": "^3.13.1",
     "cryptr": "^6.0.3",
     "http-graceful-shutdown": "^3.1.7",

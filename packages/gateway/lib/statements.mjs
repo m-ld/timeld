@@ -28,25 +28,3 @@ export const userIsAdmin = (user, account) => ({
 export const timesheetHasProject = (ts, project) => ({
   '@id': ts, '@type': 'Timesheet', project: { '@id': project }
 });
-
-/**
- * TODO: Use `ask` in m-ld-js v0.9
- */
-export class Ask {
-  /**
-   * @param {import('@m-ld/m-ld').MeldReadState} state
-   */
-  constructor(state) {
-    this.state = state;
-  }
-
-  /**
-   * @param {Where} where
-   * @returns {Promise<boolean>}
-   */
-  async exists(where) {
-    return !!(await this.state.read({
-      '@select': '?', '@where': where
-    })).length;
-  }
-}

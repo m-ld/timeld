@@ -1,7 +1,7 @@
-import { propertyValue } from '@m-ld/m-ld';
+import { propertyValue, Reference } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, Session } from 'timeld-common';
-import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
-import { accountHasTimesheet, Ask, timesheetHasProject, userIsAdmin } from './statements.mjs';
+import { idSet } from 'timeld-common/lib/util.mjs';
+import { accountHasTimesheet, timesheetHasProject, userIsAdmin } from './statements.mjs';
 import ReadPatterns from './ReadPatterns.mjs';
 import WritePatterns from './WritePatterns.mjs';
 import { each } from 'rx-flowable';
@@ -25,9 +25,9 @@ export default class Account {
       name: src['@id'],
       emails: propertyValue(src, 'email', Set, String),
       keyids: propertyValue(src, 'keyid', Set, String),
-      admins: idSet(safeRefsIn(src, 'vf:primaryAccountable')),
-      timesheets: safeRefsIn(src, 'timesheet'),
-      projects: safeRefsIn(src, 'project')
+      admins: idSet(propertyValue(src, 'vf:primaryAccountable', Array, Reference)),
+      timesheets: propertyValue(src, 'timesheet', Array, Reference),
+      projects: propertyValue(src, 'project', Array, Reference)
     });
   }
 
@@ -37,8 +37,8 @@ export default class Account {
    * @param {Iterable<string>} emails verifiable account identities
    * @param {Iterable<string>} keyids per-device keys
    * @param {Iterable<string>} admins admin (primary accountable) IRIs
-   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet Id Refs
-   * @param {import('@m-ld/m-ld').Reference[]} projects project Id Refs
+   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet ID Refs
+   * @param {import('@m-ld/m-ld').Reference[]} projects project ID Refs
    */
   constructor(gateway, {
     name,
@@ -126,16 +126,15 @@ export default class Account {
    * @returns {Promise<void>}
    */
   async checkAccess(state, access) {
-    const ask = new Ask(state);
     const iri = access.id.toRelativeIri();
     const writable = {
       'Timesheet': await this.allOwned(state, 'Timesheet'),
       'Project': await this.allOwned(state, 'Project')
     };
-    if (access.forWrite && !(await ask.exists({ '@id': iri }))) {
+    if (access.forWrite && !(await state.ask({ '@where': { '@id': iri } }))) {
       // Creating; check write access to account
       if (access.id.account !== this.name &&
-        !(await ask.exists(userIsAdmin(this.name, access.id.account))))
+        !(await state.ask({ '@where': userIsAdmin(this.name, access.id.account) })))
         throw new ForbiddenError();
       // Otherwise OK to create
       writable[access.forWrite].add(iri);
@@ -145,7 +144,7 @@ export default class Account {
       } else {
         // Finally check for a readable timesheet through one of the projects
         if (!(await Promise.all([...writable['Project']].map(project =>
-          ask.exists(timesheetHasProject(iri, project))))).includes(true))
+          state.ask({ '@where': timesheetHasProject(iri, project) })))).includes(true))
           throw new ForbiddenError();
       }
     }
@@ -201,11 +200,10 @@ export default class Account {
   onInsertTimesheet = async (state, tsRef) => {
     if (tsRef != null) {
       const tsId = this.gateway.ownedRefAsId(tsRef);
-      const ask = new Ask(state);
-      if (await ask.exists(accountHasTimesheet(tsId)))
+      if (await state.ask({ '@where': accountHasTimesheet(tsId) }))
         throw new ConflictError('Timesheet already exists');
       if (this.name !== tsId.account &&
-        !(await ask.exists(userIsAdmin(this.name, tsId.account))))
+        !(await state.ask({ '@where': userIsAdmin(this.name, tsId.account) })))
         throw new UnauthorizedError('No access to timesheet');
       await this.gateway.initTimesheet(tsId, true);
     }

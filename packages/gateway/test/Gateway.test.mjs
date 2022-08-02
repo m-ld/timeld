@@ -1,10 +1,10 @@
 // noinspection JSCheckFunctionSignatures
 
 import { describe, expect, jest, test } from '@jest/globals';
-import { clone as meldClone } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
+import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
 import Gateway from '../lib/Gateway.mjs';
-import { dateJsonLd, Env, timeldContext } from 'timeld-common';
+import { Env, timeldContext } from 'timeld-common';
 import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
@@ -552,7 +552,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' },
             activity: 'testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date)
+            start: normaliseValue(new Date)
           }]))).resolves.not.toThrow();
           const report = await gateway.report(gateway.ownedId('test', 'ts1'));
           await expect(drain(report)).resolves.toMatchObject([
@@ -579,7 +579,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' },
             activity: 'testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date)['@value']
+            start: normaliseValue(new Date)['@value']
           }]))).rejects.toThrow();
         });
 
@@ -589,7 +589,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' }, // Does not exist
             activity: 'testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date)
+            start: normaliseValue(new Date)
           }]))).rejects.toThrow();
         });
 
@@ -602,7 +602,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' },
             activity: 'testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date)
+            start: normaliseValue(new Date)
           }]))).rejects.toThrow();
         });
 
@@ -614,7 +614,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' },
             activity: 'testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date),
+            start: normaliseValue(new Date),
             external: { '@id': 'http://ex.org/ts/entry/1' }
           }]));
           await acc.import(consume([{
@@ -622,7 +622,7 @@ describe('Gateway', () => {
             session: { '@id': 'test/ts1' },
             activity: 'more testing',
             'vf:provider': { '@id': 'test' },
-            start: dateJsonLd(new Date),
+            start: normaliseValue(new Date),
             external: { '@id': 'http://ex.org/ts/entry/1' }
           }]));
           const report = await gateway.report(gateway.ownedId('test', 'ts1'));

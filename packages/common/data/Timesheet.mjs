@@ -1,6 +1,7 @@
-import { isReference, mustBe, safeRefsIn } from '../lib/util.mjs';
+import { isReference, mustBe } from '../lib/util.mjs';
 import { AccountOwnedId } from '../index.mjs';
 import DomainEntity from './DomainEntity.mjs';
+import { propertyValue, Reference } from '@m-ld/m-ld';
 
 export default class Timesheet extends DomainEntity {
   /** @type {import('jtd').Schema} */
@@ -23,7 +24,7 @@ export default class Timesheet extends DomainEntity {
     // noinspection JSCheckFunctionSignatures
     return new Timesheet({
       id: AccountOwnedId.fromReference(src),
-      projects: safeRefsIn(src, 'project'),
+      projects: propertyValue(src, 'project', Array, Reference),
       ...DomainEntity.specFromJson(src)
     });
   }

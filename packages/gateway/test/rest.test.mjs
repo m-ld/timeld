@@ -2,10 +2,10 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { dateJsonLd, Env } from 'timeld-common';
+import { Env } from 'timeld-common';
 import { join } from 'path';
-import { clone as meldClone } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
+import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
 import Gateway from '../lib/Gateway.mjs';
 import rest from '../rest/index.mjs';
@@ -113,7 +113,7 @@ describe('Gateway REST API', () => {
           session: { '@id': 'test/ts1' },
           activity: 'testing',
           'vf:provider': { '@id': 'test' },
-          start: dateJsonLd(new Date)
+          start: normaliseValue(new Date)
         }].map(JSON.stringify).join('\n'))
         .expect(200);
       const res = await request(app)
@@ -139,7 +139,7 @@ describe('Gateway REST API', () => {
           session: { '@id': 'test/ts1' },
           activity: 'testing',
           'vf:provider': { '@id': 'test' },
-          start: dateJsonLd(new Date)
+          start: normaliseValue(new Date)
         }].map(JSON.stringify).join('\n'))
         .expect(400);
     });

@@ -1,7 +1,5 @@
-import { propertyValue } from '@m-ld/m-ld';
-import {
-  dateJsonLd, isDate, isReference, mustBe, optionalPropertyValue, withDoc
-} from '../lib/util.mjs';
+import { normaliseValue, Optional, propertyValue, Reference } from '@m-ld/m-ld';
+import { isDate, isReference, mustBe, withDoc } from '../lib/util.mjs';
 import DomainEntity from './DomainEntity.mjs';
 
 export default class Entry extends DomainEntity {
@@ -46,12 +44,11 @@ export default class Entry extends DomainEntity {
     // noinspection JSCheckFunctionSignatures
     return new Entry({
       seqNo: src['@id'].split('/').slice(-1)[0],
-      // TODO: Use Reference in m-ld-js v0.9
-      sessionId: propertyValue(src, 'session', Object)['@id'],
+      sessionId: propertyValue(src, 'session', Reference)['@id'],
       activity: propertyValue(src, 'activity', String),
-      providerId: propertyValue(src, 'vf:provider', Object)['@id'],
+      providerId: propertyValue(src, 'vf:provider', Reference)['@id'],
       start: propertyValue(src, 'start', Date),
-      duration: optionalPropertyValue(src, 'duration', Number),
+      duration: propertyValue(src, 'duration', Optional, Number),
       ...DomainEntity.specFromJson(src)
     });
   }
@@ -82,7 +79,7 @@ export default class Entry extends DomainEntity {
       'session': { '@id': this.sessionId },
       'activity': this.activity,
       'vf:provider': { '@id': this.providerId },
-      'start': dateJsonLd(this.start),
+      'start': normaliseValue(this.start),
       'duration': this.duration,
       ...super.toJSON()
     };

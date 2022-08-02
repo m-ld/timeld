@@ -1,10 +1,10 @@
-import ablyModule from '@m-ld/m-ld/dist/ably';
+import ablyModule from '@m-ld/m-ld/ext/ably';
 import leveldown from 'leveldown';
 import { clone as meldClone } from '@m-ld/m-ld';
 
 /**
  * TODO: This is a duplication of m-ld-cli/ext/ably.js
- * @param {import('@m-ld/m-ld/dist/ably').MeldAblyConfig} config
+ * @param {import('@m-ld/m-ld/ext/ably').MeldAblyConfig} config
  */
 async function ably(config) {
   // Load WRTC config from Xirsys if available
@@ -19,7 +19,7 @@ async function ably(config) {
 }
 
 /**
- * @param {import('@m-ld/m-ld/dist/ably').MeldAblyConfig} config
+ * @param {import('@m-ld/m-ld/ext/ably').MeldAblyConfig} config
  * @param {string} dataDir
  * @param {import('@m-ld/m-ld').AppPrincipal} [principal]
  * @returns {Promise<import('@m-ld/m-ld').MeldClone>}

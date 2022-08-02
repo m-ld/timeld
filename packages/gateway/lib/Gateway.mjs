@@ -1,12 +1,12 @@
 import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
-import { uuid } from '@m-ld/m-ld';
-import { AblyKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
+import { propertyValue, Reference, uuid } from '@m-ld/m-ld';
+import { AblyKey, BaseGateway, Env, timeldContext } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import { accountHasTimesheet, Ask } from './statements.mjs';
+import { accountHasTimesheet } from './statements.mjs';
 import { concat } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
@@ -18,14 +18,14 @@ import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.
 export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
-   * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
+   * @param {Partial<import('@m-ld/m-ld/ext/ably').MeldAblyConfig>} config
    * @param {import('timeld-common')['clone']} clone m-ld clone creation function
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
     super(config['@domain']);
     this.env = env;
-    this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
+    this.config = /**@type {import('@m-ld/m-ld/ext/ably').MeldAblyConfig}*/{
       ...config,
       '@id': uuid(),
       '@context': timeldContext
@@ -56,10 +56,10 @@ export default class Gateway extends BaseGateway {
       // noinspection JSCheckFunctionSignatures
       return Promise.all([
         ...update['@delete'].map(subject => Promise.all(
-          safeRefsIn(subject, 'timesheet').map(tsRef =>
+          propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
             this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
         ...update['@insert'].map(subject => Promise.all(
-          safeRefsIn(subject, 'timesheet').map(tsRef =>
+          propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
             this.timesheetAdded(this.ownedRefAsId(tsRef)))))
       ]);
     });
@@ -201,7 +201,7 @@ export default class Gateway extends BaseGateway {
    * @returns {Promise<boolean>}
    */
   async isGenesisTs(state, tsId) {
-    return !(await new Ask(state).exists(accountHasTimesheet(tsId)));
+    return !(await state.ask({ '@where': accountHasTimesheet(tsId) }));
   }
 
   /**

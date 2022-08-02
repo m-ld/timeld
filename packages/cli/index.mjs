@@ -3,7 +3,7 @@ import Cli from './lib/Cli.mjs';
 import { Env } from 'timeld-common';
 
 /**
- * @typedef {import('@m-ld/m-ld/dist/ably').MeldAblyConfig} TimeldConfig
+ * @typedef {import('@m-ld/m-ld/ext/ably').MeldAblyConfig} TimeldConfig
  * @property {string | URL | false} [gateway]
  * @property {string} user User account (may not be the same as timesheet account)
  * @property {string} account Timesheet account (default in config)

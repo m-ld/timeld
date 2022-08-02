@@ -1,5 +1,5 @@
 import { clone, uuid } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
 import { DeadRemotes } from './fixtures.mjs';
 import { BaseGateway } from '../index.mjs';
 import { jest } from '@jest/globals';
