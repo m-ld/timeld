@@ -16,6 +16,7 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} TIMELD_GATEWAY_ABLY__KEY gateway Ably app key
  * @property {string} TIMELD_GATEWAY_ABLY__API_KEY gateway Ably api key
  * @property {string} TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN
+ * @property {string} TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE
  */
 
 const env = new Env({
