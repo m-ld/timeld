@@ -187,12 +187,15 @@ export default class Gateway extends BaseGateway {
         await state.write(accountHasTimesheet(tsId));
       });
     }
-    // Return the config required for a new clone
-    return Object.assign(Env.mergeConfig(this.config, {
-      '@id': false, // Remove identity
+    // Return the config required for a new clone, using some of our config
+    const { ably, networkTimeout, maxOperationSize, logLevel } = this.config;
+    return Env.mergeConfig({
       '@domain': tsId.toDomain(),
-      ably: { key: false } // Remove our secret
-    }), { genesis: false }); // Definitely not genesis
+      genesis: false, // Definitely not genesis
+      ably, networkTimeout, maxOperationSize, logLevel
+    }, {
+      ably: { key: false, apiKey: false } // Remove our Ably secrets
+    });
   }
 
   /**
