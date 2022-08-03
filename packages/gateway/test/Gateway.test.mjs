@@ -60,7 +60,12 @@ describe('Gateway', () => {
       gateway = new Gateway(env, {
         '@domain': 'ex.org',
         genesis: true,
-        ably: { key: 'app.id:secret' }
+        ably: {
+          key: 'app.id:secret',
+          apiKey: 'ably_api_secret',
+          tls: true // random additional property sent to clients
+        },
+        courier: { authorizationToken: 'courier_secret' }
       }, clone, ablyApi);
       await gateway.initialise();
     });
@@ -149,23 +154,27 @@ describe('Gateway', () => {
     test('gets timesheet config', async () => {
       const tsConfig = await gateway.timesheetConfig(
         gateway.ownedId('test', 'ts1'));
-      expect(tsConfig).toMatchObject({
-        '@id': undefined,
+      expect(tsConfig).toEqual({
         '@domain': 'ts1.test.ex.org',
-        '@context': timeldContext,
         genesis: false,
-        ably: { key: undefined } // Gateway key NOT present
+        ably: { tls: true }
       });
+      // Gateway API secrets NOT present
+      expect(tsConfig['ably'].key).toBeUndefined();
+      expect(tsConfig['ably']['apiKey']).toBeUndefined();
+      expect(tsConfig['courier']).toBeUndefined();
+
       // Expect to have created the timesheet genesis clone
-      expect(clone).lastCalledWith(
+      expect(clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ts1.test.ex.org',
           '@context': timeldContext,
           genesis: true,
-          ably: { key: 'app.id:secret' }
+          ably: { key: 'app.id:secret', tls: true }
         },
-        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'));
+        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+      ]);
       await expect(gateway.domain.get('test')).resolves.toEqual({
         '@id': 'test',
         timesheet: { '@id': 'test/ts1' }
@@ -181,15 +190,16 @@ describe('Gateway', () => {
       await gateway.domain.write({});
       // The gateway should attempt to clone the timesheet.
       // (It will fail due to dead remotes, but we don't care.)
-      expect(clone).lastCalledWith(
+      expect(clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ts1.test.ex.org',
           '@context': timeldContext,
           genesis: false,
-          ably: { key: 'app.id:secret' }
+          ably: { key: 'app.id:secret', tls: true }
         },
-        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'));
+        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+      ]);
     });
 
     test('removes a timesheet', async () => {
