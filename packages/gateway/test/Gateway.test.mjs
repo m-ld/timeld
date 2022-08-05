@@ -21,6 +21,7 @@ describe('Gateway', () => {
   let tmpDir;
   let ablyApi;
   let config;
+  let auditLogger;
 
   beforeEach(() => {
     tmpDir = dirSync({ unsafeCleanup: true });
@@ -36,6 +37,7 @@ describe('Gateway', () => {
       '@domain': 'ex.org',
       ...UserKey.generate(ablyKey).toConfig(ablyKey)
     };
+    auditLogger = { log: jest.fn() };
   });
 
   afterEach(async () => {
@@ -46,7 +48,7 @@ describe('Gateway', () => {
   test('throws if no ably config', async () => {
     await expect(async () => {
       delete config.ably;
-      const gateway = new Gateway(env, config, clone, ablyApi);
+      const gateway = new Gateway(env, config, clone, ablyApi, auditLogger);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
@@ -54,7 +56,7 @@ describe('Gateway', () => {
   test('throws if no domain', async () => {
     delete config['@domain'];
     await expect(async () => {
-      const gateway = new Gateway(env, config, clone, ablyApi);
+      const gateway = new Gateway(env, config, clone, ablyApi, auditLogger);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
@@ -69,7 +71,7 @@ describe('Gateway', () => {
       config.courier = { authorizationToken: 'courier_secret' };
       // random additional property sent to clients
       config.ably.tls = true;
-      gateway = new Gateway(env, config, clone, ablyApi);
+      gateway = new Gateway(env, config, clone, ablyApi, auditLogger);
       await gateway.initialise();
     });
 
@@ -190,7 +192,8 @@ describe('Gateway', () => {
             genesis: true,
             ably: { key: 'app.id:secret', tls: true }
           },
-          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
+          { '@id': 'http://ex.org/' }
         ]);
         await expect(gateway.domain.get('test')).resolves.toMatchObject({
           '@id': 'test',
@@ -221,7 +224,8 @@ describe('Gateway', () => {
             genesis: false,
             ably: { key: 'app.id:secret', tls: true }
           },
-          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
+          { '@id': 'http://ex.org/' }
         ]);
       });
 

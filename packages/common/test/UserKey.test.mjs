@@ -1,11 +1,19 @@
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, test } from '@jest/globals';
 import { AblyKey, UserKey } from '..';
 
 describe('User key', () => {
-  test('key identity', () => {
+  test('key from ref', () => {
     expect(() => UserKey.keyidFromRef({ '@id': 'garbage' })).toThrow(TypeError);
     expect(() => UserKey.keyidFromRef({ '@id': '.foo' })).toThrow(TypeError); // Too short
     expect(UserKey.keyidFromRef({ '@id': '.sorted' })).toBe('sorted');
+    expect(UserKey.keyidFromRef({ '@id': 'http://ex.org/.sorted' })).toBe('sorted');
+  });
+
+  test('ref from key', () => {
+    expect(UserKey.refFromKeyid('keyid')).toEqual({ '@id': '.keyid' });
+    expect(UserKey.refFromKeyid('keyid', 'ex.org'))
+      .toEqual({ '@id': 'http://ex.org/.keyid' });
   });
 
   test('JSON serialisation', () => {

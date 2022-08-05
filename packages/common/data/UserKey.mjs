@@ -1,6 +1,7 @@
 import { normaliseValue, Optional, propertyValue } from '@m-ld/m-ld';
 import { sign, generateKeyPairSync, verify, createPrivateKey, createPublicKey } from 'crypto';
 import AblyKey from '../lib/AblyKey.mjs';
+import { domainRelativeIri } from '../lib/util.mjs';
 
 /**
  * @typedef {object} UserKeyConfig
@@ -41,17 +42,21 @@ export default class UserKey {
    */
   static keyidFromRef(ref) {
     // noinspection JSCheckFunctionSignatures
-    if (!/^\.\w{5,}$/.test(ref['@id']))
-      throw new TypeError(`Unexpected user key identity format "${ref['@id']}"`);
-    return ref['@id'].slice(1);
+    const id = ref['@id'].includes('//') ?
+      new URL(ref['@id']).pathname.slice(1) : ref['@id'];
+    if (!/^\.\w{5,}$/.test(id))
+      throw new TypeError(`Unexpected user key identity format "${id}"`);
+    return id.slice(1);
   }
 
   /**
    * @param {string} keyid
+   * @param {string} [domain] if passed, returns an absolute reference
    * @returns {import('@m-ld/m-ld').Reference}
    */
-  static refFromKeyid(keyid) {
-    return { '@id': `.${keyid}` };
+  static refFromKeyid(keyid, domain) {
+    const id = `.${keyid}`;
+    return { '@id': domain ? domainRelativeIri(id, domain) : id };
   }
 
   /**

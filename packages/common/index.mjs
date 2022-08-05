@@ -30,5 +30,6 @@ export {
 
 export {
   mustBe,
-  isReference
+  isReference,
+  domainRelativeIri
 } from './lib/util.mjs';

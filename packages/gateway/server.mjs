@@ -6,6 +6,7 @@ import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
+import AuditLogger from './lib/AuditLogger.mjs';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -17,6 +18,7 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} TIMELD_GATEWAY_ABLY__API_KEY gateway Ably api key
  * @property {string} TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN
  * @property {string} TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE
+ * @property {string} TIMELD_GATEWAY_LOGZ__KEY
  */
 
 /**
@@ -25,6 +27,7 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} ably.apiKey gateway Ably api key
  * @property {string} courier.authorizationToken
  * @property {string} courier.activationTemplate
+ * @property {string} logz.key
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
  */
@@ -46,7 +49,8 @@ if (config['@domain'] == null) {
 
 // noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
 const ablyApi = new AblyApi(config.ably);
-const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
+const auditLogger = new AuditLogger(config);
+const gateway = await new Gateway(env, config, clone, ablyApi, auditLogger).initialise();
 const notifier = new Notifier(config.courier);
 const server = rest({ gateway, notifier });
 
@@ -59,6 +63,7 @@ gracefulShutdown(server, {
   async onShutdown() {
     LOG.info('Gateway shutting down...');
     await gateway.close();
+    await auditLogger.close();
     LOG.info('Gateway shut down');
   }
 });

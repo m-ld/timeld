@@ -12,6 +12,12 @@ export const timeldContext = {
   'vf': 'https://w3id.org/valueflows#'
 };
 
+/**
+ * Obtains absolute IRIs in the Timeld vocabulary
+ * @returns {string}
+ */
+export const timeldVocab = iri => `${timeldContext['@vocab']}${iri}`;
+
 /** @typedef {import('jtd').SchemaFormProperties['properties']} JtdProperties */
 
 /** @type {import('jtd').SchemaFormDiscriminator} */

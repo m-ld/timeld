@@ -1,5 +1,7 @@
 import restify from 'restify';
-import { AccountOwnedId, isDomainEntity, ResultsReadable, timeldContext } from 'timeld-common';
+import {
+  AccountOwnedId, domainRelativeIri, isDomainEntity, ResultsReadable, timeldContext
+} from 'timeld-common';
 import isEmail from 'validator/lib/isEmail.js';
 import Authorization from '../lib/Authorization.mjs';
 import { pipeline } from 'stream/promises';
@@ -166,7 +168,7 @@ export default function rest({ gateway, notifier }) {
       res.contentType = req.accepts('html') ? 'html' : 'application/ld+json';
       // noinspection HttpUrlsUsage
       res.send({
-        '@base': `http://${gateway.domainName}/`,
+        '@base': domainRelativeIri('/', gateway.domainName),
         ...timeldContext
       });
       next();

@@ -26,3 +26,4 @@ console.log(`TIMELD_GATEWAY_ABLY__KEY=${config.ably.key}`);
 console.log(`TIMELD_GATEWAY_ABLY__API_KEY=${config.ably.apiKey}`);
 console.log(`TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=${config.courier.authorizationToken}`);
 console.log(`TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE=${config.courier.activationTemplate}`);
+console.log(`TIMELD_GATEWAY_LOGZ__KEY=${config.logz.key}`);

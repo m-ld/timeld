@@ -33,7 +33,7 @@ describe('Gateway REST API', () => {
       '@domain': 'ex.org',
       genesis: true,
       ...UserKey.generate(gwAblyKey).toConfig(gwAblyKey)
-    }, clone, ablyApi);
+    }, clone, ablyApi, { log: jest.fn() });
     await gateway.initialise();
     // noinspection JSValidateTypes
     notifier = { sendActivationCode: jest.fn() };

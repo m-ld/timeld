@@ -1,3 +1,5 @@
+import { domainRelativeIri } from './util.mjs';
+
 /**
  * Combination of gateway, account and timesheet/project. Representations:
  * 1. Presentation string `[<account>/]<name>[@<gateway>]`,
@@ -48,7 +50,7 @@ export default class AccountOwnedId {
         const [account, name] = iri.split('/');
         return new AccountOwnedId({ account, name });
       }
-      iri = new URL(iri, `http://${gateway}`);
+      iri = new URL(domainRelativeIri(iri, gateway));
     }
     gateway = iri.hostname;
     const [, account, name] = iri.pathname.split('/');
@@ -120,7 +122,7 @@ export default class AccountOwnedId {
 
   toIri() {
     const path = this.toRelativeIri();
-    return this.isRelative ? path : `http://${this.gateway}/${path}`;
+    return this.isRelative ? path : domainRelativeIri(path, this.gateway);
   }
 
   toRelativeIri() {

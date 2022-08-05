@@ -1,4 +1,5 @@
 import { AccountOwnedId } from '../index.mjs';
+import { domainRelativeIri } from './util.mjs';
 
 /**
  * Utility base class for things that represent a Gateway
@@ -29,8 +30,6 @@ export default class BaseGateway {
   }
 
   absoluteId(iri) {
-    // This leaves an already-absolute URI alone
-    // noinspection HttpUrlsUsage
-    return new URL(iri, `http://${this.domainName}`).toString();
+    return domainRelativeIri(iri, this.domainName);
   }
 }

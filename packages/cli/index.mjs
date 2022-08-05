@@ -12,8 +12,9 @@ import { Env } from 'timeld-common';
  * @typedef {TimeldConfig & _TimeldCliConfig} TimeldCliConfig
  */
 
-// Support override of config path for testing
+// Support override of config and data paths for testing
 const env = new Env({
-  config: process.env.TIMELD_CLI_CONFIG_PATH
+  config: process.env.TIMELD_CLI_CONFIG_PATH,
+  data: process.env.TIMELD_CLI_DATA_PATH
 });
 await new Cli(env).start();

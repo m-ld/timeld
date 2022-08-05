@@ -19,10 +19,16 @@ export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {TimeldGatewayConfig} config
-   * @param {import('timeld-common')['clone']} clone m-ld clone creation function
+   * @param {(...args: *[]) => import('timeld-common').clone} clone m-ld clone creation function
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
+   * @param {import('./AuditLogger.mjs').AuditLogger} auditLogger
    */
-  constructor(env, config, clone, ablyApi) {
+  constructor(env,
+    config,
+    clone,
+    ablyApi,
+    auditLogger
+  ) {
     super(config['@domain']);
     this.env = env;
     this.config = /**@type {TimeldGatewayConfig}*/{
@@ -36,6 +42,7 @@ export default class Gateway extends BaseGateway {
     this.machineKey = UserKey.fromConfig(config);
     this.clone = clone;
     this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
+    this.auditLogger = auditLogger;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
   }
 
@@ -77,7 +84,9 @@ export default class Gateway extends BaseGateway {
       '@id': uuid(), '@domain': tsId.toDomain()
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
-    const ts = await this.clone(config, await this.getDataPath(tsId));
+    const principal = { '@id': this.absoluteId('/') };
+    const ts = await this.clone(config, await this.getDataPath(tsId), principal);
+    ts.follow(this.auditLogger.log);
     if (genesis) {
       // Add our machine identity and key to the timesheet for signing
       await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.machineKey);
