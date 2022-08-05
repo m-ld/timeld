@@ -136,7 +136,7 @@ export default class Cli {
   }
 
   /**
-   * @param {Partial<TimeldConfig>} argv
+   * @param {Partial<TimeldCliConfig>} argv
    * @returns {Promise<void>}
    */
   async openCmd(argv) {
@@ -178,7 +178,7 @@ export default class Cli {
   }
 
   /**
-   * @param {TimeldConfig} config
+   * @param {TimeldCliConfig} config
    * @param {import('@m-ld/m-ld').AppPrincipal} principal
    * @returns {Promise<{meld: import('@m-ld/m-ld').MeldClone, logFile: string}>}
    */
@@ -191,7 +191,7 @@ export default class Cli {
   }
 
   /**
-   * @param {TimeldConfig} config
+   * @param {TimeldCliConfig} config
    * @param {import('@m-ld/m-ld').AppPrincipal} principal
    * @param {import('@m-ld/m-ld').MeldClone} meld
    * @param {string} logFile

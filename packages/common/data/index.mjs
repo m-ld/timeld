@@ -2,8 +2,9 @@ import Entry from './Entry.mjs';
 import Project from './Project.mjs';
 import Timesheet from './Timesheet.mjs';
 import Session from './Session.mjs';
+import UserKey from './UserKey.mjs';
 
-export { Entry, Project, Timesheet, Session };
+export { Entry, Project, Timesheet, Session, UserKey };
 
 export const timeldContext = {
   '@vocab': 'http://timeld.org/#',

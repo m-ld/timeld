@@ -1,8 +1,8 @@
-// noinspection JSCheckFunctionSignatures
+// noinspection JSCheckFunctionSignatures, NpmUsedModulesInstalled
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { Env } from 'timeld-common';
+import { Env, UserKey } from 'timeld-common';
 import { join } from 'path';
 import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
@@ -28,10 +28,11 @@ describe('Gateway REST API', () => {
           id: keyid, key: `app.${keyid}:secret`, name: 'test@ex.org', capability, status: 0
         }))
     };
+    const gwAblyKey = 'app.id:secret';
     gateway = new Gateway(env, {
       '@domain': 'ex.org',
       genesis: true,
-      ably: { key: 'app.id:secret' }
+      ...UserKey.generate(gwAblyKey).toConfig(gwAblyKey)
     }, clone, ablyApi);
     await gateway.initialise();
     // noinspection JSValidateTypes
@@ -57,7 +58,7 @@ describe('Gateway REST API', () => {
   describe('with user account', () => {
     beforeEach(async () => {
       await gateway.domain.write({
-        '@id': 'test', '@type': 'Account', keyid: 'uk' // User Key
+        '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' } // User Key
       });
     });
 
@@ -67,7 +68,7 @@ describe('Gateway REST API', () => {
       });
       const res = await request(rest({ gateway, notifier }))
         .get('/api/rpt/test/own/pr1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect('Content-Type', 'application/x-ndjson');
       expect(res.text.split('\n').map(JSON.parse)).toMatchObject([{
         '@id': 'test/pr1',
@@ -90,14 +91,14 @@ describe('Gateway REST API', () => {
       });
       await request(rest({ gateway, notifier }))
         .get('/api/rpt/test/own/pr1')
-        .auth('test', 'app.uk:garbage')
+        .auth('test', 'app.keyid:garbage')
         .expect(401);
     });
 
     test('rejects forbidden report', async () => {
       await request(rest({ gateway, notifier }))
         .get('/api/rpt/org1/own/pr1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect(403);
     });
 
@@ -105,7 +106,7 @@ describe('Gateway REST API', () => {
       const app = rest({ gateway, notifier });
       await request(app)
         .post('/api/import')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .send([{
           '@id': 'test/ts1', '@type': 'Timesheet'
         }, {
@@ -118,7 +119,7 @@ describe('Gateway REST API', () => {
         .expect(200);
       const res = await request(app)
         .get('/api/rpt/test/own/ts1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect('Content-Type', 'application/x-ndjson');
       expect(res.text.split('\n').map(JSON.parse)).toMatchObject([{
         '@id': 'test/ts1', '@type': 'Timesheet'
@@ -133,7 +134,7 @@ describe('Gateway REST API', () => {
       const app = rest({ gateway, notifier });
       await request(app)
         .post('/api/import')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .send([{
           '@type': 'Entry',
           session: { '@id': 'test/ts1' },

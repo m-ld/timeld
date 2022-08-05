@@ -49,7 +49,7 @@ describe('Gateway account', () => {
       '@type': 'Account',
       email: ['test@ex.org'],
       'vf:primaryAccountable': [{ '@id': 'user1' }],
-      keyid: ['keyid'],
+      key: [{ '@id': '.keyid' }],
       timesheet: [{ '@id': 'test/ts1' }],
       project: []
     });
@@ -57,29 +57,42 @@ describe('Gateway account', () => {
 
   test('activate', async () => {
     const acc = new Account(gateway, { name: 'test' });
+    await gateway.domain.write(acc.toJSON());
     gateway.ablyApi.createAppKey.mockImplementation(
       ({ name, capability }) => Promise.resolve({
         id: 'keyid', key: 'appid.keyid:secret', name, capability
       }));
-    const key = await acc.activate('test@ex.org');
+    const keyConfig = await acc.activate('test@ex.org');
     expect(gateway.ablyApi.createAppKey).toBeCalledWith({
       name: 'test@ex.org',
       capability: { 'ex.org:notify': ['subscribe'] }
     });
     expect(acc.emails).toEqual(new Set(['test@ex.org']));
     expect(acc.keyids).toEqual(new Set(['keyid']));
-    expect(key).toBe('appid.keyid:secret');
+    expect(keyConfig.ably.key).toBe('appid.keyid:secret');
     await expect(gateway.domain.get('test')).resolves.toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: 'test@ex.org',
-      keyid: 'keyid'
+      key: { '@id': '.keyid' }
+    });
+    await expect(gateway.domain.get('.keyid')).resolves.toEqual({
+      '@id': '.keyid',
+      '@type': 'UserKey',
+      public: {
+        '@type': 'http://www.w3.org/2001/XMLSchema#base64Binary',
+        '@value': keyConfig.key.public
+      },
+      private: {
+        '@type': 'http://www.w3.org/2001/XMLSchema#base64Binary',
+        '@value': keyConfig.key.private
+      }
     });
   });
 
   test('authorise user for no particular owned object', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
@@ -93,7 +106,7 @@ describe('Gateway account', () => {
 
   test('authorise new timesheet in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.ablyApi.updateAppKey.mockImplementation((keyid, { capability }) => Promise.resolve({
@@ -112,7 +125,7 @@ describe('Gateway account', () => {
 
   test('authorise existing timesheet in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' },
       timesheet: [
         { '@id': 'test/ts1', '@type': 'Timesheet' },
         { '@id': 'test/ts2', '@type': 'Timesheet' }
@@ -136,7 +149,7 @@ describe('Gateway account', () => {
 
   test('authorise new timesheet in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
     }]);
@@ -157,7 +170,7 @@ describe('Gateway account', () => {
 
   test('authorise existing timesheet in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' },
       timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
@@ -181,7 +194,7 @@ describe('Gateway account', () => {
 
   test('authorise to read organisation timesheet in user project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' },
       project: { '@id': 'test/pr1', '@type': 'Project' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
@@ -198,7 +211,7 @@ describe('Gateway account', () => {
 
   test('authorise to read organisation timesheet in organisation project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
       project: { '@id': 'org1/pr1', '@type': 'Project' }
@@ -217,7 +230,7 @@ describe('Gateway account', () => {
 
   test('unauthorised to write timesheet in organisation project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' },
       project: { '@id': 'test/pr1', '@type': 'Project' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
@@ -234,7 +247,7 @@ describe('Gateway account', () => {
 
   test('unauthorised if not an organisation admin', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' },
       timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet' }
@@ -250,7 +263,7 @@ describe('Gateway account', () => {
 
   test('unauthorised for create if not an organisation admin', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' }
     }]);
@@ -299,7 +312,7 @@ describe('Gateway account', () => {
 
   test('authorise project for read in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' },
       project: { '@id': 'test/pr1', '@type': 'Project' }
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
@@ -313,7 +326,7 @@ describe('Gateway account', () => {
 
   test('authorise project for read in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
       project: { '@id': 'org1/pr1', '@type': 'Project' }

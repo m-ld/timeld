@@ -14,7 +14,7 @@ import isFQDN from 'validator/lib/isFQDN.js';
  */
 export default class DomainConfigurator {
   /**
-   * @param {Partial<TimeldConfig>} argv
+   * @param {Partial<TimeldCliConfig>} argv
    * @param {GatewayClient | null} gateway
    */
   constructor(argv, gateway) {
@@ -23,7 +23,7 @@ export default class DomainConfigurator {
   }
 
   /**
-   * @returns {Promise<{ config: TimeldConfig, principal: AppPrincipal }>}
+   * @returns {Promise<{ config: TimeldCliConfig, principal: AppPrincipal }>}
    */
   async load() {
     const { config: remoteConfig, principal } = await this.fetchConfig();
@@ -70,13 +70,13 @@ export default class DomainConfigurator {
       return {
         config: this.noGatewayConfig(
           `timeld.${new AblyKey(ablyKey).appId.toLowerCase()}`),
-        principal: { '@id': this.argv.user /*, TODO: sign*/ }
+        principal: { '@id': this.argv.user }
       };
     } else {
       const config = await this.fetchGatewayConfig();
       return {
         config: Env.mergeConfig(config, this.gateway.accessConfig),
-        principal: { '@id': this.gateway.principalId /*, TODO: sign*/ }
+        principal: { '@id': this.gateway.principalId }
       };
     }
   }

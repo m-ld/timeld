@@ -30,7 +30,9 @@ describe('Authorization helper', () => {
 
     account.authorise.mockImplementation(() => ({ key: 'appid.keyid:secret' }));
     const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
-    await auth.verifyUser(gateway, access);
+    const { acc, keyid } = await auth.verifyUser(gateway, access);
+    expect(acc).toBe(account);
+    expect(keyid).toBe('keyid');
     expect(account.authorise).toBeCalledWith('keyid', access);
   });
 

@@ -36,15 +36,11 @@ Account "client" *--> "*" Project
 
 class UserAccount {
   email : string [1..*]
-  keyid : string [*]
+  key : UserKey [*]
 }
 note left of UserAccount::email
   Registered email, used
   for account activation
-end note
-note left of UserAccount::keyid
-  Matches ""ably.key""
-  Can be revoked
 end note
 UserAccount --|> Account
 
@@ -123,6 +119,22 @@ note bottom on link
     account<sub>p</sub>.vf:primaryAccountable
 end note
 
+class UserKey {
+  public : base64Binary
+  private : base64Binary
+}
+note top of UserKey
+  Matches ""ably.key""
+  Can be revoked
+  ""@id = ".${keyid}"""
+end note
+note left of UserKey::private
+  encrypted with
+  AblyKey.secret
+end note
+
+UserAccount "1" -- "*" UserKey
+
 package Ably <<service>> {
   class AblyKey {
     keyid
@@ -139,7 +151,7 @@ package Ably <<service>> {
     timesheet access
   end note
 
-  UserAccount "1" -- "*" AblyKey
+  UserKey "1" -- "1" AblyKey
 }
 
 @enduml

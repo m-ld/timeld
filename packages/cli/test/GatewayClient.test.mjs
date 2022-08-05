@@ -8,9 +8,13 @@ import { drain } from 'rx-flowable';
 describe('Gateway Client', () => {
   test('init with key', async () => {
     const gw = new GatewayClient({
-      gateway: 'timeld.org', user: 'user', ably: { key: 'app.id:secret' }
+      gateway: 'timeld.org',
+      user: 'user',
+      ably: { key: 'app.id:secret' },
+      key: { public: 'publicKey', private: 'privateKey' }
     });
     expect(gw.ablyKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
+    expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
     expect(gw.domainName).toBe('timeld.org');
     expect(gw.principalId).toBe('http://timeld.org/user');
   });
@@ -28,17 +32,24 @@ describe('Gateway Client', () => {
         return { ok: true, json: async () => ({ jwe }) };
       } else if (url === 'https://timeld.org/api/key/user') {
         expect(options.headers.Authorization).toBe(`Bearer ${jwt}`);
-        return { ok: true, json: async () => ({ key: 'app.id:secret' }) };
+        return {
+          ok: true, json: async () => ({
+            ably: { key: 'app.id:secret' },
+            key: { public: 'publicKey', private: 'privateKey' }
+          })
+        };
       }
     });
     const gw = new GatewayClient({
       gateway: 'timeld.org', user: 'user'
     }, fetch);
     expect(gw.ablyKey).toBeNull();
+    expect(gw.userKeyConfig).toBeNull();
     await gw.activate(jest.fn()
       .mockReturnValueOnce('user@timeld.org')
       .mockReturnValueOnce('111111'));
     expect(gw.ablyKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
+    expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
   });
 
   test('config', async () => {

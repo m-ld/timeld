@@ -45,17 +45,19 @@ export default class Authorization {
   /**
    * @param {Gateway} gateway
    * @param {AccessRequest} [access] a timesheet or project access request
-   * @returns {Promise<Account>}
+   * @returns {Promise<{ acc: Account, keyid: string }>}
    */
   async verifyUser(gateway, access) {
     const userAcc = await gateway.account(this.user);
     if (userAcc == null)
       throw new UnauthorizedError('Not found: %s', this.user);
+    let /**@type AblyKey*/ablyKey;
     if (this.jwt) {
       try { // Verify the JWT against its declared keyid
         const payload = await verify(this.jwt, async header => {
           const { key } = await userAcc.authorise(header.kid, access);
-          return new AblyKey(key).secret;
+          ablyKey = new AblyKey(key);
+          return ablyKey.secret;
         });
         if (payload.sub !== this.user)
           return Promise.reject(new UnauthorizedError('JWT does not correspond to user'));
@@ -63,11 +65,11 @@ export default class Authorization {
         throw new UnauthorizedError(e);
       }
     } else {
-      const ablyKey = new AblyKey(this.key);
+      ablyKey = new AblyKey(this.key);
       const { key: actualKey } = await userAcc.authorise(ablyKey.keyid, access);
       if (this.key !== actualKey)
         throw new UnauthorizedError();
     }
-    return userAcc;
+    return { acc: userAcc, keyid: ablyKey.keyid };
   }
 }

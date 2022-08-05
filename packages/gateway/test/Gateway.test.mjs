@@ -4,7 +4,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
 import Gateway from '../lib/Gateway.mjs';
-import { Env, timeldContext } from 'timeld-common';
+import { Env, timeldContext, UserKey } from 'timeld-common';
 import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
@@ -20,6 +20,7 @@ describe('Gateway', () => {
   let clone;
   let tmpDir;
   let ablyApi;
+  let config;
 
   beforeEach(() => {
     tmpDir = dirSync({ unsafeCleanup: true });
@@ -30,6 +31,11 @@ describe('Gateway', () => {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn()
     };
+    const ablyKey = 'app.id:secret';
+    config = {
+      '@domain': 'ex.org',
+      ...UserKey.generate(ablyKey).toConfig(ablyKey)
+    };
   });
 
   afterEach(async () => {
@@ -39,16 +45,16 @@ describe('Gateway', () => {
 
   test('throws if no ably config', async () => {
     await expect(async () => {
-      const gateway = new Gateway(
-        env, { '@domain': 'ex.org' }, clone, ablyApi);
+      delete config.ably;
+      const gateway = new Gateway(env, config, clone, ablyApi);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
 
   test('throws if no domain', async () => {
+    delete config['@domain'];
     await expect(async () => {
-      const gateway = new Gateway(
-        env, { ably: { key: 'id:secret' } }, clone, ablyApi);
+      const gateway = new Gateway(env, config, clone, ablyApi);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
@@ -57,16 +63,13 @@ describe('Gateway', () => {
     let /**@type Gateway*/gateway;
 
     beforeEach(async () => {
-      gateway = new Gateway(env, {
-        '@domain': 'ex.org',
-        genesis: true,
-        ably: {
-          key: 'app.id:secret',
-          apiKey: 'ably_api_secret',
-          tls: true // random additional property sent to clients
-        },
-        courier: { authorizationToken: 'courier_secret' }
-      }, clone, ablyApi);
+      config.genesis = true;
+      // Add some secrets which should not leak to clients
+      config.ably.apiKey = 'ably_api_secret';
+      config.courier = { authorizationToken: 'courier_secret' };
+      // random additional property sent to clients
+      config.ably.tls = true;
+      gateway = new Gateway(env, config, clone, ablyApi);
       await gateway.initialise();
     });
 
@@ -151,124 +154,6 @@ describe('Gateway', () => {
       expect(gateway.verify(jwt)).toMatchObject({ email: 'test@ex.org' });
     });
 
-    test('gets timesheet config', async () => {
-      const tsConfig = await gateway.timesheetConfig(
-        gateway.ownedId('test', 'ts1'));
-      expect(tsConfig).toEqual({
-        '@domain': 'ts1.test.ex.org',
-        genesis: false,
-        ably: { tls: true }
-      });
-      // Gateway API secrets NOT present
-      expect(tsConfig['ably'].key).toBeUndefined();
-      expect(tsConfig['ably']['apiKey']).toBeUndefined();
-      expect(tsConfig['courier']).toBeUndefined();
-
-      // Expect to have created the timesheet genesis clone
-      expect(clone.mock.lastCall).toMatchObject([
-        {
-          '@id': expect.stringMatching(/\w+/),
-          '@domain': 'ts1.test.ex.org',
-          '@context': timeldContext,
-          genesis: true,
-          ably: { key: 'app.id:secret', tls: true }
-        },
-        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
-      ]);
-      await expect(gateway.domain.get('test')).resolves.toEqual({
-        '@id': 'test',
-        timesheet: { '@id': 'test/ts1' }
-      });
-      expect(existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
-    });
-
-    test('clones a new timesheet', async () => {
-      await gateway.domain.write({
-        '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
-      });
-      // Doing another write awaits all follow handlers
-      await gateway.domain.write({});
-      // The gateway should attempt to clone the timesheet.
-      // (It will fail due to dead remotes, but we don't care.)
-      expect(clone.mock.lastCall).toMatchObject([
-        {
-          '@id': expect.stringMatching(/\w+/),
-          '@domain': 'ts1.test.ex.org',
-          '@context': timeldContext,
-          genesis: false,
-          ably: { key: 'app.id:secret', tls: true }
-        },
-        join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
-      ]);
-    });
-
-    test('removes a timesheet', async () => {
-      const tsId = gateway.ownedId('test', 'ts1');
-      await gateway.timesheetConfig(tsId);
-      await gateway.domain.write({
-        '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } }
-      });
-      // Doing another write awaits all follow handlers
-      await gateway.domain.write({});
-      expect(!existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
-      expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
-      // Cannot re-use a timesheet name
-      await expect(gateway.timesheetConfig(tsId))
-        .rejects.toThrowError();
-    });
-
-    test('reports on a timesheet', async () => {
-      const tsId = gateway.ownedId('test', 'ts1');
-      await gateway.timesheetConfig(tsId);
-      await gateway.timesheetDomains['ts1.test.ex.org']
-        .write(exampleEntryJson(new Date));
-      const report = await gateway.report(tsId);
-      await expect(drain(report)).resolves.toMatchObject([
-        { '@id': 'test/ts1', '@type': 'Timesheet' },
-        { '@id': 'session123/1', '@type': 'Entry' } // Plus a lot more
-      ]);
-    });
-
-    test('reports on non-existent timesheet', async () => {
-      const tsId = gateway.ownedId('test', 'garbage');
-      await expect(gateway.report(tsId)).rejects.toThrowError(errors.NotFoundError);
-    });
-
-    test('reports on a project', async () => {
-      await gateway.timesheetConfig(gateway.ownedId('test', 'ts1'));
-      await gateway.timesheetConfig(gateway.ownedId('test', 'ts2'));
-      await gateway.domain.write({
-        '@insert': [ // brittle use of direct write
-          { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
-          { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
-          { '@id': 'test/ts2', project: { '@id': 'test/pr1' } }
-        ]
-      });
-      await Promise.all(['ts1', 'ts2'].map((id, i) =>
-        gateway.timesheetDomains[`${id}.test.ex.org`].write(exampleEntryJson(new Date, i))));
-      const report = await gateway.report(gateway.ownedId('test', 'pr1'));
-      await expect(drain(report)).resolves.toMatchObject([
-        { '@id': 'test/pr1', '@type': 'Project' },
-        { '@id': 'test/ts1', '@type': 'Timesheet' },
-        { '@id': 'session123/0', '@type': 'Entry' },
-        { '@id': 'test/ts2', '@type': 'Timesheet' },
-        { '@id': 'session123/1', '@type': 'Entry' }
-      ]);
-    });
-
-    test('refuses unauthorised read', async () => {
-      await gateway.domain.write({
-        '@id': 'test',
-        '@type': 'Account',
-        email: 'test@ex.org'
-      });
-      const acc = await gateway.account('test');
-      await expect(acc.read({ '@describe': 'bob' }))
-        .rejects.toThrowError();
-      await expect(acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
-        .rejects.toThrowError();
-    });
-
     describe('with account', () => {
       let /**@type {Account}*/acc;
 
@@ -276,9 +161,131 @@ describe('Gateway', () => {
         await gateway.domain.write({
           '@id': 'test',
           '@type': 'Account',
-          email: 'test@ex.org'
+          email: 'test@ex.org',
+          key: UserKey.generate('appid.keyid:secret').toJSON()
         });
         acc = await gateway.account('test');
+      });
+
+      test('gets timesheet config', async () => {
+        const tsConfig = await gateway.timesheetConfig(
+          gateway.ownedId('test', 'ts1'),
+          { acc, keyid: 'keyid' });
+        expect(tsConfig).toEqual({
+          '@domain': 'ts1.test.ex.org',
+          genesis: false,
+          ably: { tls: true }
+        });
+        // Gateway API secrets NOT present
+        expect(tsConfig['ably'].key).toBeUndefined();
+        expect(tsConfig['ably']['apiKey']).toBeUndefined();
+        expect(tsConfig['courier']).toBeUndefined();
+
+        // Expect to have created the timesheet genesis clone
+        expect(clone.mock.lastCall).toMatchObject([
+          {
+            '@id': expect.stringMatching(/\w+/),
+            '@domain': 'ts1.test.ex.org',
+            '@context': timeldContext,
+            genesis: true,
+            ably: { key: 'app.id:secret', tls: true }
+          },
+          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+        ]);
+        await expect(gateway.domain.get('test')).resolves.toMatchObject({
+          '@id': 'test',
+          timesheet: { '@id': 'test/ts1' }
+        });
+        expect(existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
+
+        // Expect timesheet clone to contain user principal for signing
+        await expect(gateway.timesheetDomains['ts1.test.ex.org']
+          .get('http://ex.org/test')).resolves.toEqual({
+          '@id': 'http://ex.org/test', '@type': 'Account', key: { '@id': '.keyid' }
+        });
+      });
+
+      test('clones a new timesheet', async () => {
+        await gateway.domain.write({
+          '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
+        });
+        // Doing another write awaits all follow handlers
+        await gateway.domain.write({});
+        // The gateway should attempt to clone the timesheet.
+        // (It will fail due to dead remotes, but we don't care.)
+        expect(clone.mock.lastCall).toMatchObject([
+          {
+            '@id': expect.stringMatching(/\w+/),
+            '@domain': 'ts1.test.ex.org',
+            '@context': timeldContext,
+            genesis: false,
+            ably: { key: 'app.id:secret', tls: true }
+          },
+          join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
+        ]);
+      });
+
+      test('removes a timesheet', async () => {
+        const tsId = gateway.ownedId('test', 'ts1');
+        await gateway.timesheetConfig(tsId, { acc, keyid: 'keyid' });
+        await gateway.domain.write({
+          '@delete': { '@id': 'test', timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' } }
+        });
+        // Doing another write awaits all follow handlers
+        await gateway.domain.write({});
+        expect(!existsSync(join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')));
+        expect(gateway.timesheetDomains['ts1.test.ex.org']).toBeUndefined();
+        // Cannot re-use a timesheet name
+        await expect(gateway.timesheetConfig(tsId, { acc, keyid: 'keyid' }))
+          .rejects.toThrowError();
+      });
+
+      test('reports on a timesheet', async () => {
+        const tsId = gateway.ownedId('test', 'ts1');
+        await gateway.timesheetConfig(tsId, { acc, keyid: 'keyid' });
+        await gateway.timesheetDomains['ts1.test.ex.org']
+          .write(exampleEntryJson(new Date));
+        const report = await gateway.report(tsId);
+        await expect(drain(report)).resolves.toMatchObject([
+          { '@id': 'test/ts1', '@type': 'Timesheet' },
+          { '@id': 'session123/1', '@type': 'Entry' } // Plus a lot more
+        ]);
+      });
+
+      test('reports on non-existent timesheet', async () => {
+        const tsId = gateway.ownedId('test', 'garbage');
+        await expect(gateway.report(tsId)).rejects.toThrowError(errors.NotFoundError);
+      });
+
+      test('reports on a project', async () => {
+        await gateway.timesheetConfig(
+          gateway.ownedId('test', 'ts1'), { acc, keyid: 'keyid' });
+        await gateway.timesheetConfig(
+          gateway.ownedId('test', 'ts2'), { acc, keyid: 'keyid' });
+        await gateway.domain.write({
+          '@insert': [ // brittle use of direct write
+            { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } },
+            { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
+            { '@id': 'test/ts2', project: { '@id': 'test/pr1' } }
+          ]
+        });
+        await Promise.all(['ts1', 'ts2'].map((id, i) =>
+          gateway.timesheetDomains[`${id}.test.ex.org`].write(exampleEntryJson(new Date, i))));
+        const report = await gateway.report(gateway.ownedId('test', 'pr1'));
+        await expect(drain(report)).resolves.toMatchObject([
+          { '@id': 'test/pr1', '@type': 'Project' },
+          { '@id': 'test/ts1', '@type': 'Timesheet' },
+          { '@id': 'session123/0', '@type': 'Entry' },
+          { '@id': 'test/ts2', '@type': 'Timesheet' },
+          { '@id': 'session123/1', '@type': 'Entry' }
+        ]);
+      });
+
+      test('refuses unauthorised read', async () => {
+        await expect(acc.read({ '@describe': 'bob' }))
+          .rejects.toThrowError();
+        await expect(acc.read({ '@select': '?v', '@where': { '@id': 'bob' } }))
+          .rejects.toThrowError();
       });
 
       describe('reads and writes', () => {

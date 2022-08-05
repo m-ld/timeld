@@ -28,5 +28,8 @@ fi
 echo "${CMD[@]}"
 read -r -p 'Run it? y/n ' SURE
 if [ "$SURE" = 'y' ]; then
+  if [[ $GENESIS == 'genesis' ]]; then
+    flyctl secrets import --stage < node secrets.mjs
+  fi
   "${CMD[@]}"
 fi

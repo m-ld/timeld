@@ -9,6 +9,7 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
+import UserKey from 'timeld-common/data/UserKey.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -24,7 +25,7 @@ export default class Account {
     return new Account(gateway, {
       name: src['@id'],
       emails: propertyValue(src, 'email', Set, String),
-      keyids: propertyValue(src, 'keyid', Set, String),
+      keyids: propertyValue(src, 'key', Array, Reference).map(UserKey.keyidFromRef),
       admins: idSet(propertyValue(src, 'vf:primaryAccountable', Array, Reference)),
       timesheets: propertyValue(src, 'timesheet', Array, Reference),
       projects: propertyValue(src, 'project', Array, Reference)
@@ -68,7 +69,7 @@ export default class Account {
    * This is because Ably cannot create a key without at least one capability.
    *
    * @param {string} email
-   * @returns {Promise<string>} Ably key for the account
+   * @returns {UserKeyConfig} keys for the account
    */
   async activate(email) {
     // Every activation creates a new Ably key (assumes new device)
@@ -76,11 +77,16 @@ export default class Account {
       name: `${this.name}@${this.gateway.domainName}`,
       capability: this.keyCapability()
     });
+    // Generate a key pair for signing
+    const userKey = UserKey.generate(keyDetails.key);
     // Store the keyid and the email
     this.keyids.add(keyDetails.id);
     this.emails.add(email);
-    await this.gateway.domain.write(this.toJSON());
-    return keyDetails.key;
+    // Write the changed details, including the new key
+    await this.gateway.domain.write({
+      '@id': this.name, email, key: userKey.toJSON()
+    });
+    return userKey.toConfig(keyDetails.key);
   }
 
   /**
@@ -90,10 +96,7 @@ export default class Account {
    * @throws {import('restify-errors').DefinedHttpError}
    */
   async authorise(keyid, access) {
-    if (!this.keyids.has(keyid))
-      throw new UnauthorizedError(
-        `Key ${keyid} does not belong to account ${this.name}`);
-
+    this.checkKeyid(keyid);
     return new Promise(async (resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
@@ -118,6 +121,16 @@ export default class Account {
         }
       });
     });
+  }
+
+  /**
+   * @param {string} keyid
+   * @throws {UnauthorizedError} if the keyid does not belong to this account
+   */
+  checkKeyid(keyid) {
+    if (!this.keyids.has(keyid))
+      throw new UnauthorizedError(
+        `Key ${keyid} does not belong to account ${this.name}`);
   }
 
   /**
@@ -169,6 +182,16 @@ export default class Account {
       }).forEach(result => this.owned[type].add(result['?owned']['@id']));
     }
     return this.owned[type];
+  }
+
+  /**
+   * @param {MeldReadState} state gateway state
+   * @param {string} keyid
+   * @returns {Promise<UserKey>}
+   */
+  async key(state, keyid) {
+    this.checkKeyid(keyid);
+    return UserKey.fromJSON(await state.get(UserKey.refFromKeyid(keyid)['@id']));
   }
 
   /**
@@ -331,7 +354,7 @@ export default class Account {
       '@id': this.name, // scoped to gateway domain
       '@type': 'Account',
       'email': [...this.emails],
-      'keyid': [...this.keyids],
+      'key': [...this.keyids].map(UserKey.refFromKeyid),
       'vf:primaryAccountable': [...this.admins].map(iri => ({ '@id': iri })),
       'timesheet': this.timesheets,
       'project': this.projects

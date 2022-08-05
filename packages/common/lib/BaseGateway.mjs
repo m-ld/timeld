@@ -27,4 +27,10 @@ export default class BaseGateway {
       gateway: this.domainName, account, name
     });
   }
+
+  absoluteId(iri) {
+    // This leaves an already-absolute URI alone
+    // noinspection HttpUrlsUsage
+    return new URL(iri, `http://${this.domainName}`).toString();
+  }
 }

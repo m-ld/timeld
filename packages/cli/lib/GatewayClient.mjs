@@ -15,26 +15,30 @@ export default class GatewayClient extends BaseGateway {
   /**
    * @param {string} gateway
    * @param {string} user
-   * @param {string} [key] available Ably key, if missing, {@link activate}
+   * @param {object} ably
+   * @param {string} [ably.key] available Ably key, if missing, {@link activate}
    * must be called before other methods
+   * @param {UserKeyConfig['key']} [key] public/private key pair
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
   constructor({
     gateway,
     user,
-    ably: { key } = {}
+    ably,
+    key
   }, fetch = setupFetch()) {
     const { apiRoot, domainName } = GatewayClient.resolveApiRoot(gateway);
     super(domainName);
     this.user = user;
-    this.ablyKey = key != null ? new AblyKey(key) : null;
+    this.ablyKey = ably?.key != null ? new AblyKey(ably.key) : null;
+    // We don't hydrate the user key here
+    this.userKeyConfig = key ?? null;
     this.apiRoot = apiRoot;
     /**
-     * Resolve our user name against the gateway to get the canonical user URI.
+     * Resolve our username against the gateway to get the canonical user URI.
      * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
      */
-    // This leaves an absolute URI alone
-    this.principalId = new URL(this.user, `http://${this.domainName}`).toString();
+    this.principalId = this.absoluteId(this.user);
     this.fetch = fetch;
   }
 
@@ -55,6 +59,7 @@ export default class GatewayClient extends BaseGateway {
     // Add the user as a query parameter, unless disabled
     if (options.user !== false)
       (options.params ||= {}).user = this.user;
+    // noinspection JSCheckFunctionSignatures
     const url = new URL(path, await this.apiRoot);
     // Add the query parameters to the URL
     if (options.params != null)
@@ -112,18 +117,19 @@ export default class GatewayClient extends BaseGateway {
       const jwt = new Cryptr(code).decrypt(jwe);
       if (!isJWT(jwt))
         throw 'Sorry, that code was incorrect, please start again.';
-      const { key } = await this.fetchApi(`key/${this.user}`,
-        { jwt, user: false })
+      const keys = /**@type UserKeyConfig*/ await this
+        .fetchApi(`key/${this.user}`, { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.ablyKey = new AblyKey(key);
+      this.ablyKey = new AblyKey(keys.ably.key);
+      this.userKeyConfig = keys.key;
     }
   }
 
   /**
-   * @returns {{ably: {key: string}}}
+   * @returns {UserKeyConfig}
    */
   get accessConfig() {
-    return { ably: { key: this.ablyKey.toString() } };
+    return { ably: { key: this.ablyKey.toString() }, key: this.userKeyConfig };
   }
 
   /**
