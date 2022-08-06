@@ -2,21 +2,21 @@ import { createLogger } from 'logzio-nodejs';
 
 export default class AuditLogger {
   /**
-   * @param {string} domain gateway domain
    * @param {string} key Logz.io key
    */
-  constructor({ '@domain': domain, logz: { key } }) {
+  constructor({ key }) {
     this.logz = createLogger({
-      token: key, protocol: 'https', type: domain
+      token: key, protocol: 'https', type: 'timesheet'
     });
   }
 
   /**
+   * @param {AccountOwnedId} tsId
    * @param {import('@m-ld/m-ld').MeldUpdate} update
    */
-  log = update => {
-    this.logz.log(update);
-  };
+  log(tsId, update) {
+    this.logz.log({ ...tsId.toJSON(), update });
+  }
 
   async close() {
     return new Promise((resolve, reject) =>

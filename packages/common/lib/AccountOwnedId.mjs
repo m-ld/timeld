@@ -139,4 +139,9 @@ export default class AccountOwnedId {
     rtn += this.gateway ? `@${this.gateway}` : '';
     return rtn;
   }
+
+  toJSON() {
+    const { gateway, account, name } = this;
+    return { gateway, account, name };
+  }
 }

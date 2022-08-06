@@ -86,7 +86,7 @@ export default class Gateway extends BaseGateway {
     LOG.info(tsId, 'ID is', config['@id']);
     const principal = { '@id': this.absoluteId('/') };
     const ts = await this.clone(config, await this.getDataPath(tsId), principal);
-    ts.follow(this.auditLogger.log);
+    ts.follow(update => this.auditLogger.log(tsId, update));
     if (genesis) {
       // Add our machine identity and key to the timesheet for signing
       await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.machineKey);

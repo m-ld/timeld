@@ -49,7 +49,7 @@ if (config['@domain'] == null) {
 
 // noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
 const ablyApi = new AblyApi(config.ably);
-const auditLogger = new AuditLogger(config);
+const auditLogger = new AuditLogger(config.logz);
 const gateway = await new Gateway(env, config, clone, ablyApi, auditLogger).initialise();
 const notifier = new Notifier(config.courier);
 const server = rest({ gateway, notifier });
