@@ -27,6 +27,7 @@ COMMON_VER=$(npm run ver -w packages/common -s)
 npm i timeld-common@"$COMMON_VER" \
   -w packages/cli \
   -w packages/gateway
+git commit -am "version-packages"
 
 echo Versioning the top-level project
 npm version "$VERSION" --preid "$PRE_ID" --force
