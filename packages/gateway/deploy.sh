@@ -21,14 +21,14 @@ fi
 CMD=(flyctl deploy -a "$APP" -e TIMELD_GATEWAY_GATEWAY="$GATEWAY")
 
 if [[ $GENESIS == 'genesis' ]]; then
-  CMD+=(TIMELD_GATEWAY_GENESIS=true)
+  CMD+=(-e TIMELD_GATEWAY_GENESIS=true)
 fi
 
 echo "${CMD[@]}"
 read -r -p 'Run it? y/n ' SURE
 if [ "$SURE" = 'y' ]; then
   if [[ $GENESIS == 'genesis' ]]; then
-    flyctl secrets import --stage < node secrets.mjs
+    node secrets.mjs | flyctl secrets import -a "$APP" --stage
   fi
   "${CMD[@]}"
 fi
