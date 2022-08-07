@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.3.0-edge.0",
+  "version": "0.3.0-edge.1",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
@@ -39,7 +39,7 @@
     "rx-flowable": "^0.1.1",
     "rxjs": "^7.5.5",
     "simple-peer": "^9.11.1",
-    "timeld-common": "^0.2.0-edge.0",
+    "timeld-common": "^0.2.0-edge.1",
     "validator": "^13.7.0"
   },
   "devDependencies": {
