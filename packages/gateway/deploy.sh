@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # 1st (required) arg is app name
 APP=${1:-timeld}
 # 2nd arg is app suffix, defaults to git branch name
