@@ -35,4 +35,4 @@ The [Gateway](https://www.npmjs.com/package/timeld-gateway) manages accounts and
 
 [![project](https://raw.githubusercontent.com/primer/octicons/main/icons/table-16.svg) kanban board](https://github.com/m-ld/timeld/projects/1)
 
-To publish, use e.g. `$VERSION=patch npm run publish` in the root, to ensure that workspace packages stay in sync.
+To publish, use e.g. `./publish.sh` in the root, to ensure that workspace packages stay in sync.

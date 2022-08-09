@@ -19,12 +19,22 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE
  */
 
+/**
+ * @typedef {object} _TimeldGatewayConfig
+ * @property {string} gateway domain name or URL of gateway
+ * @property {string} ably.apiKey gateway Ably api key
+ * @property {string} courier.authorizationToken
+ * @property {string} courier.activationTemplate
+ * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
+ * @see process.env
+ */
+
 const env = new Env({
   // Default is a volume mount, see fly.toml
   data: process.env.TIMELD_GATEWAY_DATA_PATH || '/data'
 }, 'timeld-gateway');
 // Parse command line, environment variables & configuration
-const config = /**@type {*}*/(await env.yargs()).parse();
+const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 LOG.setLevel(config.logLevel || 'INFO');
 LOG.debug('Loaded configuration', config);
 
@@ -34,6 +44,7 @@ if (config['@domain'] == null) {
     config.gateway : new URL(config.gateway).hostname;
 }
 
+// noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
 const ablyApi = new AblyApi(config.ably);
 const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
 const notifier = new Notifier(config.courier);

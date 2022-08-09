@@ -5,6 +5,10 @@ import AblyKey from './lib/AblyKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
 import BaseGateway from './lib/BaseGateway.mjs';
 
+/**
+ * @typedef {import('@m-ld/m-ld/ext/ably').MeldAblyConfig & UserKeyConfig} TimeldConfig
+ */
+
 export {
   clone,
   Env,
@@ -13,5 +17,20 @@ export {
   ResultsReadable,
   BaseGateway
 };
-export { timeldContext, isDomainEntity, Entry, Project, Timesheet, Session } from './data/index.mjs';
-export { dateJsonLd, safeRefsIn, mustBe, isReference } from './lib/util.mjs';
+
+export {
+  timeldContext,
+  isDomainEntity,
+  Entry,
+  Project,
+  Timesheet,
+  Session
+} from './data/index.mjs';
+
+export {
+  mustBe,
+  dateJsonLd,
+  safeRefsIn,
+  isReference,
+  domainRelativeIri
+} from './lib/util.mjs';

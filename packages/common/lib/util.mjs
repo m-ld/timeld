@@ -69,3 +69,13 @@ export const isDate = {
 export const withDoc = doc => ({
   metadata: { description: doc }
 });
+
+// noinspection HttpUrlsUsage
+/**
+ * Leaves an already-absolute URI alone
+ * @param {string} iri
+ * @param {string} domainName
+ * @returns {string}
+ */
+export const domainRelativeIri = (iri, domainName) =>
+  new URL(iri, `http://${domainName}`).toString();

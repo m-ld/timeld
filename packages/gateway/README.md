@@ -6,44 +6,65 @@ The timeld Gateway is a service to manage timeld accounts and persist timesheets
 
 ## Fly.io Deployment Notes
 
+### prerequisites
+
+```bash
+git clone https://github.com/m-ld/timeld
+cd timeld/packages/gateway
+```
+
+1. Create a [fly.io](https://fly.io) account (requires a credit card) and install `flyctl`.
+2. Sign up for [Ably](https://ably.com/), create an app in the Ably dashboard, and look for the root key and the api key.
+3. Sign up for [Courier](https://www.courier.com/) and copy the authorization token that gets generated.
+4. Decide your app name!
+
+```shell
+flyctl apps create {your great name}
+```
+
+If developing off the `main` branch, the deploy script (below) will use your current branch name as a suffix; in preparation you should run the above command with the suffixed name e.g. `timeld-edge`.
+
 ### volumes
 
 A volume is required for clone persistence (Gateway and Timesheet domains).
 
-```bash
-flyctl volumes create timeld_data --region lhr
+_NB: The `-a` parameter must match your app name._
+
+```shell
+flyctl volumes create timeld_data --region lhr -a timeld
 ```
 
-> A volume is directly associated with only one app and exists in only one region.
 
-Each _instance_ of an app must have dedicated storage. So we can either:
-- [x] set `fly scale ... --max-per-region=1` (limits scaling), or
-- [ ] create a directory under `/data` per [allocation ID](https://fly.io/docs/reference/runtime-environment/#fly_alloc_id) – (creates a garbage collection problem with rolling redeploy)
+> NB: "A volume is directly associated with only one app and exists in only one region."
+>
+> Each _instance_ of an app must have dedicated storage. So we can either:
+> - [x] set `fly scale ... --max-per-region=1` (limits scaling), or
+> - [ ] create a directory under `/data` per [allocation ID](https://fly.io/docs/reference/runtime-environment/#fly_alloc_id) – (creates a garbage collection problem with rolling redeploy)
 
-### secrets
+### deploy
 
-```bash
-flyctl secrets import < .env
+_NB: If you have made any changes to timeld-common, it needs to be published first._
+
+A script is provided to generate, and optionally run, the correct deploy command.
+
+```shell
+chmod +x deploy.sh
 ```
 
-Where the .env file contains:
+In preparation for a first deployment ("genesis") you need a local `.env` file (in this directory or in the repo root), containing:
+
 - `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
 - `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
 - `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN={your courier auth token}`
 - `TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE={courier activation email template ID}`
 
-### deploy
+`deploy.sh` takes three optional arguments:
+1. app name (root); defaults to `timeld`
+2. app name suffix; defaults to git branch name e.g. `timeld-edge`. If `main`, no suffix is used, i.e. just `timeld`.
+3. `genesis` (if used, the 1st two arguments must also be given, and the secrets will be pushed to fly.io)
 
-_If you have made any changes to timeld-common, it needs to be published first._
-
-```bash
-flyctl deploy
-```
-
-The first deployment of a new Gateway must be started with the `genesis` flag. (You also have to include the gateway, because of a [Fly.io bug](https://github.com/superfly/flyctl/issues/560).)
-
-```bash
-flyctl deploy --env TIMELD_GATEWAY_GENESIS=true --env TIMELD_GATEWAY_GATEWAY=timeld.org
+```shell
+./deploy.sh timeld main genesis
 ```
 
 ### random
