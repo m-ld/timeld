@@ -18,14 +18,14 @@ import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.
 export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
-   * @param {Partial<import('@m-ld/m-ld/dist/ably').MeldAblyConfig>} config
-   * @param {import('timeld-common')['clone']} clone m-ld clone creation function
+   * @param {TimeldGatewayConfig} config
+   * @param {(...args: *[]) => import('timeld-common').clone} clone m-ld clone creation function
    * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
    */
   constructor(env, config, clone, ablyApi) {
     super(config['@domain']);
     this.env = env;
-    this.config = /**@type {import('@m-ld/m-ld/dist/ably').MeldAblyConfig}*/{
+    this.config = /**@type {TimeldGatewayConfig}*/{
       ...config,
       '@id': uuid(),
       '@context': timeldContext

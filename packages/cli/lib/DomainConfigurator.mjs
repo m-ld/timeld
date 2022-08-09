@@ -14,7 +14,7 @@ import isFQDN from 'validator/lib/isFQDN.js';
  */
 export default class DomainConfigurator {
   /**
-   * @param {Partial<TimeldConfig>} argv
+   * @param {Partial<TimeldCliConfig>} argv
    * @param {GatewayClient | null} gateway
    */
   constructor(argv, gateway) {
@@ -23,7 +23,7 @@ export default class DomainConfigurator {
   }
 
   /**
-   * @returns {Promise<{ config: TimeldConfig, principal: AppPrincipal }>}
+   * @returns {Promise<{ config: TimeldCliConfig, principal: AppPrincipal }>}
    */
   async load() {
     const { config: remoteConfig, principal } = await this.fetchConfig();
