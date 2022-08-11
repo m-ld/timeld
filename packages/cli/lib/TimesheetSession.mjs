@@ -85,6 +85,11 @@ export default class TimesheetSession extends Repl {
             type: 'string',
             coerce: parseDuration
           })
+          .option('activity', {
+            describe: 'The new name of the activity being worked on',
+            type: 'string',
+            alias: 'task'
+          })
           .option('start', {
             describe: 'The new start date & time of the activity',
             type: 'array',
@@ -96,8 +101,8 @@ export default class TimesheetSession extends Repl {
             coerce: parseDate
           })
           .check(argv => {
-            if (argv.start == null && argv.end == null && argv.duration == null)
-              return 'Please specify something to modify: duration, --start, or --end';
+            if (argv.start == null && argv.end == null && argv.duration == null && argv.activity == null)
+              return 'Please specify something to modify: duration, --activity, --start, or --end';
             return true;
           }),
         argv => ctx.exec(
@@ -169,15 +174,18 @@ export default class TimesheetSession extends Repl {
   /**
    * @param {string | number} selector Entry to modify, using a number or a activity name
    * @param {number} [duration] in minutes
+   * @param {string} [activity]
    * @param {Date} [start]
    * @param {Date} [end]
    * @returns {Proc}
    */
-  modifyEntryProc({ selector, duration, start, end }) {
+  modifyEntryProc({ selector, duration, activity, start, end }) {
     // TODO: selector is not specific enough?
     const proc = new PromiseProc(this.meld.write(async state => {
       async function updateEntry(src) {
         const entry = Entry.fromJSON(src);
+        if (activity)
+          entry.activity = activity;
         if (start != null)
           entry.start = start;
         if (end != null && duration == null)

@@ -93,6 +93,14 @@ describe('CLI Session', () => {
       .resolves.toMatchObject(expectEntry('testing', 120));
   });
 
+  test('modify entry with new activity', async () => {
+    const outLines = jest.fn(), errLines = jest.fn();
+    await session.execute('add testing 1h', outLines, errLines);
+    await session.execute('modify testing --activity "more testing"', outLines, errLines);
+    await expect(meld.get(`${id}/1`))
+      .resolves.toMatchObject(expectEntry('more testing', 60));
+  });
+
   test('modify entry with new end', async () => {
     const outLines = jest.fn(), errLines = jest.fn();
     await session.execute('add testing', outLines, errLines);
