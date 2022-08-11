@@ -11,6 +11,8 @@ import { Entry, Session } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { Writable } from 'stream';
+import { from, mergeMap, toArray } from 'rxjs';
+import { consume } from 'rx-flowable/consume';
 
 export default class TimesheetSession extends Repl {
   /**
@@ -157,12 +159,13 @@ export default class TimesheetSession extends Repl {
    */
   reportEntriesProc({ selector, format }) {
     // TODO: selectors
-    return new ResultsProc(
-      this.meld.read({
-        '@describe': '?entry',
-        '@where': { '@id': '?entry', '@type': 'Entry' }
-      }).consume,
-      getSubjectFormat(format, this.getSession));
+    return new ResultsProc(consume(this.meld.read({
+      '@describe': '?entry',
+      '@where': { '@id': '?entry', '@type': 'Entry' }
+    }).pipe(toArray(), mergeMap(all => {
+      all.sort((s1, s2) => s1.start?.['@value']?.localeCompare(s2.start?.['@value']) ?? -1);
+      return from(all);
+    }))), getSubjectFormat(format, this.getSession));
   }
 
   /**
@@ -172,7 +175,7 @@ export default class TimesheetSession extends Repl {
     entry.sessionId === this.session.id ? 'This session' : this.meld.get(entry.sessionId);
 
   /**
-   * @param {string | number} selector Entry to modify, using a number or a activity name
+   * @param {string | number} selector Entry to modify, using a number or an activity name
    * @param {number} [duration] in minutes
    * @param {string} [activity]
    * @param {Date} [start]

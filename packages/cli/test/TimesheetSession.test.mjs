@@ -109,12 +109,25 @@ describe('CLI Session', () => {
       .resolves.toMatchObject(expectEntry('testing', 120));
   });
 
-  test('list one entry', async () => {
+  test('list an entry', async () => {
     const outLines = jest.fn(), errLines = jest.fn();
     await session.execute('add testing 1h', outLines, errLines);
     await session.execute('list', outLines, errLines);
     expect(outLines).toHaveBeenLastCalledWith(expect.stringMatching(
       /Entry #1: testing/));
+  });
+
+  test('listed entries sorted by time', async () => {
+    const outLines = jest.fn(), errLines = jest.fn();
+    await session.execute('add testing3 1h', jest.fn(), errLines);
+    await session.execute('add testing2 1h --start one hour ago', jest.fn(), errLines);
+    await session.execute('add testing1 1h --start yesterday 12am', jest.fn(), errLines);
+    await session.execute('list', outLines, errLines);
+    expect(outLines.mock.calls).toEqual([
+      [expect.stringMatching(/Entry #3: testing1/)],
+      [expect.stringMatching(/Entry #2: testing2/)],
+      [expect.stringMatching(/Entry #1: testing3/)]
+    ]);
   });
 
   describe('import', () => {
