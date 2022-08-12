@@ -1,12 +1,10 @@
 import { Entry } from 'timeld-common';
 import stringify from 'json-stringify-pretty-compact';
-import { formatDate, formatDuration, formatTimeAgo } from './util.mjs';
-import { propertyValue } from '@m-ld/m-ld';
+import { formatDate, formatDuration } from './util.mjs';
 
 /**
  * @typedef {import('@m-ld/m-ld').Subject} Subject
  * @typedef {'default'|'JSON-LD'|'json-ld'|'ld'} EntryFormatName
- * @typedef {(entry: Entry) => string | Subject | Promise<Subject>} GetSession
  */
 
 export const ENTRY_FORMAT_OPTIONS = {
@@ -19,20 +17,20 @@ export const ENTRY_FORMAT_OPTIONS = {
 export const JSON_LD_GRAPH = {
   opening: '{ "@graph": [', closing: '] }',
   separator: ',\n',
-  stringify
+  stringify: src => stringify(src)
 };
 
 /**
  * @param {EntryFormatName} format
- * @param {GetSession} [getSession]
+ * @param {(id: string) => *} [getIndex]
  * @returns {Format}
  */
-export function getSubjectFormat(format, getSession) {
+export function getSubjectFormat(format, getIndex) {
   return {
     'JSON-LD': JSON_LD_GRAPH,
     'json-ld': JSON_LD_GRAPH,
     ld: JSON_LD_GRAPH
-  }[format] || new DefaultFormat(getSession);
+  }[format] || new DefaultFormat(getIndex);
 }
 
 /**
@@ -54,11 +52,11 @@ class DisplayFormat {
 
 export class DefaultFormat extends DisplayFormat {
   /**
-   * @param {GetSession} [getSession]
+   * @param {(id: string) => *} [getIndex]
    */
-  constructor(getSession) {
+  constructor(getIndex) {
     super();
-    this.getSession = getSession;
+    this.getIndex = getIndex;
   }
 
   /**
@@ -66,10 +64,15 @@ export class DefaultFormat extends DisplayFormat {
    * @returns {Promise<string>}
    */
   async stringify(src) {
+    const description = await this.subjectDescription(src);
+    return this.getIndex ? `#${this.getIndex(src['@id'])}: ${description}` : description;
+  }
+
+  async subjectDescription(src) {
     try {
       switch (src['@type']) {
         case 'Entry':
-          return await this.entryDescription(Entry.fromJSON(src));
+          return this.entryDescription(Entry.fromJSON(src));
         default:
           return `${src['@type']} ${src['@id']}`;
       }
@@ -78,10 +81,8 @@ export class DefaultFormat extends DisplayFormat {
     }
   }
 
-  async entryDescription(entry) {
-    const sessionLabel = await this.sessionLabel(entry);
-    const qualifier = sessionLabel ? ` (in ${sessionLabel})` : '';
-    return `Entry ${(DefaultFormat.entryLabel(entry))}${qualifier}`;
+  entryDescription(entry) {
+    return `Entry ${(DefaultFormat.entryLabel(entry))}`;
   }
 
   /**
@@ -89,20 +90,8 @@ export class DefaultFormat extends DisplayFormat {
    * @returns {string}
    */
   static entryLabel(entry) {
-    return `#${entry.seqNo}: ${entry.activity} (${formatDate(entry.start)}` +
+    return `"${entry.activity}" (${formatDate(entry.start)}` +
       (entry.duration != null ? `, ${formatDuration(entry.duration)}` : '') + `)`;
-  }
-
-  async sessionLabel(entry) {
-    if (this.getSession != null) {
-      const session = await this.getSession(entry);
-      if (typeof session == 'object') {
-        // noinspection JSCheckFunctionSignatures
-        const start = propertyValue(session, 'start', Date);
-        return `Session ${formatTimeAgo(start)}`;
-      }
-      return session;
-    }
   }
 }
 

@@ -64,7 +64,7 @@ describe('CLI Session', () => {
     });
     await expect(meld.get(`${id}/1`))
       .resolves.toMatchObject(expectEntry('testing', 60));
-    expect(outLines).toHaveBeenCalledWith(expect.stringMatching(/#1: testing/));
+    expect(outLines).toHaveBeenCalledWith(expect.stringMatching(/testing/));
   });
 
   test('add entry with start', async () => {
@@ -111,22 +111,48 @@ describe('CLI Session', () => {
 
   test('list an entry', async () => {
     const outLines = jest.fn(), errLines = jest.fn();
-    await session.execute('add testing 1h', outLines, errLines);
+    await session.execute('add testing 1h', jest.fn(), errLines);
     await session.execute('list', outLines, errLines);
     expect(outLines).toHaveBeenLastCalledWith(expect.stringMatching(
-      /Entry #1: testing/));
+      /#1: Entry "testing"/));
   });
 
-  test('listed entries sorted by time', async () => {
+  test('listed entries are sorted by time', async () => {
     const outLines = jest.fn(), errLines = jest.fn();
     await session.execute('add testing3 1h', jest.fn(), errLines);
     await session.execute('add testing2 1h --start one hour ago', jest.fn(), errLines);
     await session.execute('add testing1 1h --start yesterday 12am', jest.fn(), errLines);
     await session.execute('list', outLines, errLines);
     expect(outLines.mock.calls).toEqual([
-      [expect.stringMatching(/Entry #3: testing1/)],
-      [expect.stringMatching(/Entry #2: testing2/)],
-      [expect.stringMatching(/Entry #1: testing3/)]
+      [expect.stringMatching(/#1: Entry "testing1"/)],
+      [expect.stringMatching(/#2: Entry "testing2"/)],
+      [expect.stringMatching(/#3: Entry "testing3"/)]
+    ]);
+  });
+
+  test('modify ambiguous entry prompts', async () => {
+    const outLines = jest.fn(), errLines = jest.fn();
+    await session.execute('add testing 1h', jest.fn(), errLines);
+    await session.execute('add testing 2h', jest.fn(), errLines);
+    await session.execute('modify testing --end 2h from now', outLines, errLines);
+    expect(outLines.mock.calls).toEqual([
+      [expect.stringMatching(/Multiple entries/)],
+      [expect.stringMatching(/#1: Entry "testing" .+ 1 hour/)],
+      [expect.stringMatching(/#2: Entry "testing" .+ 2 hours/)]
+    ]);
+  });
+
+  test('modify ambiguous entry uses prior list indexes if possible', async () => {
+    const outLines = jest.fn(), errLines = jest.fn();
+    await session.execute('add first 1h', jest.fn(), errLines);
+    await session.execute('add testing 1h', jest.fn(), errLines);
+    await session.execute('add testing 2h', jest.fn(), errLines);
+    await session.execute('list', jest.fn(), errLines);
+    await session.execute('modify testing --end 2h from now', outLines, errLines);
+    expect(outLines.mock.calls).toEqual([
+      [expect.stringMatching(/Multiple entries/)],
+      [expect.stringMatching(/#2: Entry "testing" .+ 1 hour/)],
+      [expect.stringMatching(/#3: Entry "testing" .+ 2 hours/)]
     ]);
   });
 
