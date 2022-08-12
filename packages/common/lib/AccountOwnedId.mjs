@@ -99,11 +99,11 @@ export default class AccountOwnedId {
 
   static checkComponentId(id) {
     if (!AccountOwnedId.isComponentId(id))
-      throw `${id} should contain only alphanumerics & dashes`;
+      throw `${id} should contain only lowercase letters, digits & dashes`;
   }
 
   static isComponentId(id) {
-    return id != null && /^[\w-]+$/.test(id);
+    return id != null && /^[a-z0-9_-]+$/.test(id);
   }
 
   /**
