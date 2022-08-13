@@ -11,6 +11,10 @@ import { Entry, Session } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { Writable } from 'stream';
+import { mergeMap, toArray } from 'rxjs';
+import { consume } from 'rx-flowable/consume';
+
+/** @typedef {import('@m-ld/m-ld-cli/lib/Proc.js').Proc} Proc */
 
 export default class TimesheetSession extends Repl {
   /**
@@ -28,6 +32,11 @@ export default class TimesheetSession extends Repl {
     this.providerId = spec.providerId;
     this.meld = spec.meld;
     this.logFile = spec.logFile;
+    /**
+     * Index of recently-viewed Entry IDs
+     * @type {string[]}
+     */
+    this.workingSet = [];
   }
 
   buildCommands(yargs, ctx) {
@@ -85,6 +94,11 @@ export default class TimesheetSession extends Repl {
             type: 'string',
             coerce: parseDuration
           })
+          .option('activity', {
+            describe: 'The new name of the activity being worked on',
+            type: 'string',
+            alias: 'task'
+          })
           .option('start', {
             describe: 'The new start date & time of the activity',
             type: 'array',
@@ -96,8 +110,8 @@ export default class TimesheetSession extends Repl {
             coerce: parseDate
           })
           .check(argv => {
-            if (argv.start == null && argv.end == null && argv.duration == null)
-              return 'Please specify something to modify: duration, --start, or --end';
+            if (argv.start == null && argv.end == null && argv.duration == null && argv.activity == null)
+              return 'Please specify something to modify: duration, --activity, --start, or --end';
             return true;
           }),
         argv => ctx.exec(
@@ -109,8 +123,7 @@ export default class TimesheetSession extends Repl {
         yargs => yargs
           .positional('selector', {
             describe: 'A time range, like "today" or "this month"',
-            type: 'string',
-            default: 'today'
+            type: 'string'
           })
           .option('format', ENTRY_FORMAT_OPTIONS),
         argv => ctx.exec(
@@ -152,32 +165,70 @@ export default class TimesheetSession extends Repl {
    */
   reportEntriesProc({ selector, format }) {
     // TODO: selectors
+    const query = this.describeSelected(selector || '?');
     return new ResultsProc(
-      this.meld.read({
-        '@describe': '?entry',
-        '@where': { '@id': '?entry', '@type': 'Entry' }
-      }).consume,
-      getSubjectFormat(format, this.getSession));
+      consume(this.meld.read(query)
+        .pipe(toArray(), mergeMap(all => this.setWorkingSet(all)))),
+      this.getSubjectFormat(format));
   }
 
   /**
-   * @type {GetSession}
+   * Local variant of getting a subject format supporting the local working set
+   * @param {EntryFormatName} format
+   * @returns {Format}
    */
-  getSession = entry =>
-    entry.sessionId === this.session.id ? 'This session' : this.meld.get(entry.sessionId);
+  getSubjectFormat(format) {
+    return getSubjectFormat(format, id => this.workingSet.indexOf(id) + 1);
+  }
 
   /**
-   * @param {string | number} selector Entry to modify, using a number or a activity name
+   * Sets the current indexed working set of Entries
+   * @param {import('@m-ld/m-ld').GraphSubject[]} all
+   * @param {Proc} [proc] used to warn the user if the working set has changed
+   * @returns {import('@m-ld/m-ld').GraphSubject[]}
+   */
+  setWorkingSet(all, proc) {
+    all.sort((s1, s2) =>
+      s1['start']?.['@value']?.localeCompare(s2['start']?.['@value']) ?? -1);
+    // If not all given items are in the old list in the same order, update the
+    // working set and warn the user
+    let lastOldIndex = 0;
+    if (!all.every((src) =>
+      (lastOldIndex = this.workingSet.indexOf(src['@id'], lastOldIndex)) > -1)) {
+      if (proc != null && this.workingSet.length > 0)
+        proc.emit('message',
+          'NOTE: Index numbers have changed. Use "list" to review.');
+      this.workingSet = all.map(src => src['@id']);
+    }
+    return all;
+  }
+
+  /**
+   * @param {string | number} selector Entry to modify, using a number or an activity name
    * @param {number} [duration] in minutes
+   * @param {string} [activity]
    * @param {Date} [start]
    * @param {Date} [end]
    * @returns {Proc}
    */
-  modifyEntryProc({ selector, duration, start, end }) {
+  modifyEntryProc({
+    selector,
+    duration,
+    activity,
+    start,
+    end
+  }) {
     // TODO: selector is not specific enough?
     const proc = new PromiseProc(this.meld.write(async state => {
-      async function updateEntry(src) {
-        const entry = Entry.fromJSON(src);
+      const query = this.describeSelected(selector);
+      const all = query ? await state.read(query) : [];
+      if (all.length === 0) {
+        proc.emit('message',
+          `${selector} does not match an entry. Use "list" to review.`);
+      } else if (all.length === 1) {
+        const entry = Entry.fromJSON(all[0]);
+        if (activity)
+          entry.activity = activity;
         if (start != null)
           entry.start = start;
         if (end != null && duration == null)
@@ -186,30 +237,38 @@ export default class TimesheetSession extends Repl {
           entry.duration = duration;
         proc.emit('message', DefaultFormat.entryLabel(entry));
         return state.write({
-          '@delete': src,
+          '@delete': all[0],
           '@insert': entry.toJSON()
         });
-      }
-      if (typeof selector == 'number') {
-        const src = await state.get(`${this.session.id}/${selector}`);
-        if (src != null)
-          await updateEntry(src);
-        else
-          throw 'No such activity sequence number found in this session.';
       } else {
-        for (let src of await state.read({
-          '@describe': '?id',
-          '@where': {
-            '@id': '?id',
-            '@type': 'Entry',
-            activity: selector
-          }
-        })) {
-          state = await updateEntry(src);
-        }
+        proc.emit('message', 'Multiple entries matched. Please re-do, selecting a number:');
+        const format = this.getSubjectFormat('default');
+        const entries = await Promise.all(
+          this.setWorkingSet(all, proc).map(src => format.stringify(src)));
+        entries.forEach(description => proc.emit('message', description));
       }
     }));
     return proc;
+  }
+
+  /**
+   * @param {string | number} selector Entry to modify, using a number or an activity name
+   * @returns {import('@m-ld/m-ld').Describe} or `undefined` if not interpretable
+   */
+  describeSelected(selector) {
+    if (typeof selector == 'number') {
+      const id = this.workingSet[selector - 1];
+      if (id != null)
+        return { '@describe': id };
+    }
+    return {
+      '@describe': '?id',
+      '@where': {
+        '@id': '?id',
+        '@type': 'Entry',
+        activity: selector
+      }
+    };
   }
 
   /**
