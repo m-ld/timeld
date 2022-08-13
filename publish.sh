@@ -11,8 +11,8 @@ if  [[ $NOT_MAIN -eq $NOT_PRE ]]; then
   exit 1
 fi
 
-TAG='latest'
-if [[ $NOT_MAIN ]]; then
+TAG=latest
+if [[ $NOT_MAIN -eq 0 ]]; then
   TAG="$BRANCH"
   PRE_ID="$BRANCH"
 fi
