@@ -19,10 +19,22 @@ export default class ReadPatterns {
         project: isReference
       }
     };
+    /** @param {Schema} schema */
+    const projectOrTimesheet = schema => ({
+      optionalProperties: {
+        project: schema,
+        timesheet: schema
+      }
+    });
     // Check we are joining either projects or timesheets
-    const hasOwnedTimesheetJoin = query =>
-      query['@where'][0].project?.['@id'] === query['@where'][1].project['@id'] ||
-      query['@where'][0].timesheet?.['@id'] === query['@where'][1]['@id'];
+    const hasOwnedTimesheetJoin = query => {
+      const [filter, check] = query['@where'];
+      return (filter.appliesTo && (
+          (check.project && filter.appliesTo['@id'] === check.project['@id']) ||
+          (check.timesheet && filter.appliesTo['@id'] === check.timesheet['@id']))) ||
+        (check.project && filter.project?.['@id'] === check.project['@id']) ||
+        filter.timesheet?.['@id'] === check['@id'];
+    };
     /** @type {QueryPattern[]} */
     this.patterns = [
       // Read property details from user account
@@ -34,6 +46,15 @@ export default class ReadPatterns {
           timesheet: isVariable
         }
       }),
+      // Read property details of an organisation account the user is admin of
+      new class extends ReadPattern {
+        matches(query) {
+          return super.matches(query) && isCheckingAdmin(query['@where']);
+        }
+      }({
+        ...this.accountIsAdmin,
+        ...projectOrTimesheet(isVariable)
+      }),
       // Read timesheet details from user account
       new class extends ReadPattern {
         matches(query) {
@@ -41,23 +62,8 @@ export default class ReadPatterns {
         }
       }({
         ...this.isThisAccount,
-        optionalProperties: {
-          project: isReference,
-          timesheet: isReference
-        }
+        ...projectOrTimesheet(isReference)
       }, timesheetProperty),
-      // Read details of an organisation account the user is admin of
-      new class extends ReadPattern {
-        matches(query) {
-          return super.matches(query) && isCheckingAdmin(query['@where']);
-        }
-      }({
-        ...this.accountIsAdmin,
-        optionalProperties: {
-          project: isVariable,
-          timesheet: isVariable
-        }
-      }),
       // Read timesheet details from organisation account the user is admin of
       new class extends ReadPattern {
         matches(query) {
@@ -67,11 +73,40 @@ export default class ReadPatterns {
         }
       }({
         ...this.accountIsAdmin,
-        optionalProperties: {
-          project: isReference,
-          timesheet: isReference
+        ...projectOrTimesheet(isReference)
+      }, timesheetProperty),
+      // Read timesheet or project integrations from user account
+      new class extends ReadPattern {
+        matches(query) {
+          return super.matches(query) && hasOwnedTimesheetJoin(query);
         }
-      }, timesheetProperty)
+      }({
+        properties: {
+          '@type': { enum: ['Integration'] },
+          appliesTo: isReference
+        },
+        additionalProperties: true
+      }, {
+        ...this.isThisAccount,
+        ...projectOrTimesheet(isReference)
+      }),
+      // Read timesheet or project integrations from account the user is admin of
+      new class extends ReadPattern {
+        matches(query) {
+          return super.matches(query) &&
+            isCheckingAdmin(query['@where'][1]) &&
+            hasOwnedTimesheetJoin(query);
+        }
+      }({
+        properties: {
+          '@type': { enum: ['Integration'] },
+          appliesTo: isReference
+        },
+        additionalProperties: true
+      }, {
+        ...this.accountIsAdmin,
+        ...projectOrTimesheet(isReference)
+      })
     ];
   }
 
@@ -100,6 +135,6 @@ export default class ReadPatterns {
    * @returns {QueryPattern}
    */
   matchPattern(query) {
-    return this.patterns.find(qp => qp.matches(query))
+    return this.patterns.find(qp => qp.matches(query));
   }
 }

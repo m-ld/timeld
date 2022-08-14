@@ -7,13 +7,10 @@ import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
 import { accountHasTimesheet, Ask } from './statements.mjs';
-import { concat } from 'rxjs';
+import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
-
-/**
- * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
- */
+import IntegrationExtension from './Integration.mjs';
 
 export default class Gateway extends BaseGateway {
   /**
@@ -36,6 +33,8 @@ export default class Gateway extends BaseGateway {
     this.clone = clone;
     this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
+    this.integrations = /**@type {{ [id: string]: IntegrationExtension }}*/{};
+    this.subs = new Subscription();
   }
 
   async initialise() {
@@ -43,27 +42,102 @@ export default class Gateway extends BaseGateway {
     const dataDir = await this.env.readyPath('data', 'gw');
     this.domain = await this.clone(this.config, dataDir);
     await this.domain.status.becomes({ outdated: false });
-    // Enliven all timesheets already in the domain
-    await this.domain.read(state => {
-      // Timesheets are the range of the 'timesheet' Account property
-      state.read({
-        '@select': '?tsh', '@where': { timesheet: '?tsh' }
-      }).consume.subscribe(({ value, next }) => {
-        this.timesheetAdded(this.ownedRefAsId(value['?tsh'])).finally(next);
-      });
-    }, update => {
-      // And watch for timesheets appearing and disappearing
-      // noinspection JSCheckFunctionSignatures
-      return Promise.all([
-        ...update['@delete'].map(subject => Promise.all(
-          safeRefsIn(subject, 'timesheet').map(tsRef =>
-            this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
-        ...update['@insert'].map(subject => Promise.all(
-          safeRefsIn(subject, 'timesheet').map(tsRef =>
-            this.timesheetAdded(this.ownedRefAsId(tsRef)))))
-      ]);
+    // Enliven all timesheets and integrations already in the domain
+    await new Promise(resolve => {
+      this.subs.add(this.domain.read(state => Promise.all([
+        this.initTimesheets(state),
+        this.initIntegrations(state)
+      ]).then(resolve), (update, state) => Promise.all([
+        this.onUpdateTimesheets(update),
+        this.onUpdateIntegrations(update, state)
+      ])));
     });
     return this;
+  }
+
+  /**
+   * @param {MeldReadState} state
+   */
+  initTimesheets(state) {
+    // Timesheets are the range of the 'timesheet' Account property
+    return this.readAsync(state.read({
+      '@select': '?tsh', '@where': { timesheet: '?tsh' }
+    }).consume, ({ value, next }) => {
+      this.timesheetAdded(this.ownedRefAsId(value['?tsh'])).finally(next);
+    });
+  }
+
+  /**
+   * @param {MeldUpdate} update
+   * @returns {Promise<*>}
+   */
+  onUpdateTimesheets(update) {
+    // Watch for timesheets appearing and disappearing
+    // noinspection JSCheckFunctionSignatures
+    return Promise.all([
+      ...update['@delete'].map(subject => Promise.all(
+        safeRefsIn(subject, 'timesheet').map(tsRef =>
+          this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
+      ...update['@insert'].map(subject => Promise.all(
+        safeRefsIn(subject, 'timesheet').map(tsRef =>
+          this.timesheetAdded(this.ownedRefAsId(tsRef)))))
+    ]);
+  }
+
+  /**
+   * @param {MeldReadState} state
+   */
+  initIntegrations(state) {
+    return this.readAsync(state.read({
+      '@describe': '?ext', '@where': { '@id': '?ext', '@type': 'Integration' }
+    }), src => this.loadIntegration(src));
+  }
+
+  /**
+   * Hoop-jumping to ensure that an asynchronous read does not throw an
+   * unhandled exception if the gateway is closed too soon.
+   * @param {import('rxjs').Observable} results
+   * @param {Parameters<import('rxjs').Observable['subscribe']>[0]} sub
+   * @returns {Promise<unknown>}
+   */
+  readAsync(results, sub) {
+    return new Promise(resolve => {
+      // noinspection JSCheckFunctionSignatures
+      this.subs.add(results.pipe(finalize(resolve)).subscribe(sub));
+    });
+  }
+
+  /**
+   * @param {GraphSubject} src
+   * @returns {Promise<void>}
+   */
+  async loadIntegration(src) {
+    try {
+      this.integrations[src['@id']] =
+        await IntegrationExtension.fromJSON(src).initialise(this.config);
+      LOG.info('Loaded integration', src);
+    } catch (e) {
+      LOG.warn('Could not load integration', src, e);
+    }
+  }
+
+  /**
+   * @param {MeldUpdate} update
+   * @param {MeldReadState} state
+   * @returns {Promise<*>}
+   */
+  onUpdateIntegrations(update, state) {
+    for (let src of update['@delete']) {
+      // If an integration's key property vanishes, remove it
+      if (src['@id'] in this.integrations && 'module' in src)
+        delete this.integrations[src['@id']];
+    }
+    for (let src of update['@insert']) {
+      // If a new integration appears, load it
+      if (src['@type'] === 'Integration')
+        // noinspection JSIgnoredPromiseFromCall happy for this to be async
+        this.loadIntegration(src);
+    }
   }
 
   /**
@@ -76,8 +150,22 @@ export default class Gateway extends BaseGateway {
       '@id': uuid(), '@domain': tsId.toDomain()
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
-    return this.timesheetDomains[tsId.toDomain()] =
-      await this.clone(config, await this.getDataPath(tsId));
+    const ts = await this.clone(config, await this.getDataPath(tsId));
+    // Attach integration listener
+    // Note we have not waited for up to date, so this picks up rev-ups
+    const tsIri = tsId.toRelativeIri();
+    ts.follow((update, state) => {
+      for (let integration of Object.values(this.integrations)) {
+        if (integration.appliesTo.has(tsIri)) {
+          // TODO: These will queue up on the write lock, and could overflow
+          // Integrations should be guaranteed fast and async their heavy stuff
+          this.domain.write(async gwState =>
+            gwState.write(await integration.entryUpdate(tsId, update, state))
+          ).catch(err => LOG.warn('Integration update failed', tsIri, err));
+        }
+      }
+    });
+    return this.timesheetDomains[tsId.toDomain()] = ts;
   }
 
   getDataPath(tsId) {
@@ -149,6 +237,7 @@ export default class Gateway extends BaseGateway {
         'Email %s not registered to account %s', email, account);
     // Construct a JWT with the email, using our Ably key
     const { secret, keyid } = this.ablyKey;
+    // noinspection JSCheckFunctionSignatures
     const jwt = jsonwebtoken.sign({ email }, secret, {
       keyid, expiresIn: '10m'
     });
@@ -164,6 +253,7 @@ export default class Gateway extends BaseGateway {
    */
   verify(jwt) {
     // Verify the JWT was created by us
+    // noinspection JSCheckFunctionSignatures
     return jsonwebtoken.verify(jwt, this.ablyKey.secret);
   }
 
@@ -278,6 +368,7 @@ export default class Gateway extends BaseGateway {
   };
 
   close() {
+    this.subs.unsubscribe();
     // Close the gateway domain
     return Promise.all([
       this.domain?.close(),

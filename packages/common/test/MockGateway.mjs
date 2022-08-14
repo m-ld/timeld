@@ -1,14 +1,11 @@
+// noinspection NpmUsedModulesInstalled
+import { jest } from '@jest/globals';
 import { clone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import { DeadRemotes } from './fixtures.mjs';
 import { BaseGateway } from '../index.mjs';
-import { jest } from '@jest/globals';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
-
-/**
- * @typedef {import('@m-ld/m-ld').Query} Query
- */
 
 /**
  * @typedef {object} MockAccount

@@ -4,10 +4,6 @@ import { QueryPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
 import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
 
-/**
- * @typedef {import('@m-ld/m-ld').Reference} Reference
- */
-
 export default class WritePatterns {
   /**
    * @param {string} accountName
@@ -35,7 +31,7 @@ export default class WritePatterns {
       properties: { '@id': { type: 'string' } },
       additionalProperties: true // ?p ?o
     };
-    const whereDeleteOwned = {
+    const whereOwned = {
       optionalProperties: { timesheet: matchOwned, project: matchOwned }
     };
     const deletesOwnedProperties = query => {
@@ -84,7 +80,18 @@ export default class WritePatterns {
     const timesheetDetail = {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
+    const matchesApplies = (query, key) => {
+      return query['@where'][key] &&
+        query['@insert'].appliesTo['@id'] === query['@where'][key]['@id'];
+    };
     // noinspection JSValidateTypes
+    const isInsertIntegration = {
+      properties: {
+        '@type': { enum: ['Integration'] },
+        module: { type: 'string' },
+        appliesTo: isReference
+      }
+    };
     /** @type {QueryPattern[]} */
     this.patterns = [
       // Add details to user account
@@ -111,7 +118,7 @@ export default class WritePatterns {
       }({
         properties: {
           '@delete': thisAccountDetail('@delete'),
-          '@where': { ...isThisAccount(), ...whereDeleteOwned }
+          '@where': { ...isThisAccount(), ...whereOwned }
         }
       }),
       // Write new organisation account (with this account as admin)
@@ -177,7 +184,7 @@ export default class WritePatterns {
       }({
         properties: {
           '@delete': orgDetail('@delete'),
-          '@where': { ...thisAccountIsAdmin(), ...whereDeleteOwned }
+          '@where': { ...thisAccountIsAdmin(), ...whereOwned }
         }
       }),
       // Add project to user or organisation owned timesheet
@@ -209,7 +216,31 @@ export default class WritePatterns {
           [verb]: timesheetDetail,
           '@where': thisAccountIsAdmin({ timesheet: isReference })
         }
-      })))
+      }))),
+      new class extends QueryPattern {
+        matches(query) {
+          return super.matches(query) &&
+            (matchesApplies(query, 'timesheet') ||
+              matchesApplies(query, 'project'));
+        }
+      }({
+        properties: {
+          '@insert': isInsertIntegration,
+          '@where': { ...isThisAccount(), ...whereOwned }
+        }
+      }),
+      new class extends QueryPattern {
+        matches(query) {
+          return super.matches(query) &&
+            (matchesApplies(query, 'timesheet') ||
+              matchesApplies(query, 'project'));
+        }
+      }({
+        properties: {
+          '@insert': isInsertIntegration,
+          '@where': { ...thisAccountIsAdmin(), ...whereOwned }
+        }
+      })
     ];
   }
 

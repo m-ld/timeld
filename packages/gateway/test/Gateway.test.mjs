@@ -1,5 +1,4 @@
-// noinspection JSCheckFunctionSignatures
-
+// noinspection JSCheckFunctionSignatures,NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';

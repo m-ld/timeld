@@ -132,6 +132,19 @@ describe('Administration session', () => {
       await session.execute('report org1/ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('Timesheet org1/ts1');
     });
+
+    test('Lists no integrations for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Lists integration for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute('add integration wobble --timesheet ts1', outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('wobble');
+    });
   });
 
   describe('with org account', () => {
@@ -212,6 +225,13 @@ describe('Administration session', () => {
       expect(outLines).not.toHaveBeenCalled();
       await session.execute('ls link --ts fred/ts1', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Lists integration for timesheet', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await session.execute('add integration wobble --timesheet ts1', outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('wobble');
     });
   });
 });

@@ -3,7 +3,6 @@ import stringify from 'json-stringify-pretty-compact';
 import { formatDate, formatDuration } from './util.mjs';
 
 /**
- * @typedef {import('@m-ld/m-ld').Subject} Subject
  * @typedef {'default'|'JSON-LD'|'json-ld'|'ld'} EntryFormatName
  */
 
@@ -109,10 +108,11 @@ export class TableFormat extends DisplayFormat {
    * @returns {string}
    */
   stringify(src) {
-    return this.keys.map(key => {
-      const value = src[key];
+    function valStr(value) {
       if (value == null) {
         return '-';
+      } else if (Array.isArray(value)) {
+        return value.map(valStr).join(', ');
       } else if (typeof value == 'object') {
         if ('@id' in value) // Reference or subject
           return value['@id'];
@@ -121,6 +121,7 @@ export class TableFormat extends DisplayFormat {
       } else {
         return value;
       }
-    }).join('\t');
+    }
+    return this.keys.map(key => valStr(src[key])).join('\t');
   }
 }

@@ -1,0 +1,28 @@
+{
+  "name": "timeld-prejournal",
+  "version": "0.1.0",
+  "description": "timeld - prejournal integration",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timeld",
+    "prejournal",
+    "time"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@zeit/fetch": "^6.0.0",
+    "timeld-common": "^0.1.3"
+  }
+}
