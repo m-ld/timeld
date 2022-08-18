@@ -1,5 +1,5 @@
 import setupFetch from '@zeit/fetch';
-import { ResultsReadable } from 'timeld-common';
+import { lastPathComponent, ResultsReadable } from 'timeld-common';
 
 /**
  * @implements Integration
@@ -82,7 +82,7 @@ export default class PrejournalIntegration {
     return new ResultsReadable(state.read({
       '@describe': '?entry', '@where': { '@id': '?id', '@type': 'Entry' }
     }).consume, {
-      stringify: src => new WorkedHours(tsId, src).toJSON().join(', '),
+      stringify: src => new WorkedHours(tsId, src).toJSON().join(' '),
       separator: '\n'
     });
   }
@@ -120,12 +120,4 @@ class WorkedHours {
       this.description
     ];
   }
-}
-
-/**
- * @param {string} pathname
- * @returns {string}
- */
-function lastPathComponent(pathname) {
-  return pathname.substring(pathname.lastIndexOf('/') + 1);
 }

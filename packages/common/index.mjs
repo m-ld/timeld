@@ -46,5 +46,6 @@ export {
   dateJsonLd,
   safeRefsIn,
   isReference,
-  domainRelativeIri
+  domainRelativeIri,
+  lastPathComponent
 } from './lib/util.mjs';

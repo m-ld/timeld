@@ -22,10 +22,12 @@ import { flatMap } from 'rx-flowable/operators';
  */
 export default class MockGateway extends BaseGateway {
   /**
-   * @param {string} domainName
+   * @param {object} config
+   * @param {string} config.domainName
    */
-  constructor({ domainName }) {
-    super(domainName);
+  constructor(config) {
+    super(config.domainName);
+    this.config = config;
   }
 
   /**
@@ -63,6 +65,7 @@ export default class MockGateway extends BaseGateway {
   }
 
   initTimesheet = jest.fn();
+  isGenesisTs = jest.fn();
 }
 
 /** Sanitisation of JSON */

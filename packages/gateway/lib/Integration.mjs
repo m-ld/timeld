@@ -1,12 +1,19 @@
-import { propertyValue } from '@m-ld/m-ld';
+import { array, propertyValue } from '@m-ld/m-ld';
 import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
 
 /**
  * @typedef {object} Integration
  * @static {string} configKey
  * @static {string} contentType
- * @property {(tsId: AccountOwnedId, update: MeldUpdate, state: MeldReadState) => Promise<*>} entryUpdate
- * @property {(tsId: AccountOwnedId, state: MeldReadState) => Promise<*>} reportTimesheet
+ * @property {(
+ * tsId: AccountOwnedId,
+ * update: MeldUpdate,
+ * state: MeldReadState
+ * ) => Promise<*>} entryUpdate
+ * @property {(
+ * tsId: AccountOwnedId,
+ * state: MeldReadState
+ * ) => Promise<*>} reportTimesheet
  */
 
 /**
@@ -31,7 +38,7 @@ export default class IntegrationExtension {
    */
   constructor({ module, appliesTo }, src) {
     this.module = module;
-    this.appliesTo = appliesTo;
+    this.appliesTo = [...appliesTo];
     this.resetUpdate();
     this.src = new Proxy(src || {}, {
       set: (src, p, value) => {
@@ -51,7 +58,8 @@ export default class IntegrationExtension {
    */
   async initialise(config) {
     const Impl = (await import(this.module)).default;
-    this.integration = /**@type {Integration}*/new Impl(config[Impl.configKey], this.src);
+    this.integration =
+      /**@type {Integration}*/new Impl(config[Impl.configKey], this.src);
     this.contentType = Impl.contentType;
     return this;
   }
@@ -77,11 +85,39 @@ export default class IntegrationExtension {
   };
 
   /**
+   * Called when the extension subject itself is updated
+   * @param {GraphSubject} src
+   * @param {'delete'|'insert'} type
+   */
+  onUpdate(src, type) {
+    if ('appliesTo' in src) {
+      const affectedApplies = idSet(array(src['appliesTo']));
+      if (type === 'delete') {
+        this.appliesTo = this.appliesTo.filter(a => !affectedApplies.has(a));
+      } else {
+        this.appliesTo.push(...affectedApplies);
+      }
+    }
+  }
+
+  /**
    * @returns {Update}
    */
   resetUpdate() {
     const update = this.update;
     this.update = {};
     return update;
+  }
+
+  /**
+   * @returns {Subject}
+   */
+  toJSON() {
+    return {
+      '@type': 'Integration',
+      module: this.module,
+      appliesTo: [...this.appliesTo].map(iri => ({ '@id': iri })),
+      ...this.src
+    }
   }
 }

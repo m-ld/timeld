@@ -13,7 +13,7 @@ describe('Integration extension', () => {
     ext = IntegrationExtension.fromJSON({
       '@id': 'mockIntegration',
       '@type': 'Integration',
-      module: '../test/MockIntegration.mjs',
+      module: 'timeld-common/test/MockIntegration.mjs',
       appliesTo: { '@id': 'test/ts1' },
       before: 'hello'
     });
@@ -40,6 +40,14 @@ describe('Integration extension', () => {
     expect(gwUpdate).toEqual({
       '@insert': { '@id': 'mockIntegration', testing: 'ts1:config' }
     });
+    expect(ext.toJSON()).toEqual({
+      '@id': 'mockIntegration',
+      '@type': 'Integration',
+      module: 'timeld-common/test/MockIntegration.mjs',
+      appliesTo: { '@id': 'test/ts1' },
+      testing: 'ts1:config',
+      before: 'hello'
+    });
   });
 
   test('reports updated data to be stored',async () => {
@@ -54,6 +62,13 @@ describe('Integration extension', () => {
     expect(gwUpdate).toEqual({
       '@delete': { '@id': 'mockIntegration', before: 'hello' },
       '@insert': { '@id': 'mockIntegration', before: 'goodbye' }
+    });
+    expect(ext.toJSON()).toEqual({
+      '@id': 'mockIntegration',
+      '@type': 'Integration',
+      module: 'timeld-common/test/MockIntegration.mjs',
+      appliesTo: { '@id': 'test/ts1' },
+      before: 'goodbye'
     });
   });
 });

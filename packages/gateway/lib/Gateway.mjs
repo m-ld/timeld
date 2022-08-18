@@ -88,8 +88,14 @@ export default class Gateway extends BaseGateway {
    * @param {MeldReadState} state
    */
   initIntegrations(state) {
+    // FIXME: Integration must be tied to exactly one gateway instance!
+    // noinspection JSCheckFunctionSignatures
     return this.readAsync(state.read({
-      '@describe': '?ext', '@where': { '@id': '?ext', '@type': 'Integration' }
+      '@describe': '?ext',
+      '@where': {
+        // Only load the integration if it applies to anything
+        '@id': '?ext', '@type': 'Integration', appliesTo: '?'
+      }
     }), src => this.loadIntegration(src));
   }
 
@@ -128,15 +134,24 @@ export default class Gateway extends BaseGateway {
    */
   onUpdateIntegrations(update, state) {
     for (let src of update['@delete']) {
-      // If an integration's key property vanishes, remove it
-      if (src['@id'] in this.integrations && 'module' in src)
-        delete this.integrations[src['@id']];
+      if (src['@id'] in this.integrations) {
+        if ('module' in src) {
+          // If an integration's key property vanishes, remove it
+          delete this.integrations[src['@id']];
+          LOG.info('Unloaded integration', src);
+        } else {
+          this.integrations[src['@id']].onUpdate(src, 'delete');
+        }
+      }
     }
     for (let src of update['@insert']) {
       // If a new integration appears, load it
-      if (src['@type'] === 'Integration')
+      if (src['@type'] === 'Integration') {
         // noinspection JSIgnoredPromiseFromCall happy for this to be async
         this.loadIntegration(src);
+      } else if (src['@id'] in this.integrations) {
+        this.integrations[src['@id']].onUpdate(src, 'insert');
+      }
     }
   }
 
@@ -156,7 +171,7 @@ export default class Gateway extends BaseGateway {
     const tsIri = tsId.toRelativeIri();
     ts.follow((update, state) => {
       for (let integration of Object.values(this.integrations)) {
-        if (integration.appliesTo.has(tsIri)) {
+        if (integration.appliesTo.includes(tsIri)) {
           // TODO: These will queue up on the write lock, and could overflow
           // Integrations should be guaranteed fast and async their heavy stuff
           this.domain.write(async gwState =>

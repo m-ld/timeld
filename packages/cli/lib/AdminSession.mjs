@@ -473,9 +473,7 @@ export default class AdminSession extends Repl {
       add() {
         const module = argv.value;
         return this.session.writeProc({
-          '@insert': {
-            '@type': 'Integration', module, appliesTo: this.ownedRef
-          },
+          '@insert': { '@type': 'Integration', module, appliesTo: this.ownedRef },
           '@where': this.ownedIsOwned
         });
       }
@@ -484,10 +482,8 @@ export default class AdminSession extends Repl {
         const module = argv.value;
         return this.session.writeProc({
           // TODO: Leaves garbage if this is the last appliesTo
-          '@delete': {
-            module, appliesTo: this.ownedRef
-          },
-          '@where': this.ownedIsOwned
+          '@delete': { '@id': '?id', appliesTo: this.ownedRef },
+          '@where': [{ '@id': '?id', '@type': 'Integration', module }, this.ownedIsOwned]
         });
       }
     }(this);

@@ -79,3 +79,11 @@ export const withDoc = doc => ({
  */
 export const domainRelativeIri = (iri, domainName) =>
   new URL(iri, `http://${domainName}`).toString();
+
+/**
+ * @param {string} pathname
+ * @returns {string}
+ */
+export function lastPathComponent(pathname) {
+  return pathname.substring(pathname.lastIndexOf('/') + 1);
+}

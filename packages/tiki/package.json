@@ -1,0 +1,25 @@
+{
+  "name": "timeld-tiki",
+  "version": "0.1.0",
+  "description": "timeld - Tiki Timesheets integration",
+  "main": "index.mjs",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timeld",
+    "tiki",
+    "time"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme"
+}

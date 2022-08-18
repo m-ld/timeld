@@ -9,10 +9,13 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
+import IntegrationExtension from './Integration.mjs';
+import { batch } from 'rx-flowable/operators';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
  * Instances are ephemeral, instantiated dynamically on demand.
+ * @implements BeforeWriteTriggers
  */
 export default class Account {
   /**
@@ -37,8 +40,8 @@ export default class Account {
    * @param {Iterable<string>} emails verifiable account identities
    * @param {Iterable<string>} keyids per-device keys
    * @param {Iterable<string>} admins admin (primary accountable) IRIs
-   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet Id Refs
-   * @param {import('@m-ld/m-ld').Reference[]} projects project Id Refs
+   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet ID Refs
+   * @param {import('@m-ld/m-ld').Reference[]} projects project ID Refs
    */
   constructor(gateway, {
     name,
@@ -198,7 +201,7 @@ export default class Account {
    * @param {import('@m-ld/m-ld').Reference} tsRef the timesheet ref
    * @returns {Promise<void>}
    */
-  onInsertTimesheet = async (state, tsRef) => {
+  beforeInsertTimesheet = async (state, tsRef) => {
     if (tsRef != null) {
       const tsId = this.gateway.ownedRefAsId(tsRef);
       const ask = new Ask(state);
@@ -212,11 +215,49 @@ export default class Account {
   };
 
   /**
+   * @param {MeldReadState} state
+   * @param {GraphSubject} src
+   * @returns {Promise<Subject>}
+   */
+  beforeInsertIntegration = async (state, src) => {
+    // Create a temporary integration (the real one will be loaded later)
+    const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway.config);
+    // Flow matched entries to the extension
+    await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
+    return ext.toJSON();
+  };
+
+  /**
+   * @param {MeldReadState} state
+   * @param {IntegrationExtension} ext
+   * @param {string} timesheetId
+   */
+  async revupIntegration(state, ext, timesheetId) {
+    const tsId = this.gateway.ownedRefAsId({ '@id': timesheetId });
+    if (await this.gateway.isGenesisTs(state, tsId))
+      throw new BadRequestError('Timesheet not found: %s', tsId);
+    const tsClone = await this.gateway.initTimesheet(tsId, false);
+    // TODO: This holds locks on both gateway and timesheet state!
+    await new Promise((resolve, reject) => {
+      tsClone.read(state =>
+        each(tsClone.read({
+          '@describe': '?entry',
+          '@where': { '@id': '?entry', '@type': 'Entry' }
+        }).consume.pipe(batch(10)), srcBatch => {
+          // noinspection JSCheckFunctionSignatures
+          return ext.entryUpdate(tsId, {
+            '@delete': [], '@insert': srcBatch
+          }, state);
+        }).then(resolve, reject));
+    });
+  }
+
+  /**
    * @param {import('@m-ld/m-ld').Query} query
    */
   async write(query) {
     const matchingPattern =
-      new WritePatterns(this.name, this.onInsertTimesheet).matchPattern(query);
+      new WritePatterns(this.name, this).matchPattern(query);
     if (matchingPattern == null)
       throw new ForbiddenError('Unrecognised write pattern: %j', query);
     await this.gateway.domain.write(async state => {
