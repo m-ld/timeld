@@ -1,6 +1,6 @@
 {
   "name": "timeld",
-  "version": "0.1.4-prejournal.0",
+  "version": "0.1.4-prejournal.1",
   "private": true,
   "description": "Live shared timesheets",
   "scripts": {
