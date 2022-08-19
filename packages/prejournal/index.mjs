@@ -69,7 +69,10 @@ export default class PrejournalIntegration {
         // Inserting worked-hours
         const res = await this.post(new WorkedHours(tsId, src));
         // Store the movement ID for the entry
-        this.ext[src['@id']] = res[0]['movementId'];
+        // (If available: https://github.com/pondersource/prejournal/issues/127)
+        const movementId = res[0]['movementId'];
+        if (movementId)
+          this.ext[src['@id']] = movementId;
       }
     }));
   }
@@ -101,6 +104,7 @@ class WorkedHours {
     this.amount = (src['duration'] || 0) / 60;
     this.description = src['activity'];
     this.movementId = movementId;
+    // TODO: External identifier, https://github.com/pondersource/prejournal/issues/129
   }
 
   toJSON() {

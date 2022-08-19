@@ -22,10 +22,15 @@ npm run test
 echo Bumping the version of all packages in the monorepo
 npm version "$VERSION" -ws --preid "$PRE_ID"
 
-echo Updating dependencies to bumped version
-COMMON_VER=$(npm run ver -w packages/common -s)
-npm i timeld-common@"$COMMON_VER" \
+echo Updating dependencies to bumped versions
+npm i timeld-common@"$(npm run ver -w packages/common -s)" \
   -w packages/cli \
+  -w packages/gateway \
+  -w packages/prejournal \
+  -w packages/tiki
+npm i timeld-prejournal@"$(npm run ver -w packages/prejournal -s)" \
+  -w packages/gateway
+npm i timeld-tiki@"$(npm run ver -w packages/tiki -s)" \
   -w packages/gateway
 git commit -am "version-packages"
 

@@ -1,5 +1,5 @@
 import setupFetch from '@zeit/fetch';
-import { lastPathComponent, ResultsReadable } from 'timeld-common';
+import { domainRelativeIri, lastPathComponent, ResultsReadable } from 'timeld-common';
 
 /**
  * @implements Integration
@@ -112,8 +112,9 @@ class TimesheetTrackerItem {
       const end = new Date(start.getTime() + (duration * 60000));
       this.tsEndTime = tikiTime(end);
     }
-    this.tsSource = 'timeld';
-    this.tsTimeldID = tsId.toIri();
+    this.tsTimeldID = domainRelativeIri(src['@id'], tsId.toDomain());
+    // Original source ID may be external
+    this.tsSource = src['external']?.['@id'] || this.tsTimeldID;
   }
 
   toString() {
