@@ -1,6 +1,6 @@
 {
   "name": "timeld-cli",
-  "version": "0.1.4",
+  "version": "0.1.5-prejournal.0",
   "description": "Live shared timesheets command interface",
   "main": "index.mjs",
   "bin": {

@@ -1,6 +1,6 @@
 {
   "name": "timeld-prejournal",
-  "version": "0.1.0",
+  "version": "0.1.1-prejournal.0",
   "description": "timeld - prejournal integration",
   "main": "index.mjs",
   "scripts": {
