@@ -1,11 +1,10 @@
 {
   "name": "timeld-tiki",
-  "version": "0.1.1-prejournal.0",
+  "version": "0.1.1-prejournal.1",
   "description": "timeld - Tiki Timesheets integration",
   "main": "index.mjs",
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "ver": "echo $npm_package_version"
   },
   "repository": {
     "type": "git",
@@ -24,6 +23,6 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@zeit/fetch": "^6.0.0",
-    "timeld-common": "^0.1.3"
+    "timeld-common": "^0.1.4-prejournal.1"
   }
 }
