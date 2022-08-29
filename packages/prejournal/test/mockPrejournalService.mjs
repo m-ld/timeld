@@ -15,8 +15,7 @@ const server = createServer(async (req, res) => {
   if (command.startsWith('update')) {
     res.end();
   } else {
-    // Note movement ID not yet included in response
-    // https://github.com/pondersource/prejournal/issues/129
+    // Only the movement ID is interesting to the integration
     res.end(JSON.stringify([{
       movementId: ++movementId
     }]));

@@ -169,14 +169,14 @@ export default class Gateway extends BaseGateway {
     // Attach integration listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
-    ts.follow((update, state) => {
+    ts.follow(async (update, state) => {
       for (let integration of Object.values(this.integrations)) {
         if (integration.appliesTo.includes(tsIri)) {
           // TODO: These will queue up on the write lock, and could overflow
           // Integrations should be guaranteed fast and async their heavy stuff
-          this.domain.write(async gwState =>
+          await this.domain.write(async gwState =>
             gwState.write(await integration.entryUpdate(tsId, update, state))
-          ).catch(err => LOG.warn('Integration update failed', tsIri, err));
+          ).catch(err => LOG.warn(integration.module, 'update failed', tsIri, err));
         }
       }
     });

@@ -23,6 +23,7 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@zeit/fetch": "^6.0.0",
+    "loglevel": "^1.8.0",
     "timeld-common": "^0.1.4-prejournal.1"
   }
 }
