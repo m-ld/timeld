@@ -1,23 +1,36 @@
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
 import { consume } from 'rx-flowable/consume';
-import { toBeISODateString } from 'timeld-common/test/fixtures.mjs';
+import { exampleEntryJson, toBeISODateString } from 'timeld-common/test/fixtures.mjs';
+import { readResult } from '@m-ld/m-ld';
+import { EMPTY } from 'rxjs';
+import MockIntegration from 'timeld-common/test/MockIntegration.mjs';
+import { AccountOwnedId } from 'timeld-common';
 
 expect.extend({ toBeISODateString });
 
 describe('Administration session', () => {
   let gateway;
   let outLines, errLines;
+  let tsEntries;
 
   beforeEach(async () => {
-    gateway = new MockGateway({ domainName: 'ex.org' });
+    gateway = new MockGateway({ domainName: 'ex.org', mock: {} });
     // noinspection JSCheckFunctionSignatures using mock gateway
     const userAccount = new Account(gateway, {
       name: 'test', emails: ['test@ex.org']
     });
     await gateway.initialise(userAccount);
+    tsEntries = EMPTY;
+    // noinspection JSCheckFunctionSignatures
+    gateway.initTimesheet.mockResolvedValue({
+      // Required for integration revup
+      read: jest.fn(arg => typeof arg == 'function' ?
+        arg({}) : readResult(tsEntries))
+    });
     errLines = jest.fn();
     outLines = jest.fn();
   });
@@ -132,6 +145,38 @@ describe('Administration session', () => {
       await session.execute('report org1/ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('Timesheet org1/ts1');
     });
+
+    test('Lists no integrations for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Adds integration for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      const entry = exampleEntryJson();
+      tsEntries = consume([entry]);
+      await session.execute(
+        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        outLines, errLines);
+      expect(MockIntegration.created.entryUpdate).toHaveBeenCalledWith(
+        AccountOwnedId.fromString('test/ts1@ex.org'),
+        { '@delete': [], '@insert': [entry] }, expect.any(Object));
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
+    });
+
+    test('Removes integration for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        outLines, errLines);
+      await session.execute(
+        'rm integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+    });
   });
 
   describe('with org account', () => {
@@ -212,6 +257,13 @@ describe('Administration session', () => {
       expect(outLines).not.toHaveBeenCalled();
       await session.execute('ls link --ts fred/ts1', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Adds integration for timesheet', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await session.execute('add integration timeld-common/test/MockIntegration.mjs --timesheet ts1', outLines, errLines);
+      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
     });
   });
 });

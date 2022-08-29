@@ -1,8 +1,6 @@
 import { validate } from 'jtd';
 
 /**
- * @typedef {import('@m-ld/m-ld').MeldReadState} MeldReadState
- * @typedef {import('@m-ld/m-ld').Query} Query
  * @typedef {import('jtd').Schema} Schema
  */
 

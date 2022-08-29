@@ -65,6 +65,18 @@ package "Account administration" {
     project must exist
   end note
 
+  usecase integrations as ([list | add | rm] ts or project integration)
+  User --> integrations
+  note right of integrations
+    ≪constraint≫
+    timesheet or project must exist
+  end note
+  note right of integrations
+    ≪trigger≫
+    garbage collect integration
+    stored data
+  end note
+
   ' TODO
   User --> (revoke all device access)
   note right

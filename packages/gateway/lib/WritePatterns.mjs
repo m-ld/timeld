@@ -1,19 +1,27 @@
 import { array } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, isReference } from 'timeld-common';
-import { QueryPattern } from './QueryPattern.mjs';
+import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
 import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
 
 /**
- * @typedef {import('@m-ld/m-ld').Reference} Reference
+ * @typedef {object} BeforeWriteTriggers
+ * @property {(
+ * state: MeldReadState,
+ * tsRef: Reference
+ * ) => Promise<*>} beforeInsertTimesheet
+ * @property {(
+ * state: MeldReadState,
+ * src: GraphSubject
+ * ) => Promise<Subject>} beforeInsertIntegration
  */
 
 export default class WritePatterns {
   /**
    * @param {string} accountName
-   * @param {(state: MeldReadState, tsRef: Reference) => Promise<void>} onInsertTimesheet
+   * @param {BeforeWriteTriggers} triggers
    */
-  constructor(accountName, onInsertTimesheet) {
+  constructor(accountName, triggers) {
     const isThisAccountRef = { properties: { '@id': { enum: [accountName] } } };
     /** @param {object} [properties] */
     const isThisAccount = properties => ({
@@ -35,7 +43,7 @@ export default class WritePatterns {
       properties: { '@id': { type: 'string' } },
       additionalProperties: true // ?p ?o
     };
-    const whereDeleteOwned = {
+    const whereOwned = {
       optionalProperties: { timesheet: matchOwned, project: matchOwned }
     };
     const deletesOwnedProperties = query => {
@@ -84,6 +92,71 @@ export default class WritePatterns {
     const timesheetDetail = {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
+
+    class InsertIntegrationPattern extends QueryPattern {
+      constructor(whereAccount) {
+        super({
+          properties: {
+            '@insert': {
+              properties: {
+                '@type': { enum: ['Integration'] },
+                module: { type: 'string' },
+                appliesTo: isReference
+              }
+            },
+            // TODO: Support projects
+            '@where': whereAccount({ timesheet: isReference })
+          }
+        });
+      }
+      matchesApplies(query, key) {
+        return query['@where'][key] &&
+          query['@insert'].appliesTo['@id'] === query['@where'][key]['@id'];
+      }
+      matches(query) {
+        return super.matches(query) &&
+          (this.matchesApplies(query, 'timesheet') ||
+            this.matchesApplies(query, 'project'));
+      }
+      async check(state, query) {
+        query['@insert'] = await triggers.beforeInsertIntegration(state, query['@insert']);
+        return super.check(state, query);
+      }
+    }
+
+    class DeleteIntegrationPattern extends QueryPattern {
+      constructor(whereAccount) {
+        super({
+          properties: {
+            '@delete': {
+              properties: {
+                '@id': isVariable,
+                appliesTo: isReference
+              }
+            },
+            '@where': {} // See wherePattern
+          }
+        });
+        this.wherePattern = new ReadPattern({
+          properties: {
+            '@id': isVariable,
+            '@type': { enum: ['Integration'] },
+            module: { type: 'string' }
+          }
+        }, whereAccount({ timesheet: isReference }));
+      }
+      matchesApplies(query, key) {
+        return query['@where'][1][key] &&
+          query['@delete'].appliesTo['@id'] === query['@where'][1][key]['@id'];
+      }
+      matches(query) {
+        return super.matches(query) &&
+          this.wherePattern.matches(query) &&
+          (this.matchesApplies(query, 'timesheet') ||
+            this.matchesApplies(query, 'project'));
+      }
+    }
+
     // noinspection JSValidateTypes
     /** @type {QueryPattern[]} */
     this.patterns = [
@@ -93,7 +166,7 @@ export default class WritePatterns {
           return super.matches(query) && isValidAccountDetail(query['@insert']);
         }
         async check(state, query) {
-          await onInsertTimesheet(state, query['@insert'].timesheet);
+          await triggers.beforeInsertTimesheet(state, query['@insert'].timesheet);
           return query;
         }
       }({
@@ -111,7 +184,7 @@ export default class WritePatterns {
       }({
         properties: {
           '@delete': thisAccountDetail('@delete'),
-          '@where': { ...isThisAccount(), ...whereDeleteOwned }
+          '@where': { ...isThisAccount(), ...whereOwned }
         }
       }),
       // Write new organisation account (with this account as admin)
@@ -132,7 +205,7 @@ export default class WritePatterns {
             isValidAccountDetail(query['@insert']);
         }
         async check(state, query) {
-          await onInsertTimesheet(state, query['@insert'].timesheet);
+          await triggers.beforeInsertTimesheet(state, query['@insert'].timesheet);
           return query;
         }
       }({
@@ -177,7 +250,7 @@ export default class WritePatterns {
       }({
         properties: {
           '@delete': orgDetail('@delete'),
-          '@where': { ...thisAccountIsAdmin(), ...whereDeleteOwned }
+          '@where': { ...thisAccountIsAdmin(), ...whereOwned }
         }
       }),
       // Add project to user or organisation owned timesheet
@@ -209,7 +282,11 @@ export default class WritePatterns {
           [verb]: timesheetDetail,
           '@where': thisAccountIsAdmin({ timesheet: isReference })
         }
-      })))
+      }))),
+      new InsertIntegrationPattern(isThisAccount),
+      new InsertIntegrationPattern(thisAccountIsAdmin),
+      new DeleteIntegrationPattern(isThisAccount),
+      new DeleteIntegrationPattern(thisAccountIsAdmin)
     ];
   }
 

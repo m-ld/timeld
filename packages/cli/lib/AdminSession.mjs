@@ -34,17 +34,18 @@ export default class AdminSession extends Repl {
   }
 
   get detailParamChoices() {
-    return ['ts', 'timesheet', 'project', 'link'].concat(this.isUserAccount ?
-      ['email', 'org', 'organisation'] :
-      // Technically you could admin emails and organisations from an org
-      // account session by editing the logged-in user, but omit for clarity
-      ['admin', 'administrator']);
+    return ['ts', 'timesheet', 'project', 'link', 'integration']
+      .concat(this.isUserAccount ?
+        ['email', 'org', 'organisation'] :
+        // Technically you could administer emails and organisations from an org
+        // account session by editing the logged-in user, but omit for clarity
+        ['admin', 'administrator']);
   }
 
   get describeValueParam() {
     return this.isUserAccount ?
-      'timesheet or project name, email address, or organisation name' :
-      'timesheet or project name, or admin user name';
+      'timesheet or project name, email address, organisation name, or integration module' :
+      'timesheet or project name, admin user name, or integration module';
   }
 
   buildCommands(yargs, ctx) {
@@ -69,7 +70,7 @@ export default class AdminSession extends Repl {
       .command(
         'key',
         'Show your API access key',
-      yargs => yargs,
+        yargs => yargs,
         () => ctx.exec(() =>
           new SyncProc(Readable.from([this.gateway.ablyKey.toString()])))
       )
@@ -168,6 +169,8 @@ export default class AdminSession extends Repl {
         return this.ownedDetail(argv, 'Project');
       case 'link':
         return this.linkDetail(argv);
+      case 'integration':
+        return this.integrationDetail(argv);
       default:
         throw `${argv.detail} not available`;
     }
@@ -384,7 +387,7 @@ export default class AdminSession extends Repl {
           return this.session.listProc({
             '@select': '?timesheet',
             '@where': [{
-              // I can see timesheets for projects that I admin
+              // I can see timesheets for projects that I administer
               ...this.session.userIsAdmin(this.project.account),
               project: this.project.toReference()
             }, {
@@ -397,7 +400,7 @@ export default class AdminSession extends Repl {
           return this.session.listProc({
             '@select': '?project',
             '@where': [{
-              // I can see projects for timesheets that I admin
+              // I can see projects for timesheets that I administer
               ...this.session.userIsAdmin(this.timesheet.account),
               timesheet: this.timesheet.toReference()
             }, {
@@ -424,6 +427,63 @@ export default class AdminSession extends Repl {
             ...this.session.userIsAdmin(this.timesheet.account),
             timesheet: this.timesheet.toReference()
           }
+        });
+      }
+    }(this);
+  }
+
+  /**
+   * @param {object} argv
+   * @param {string} [argv.project] command option
+   * @param {string} [argv.timesheet] command option
+   * @param {string} [argv.value] the integration module
+   * @returns {AccountDetail}
+   */
+  integrationDetail(argv) {
+    if ((argv.project != null) === (argv.timesheet != null))
+      throw new RangeError('Must provide timesheet or project');
+    return new class extends AccountDetail {
+      projectId = this.session.resolveId(argv.project);
+      timesheetId = this.session.resolveId(argv.timesheet);
+
+      get ownedRef() {
+        return (this.projectId || this.timesheetId).toReference();
+      }
+
+      get ownedIsOwned() {
+        return {
+          ...this.session.userIsAdmin(),
+          [this.projectId != null ? 'project' : 'timesheet']: this.ownedRef
+        };
+      }
+
+      list() {
+        return this.session.listProc({
+          '@select': '?module', '@where': [
+            {
+              '@type': 'Integration',
+              module: '?module',
+              appliesTo: this.ownedRef
+            },
+            this.ownedIsOwned
+          ]
+        }, new TableFormat('?module'));
+      }
+
+      add() {
+        const module = argv.value;
+        return this.session.writeProc({
+          '@insert': { '@type': 'Integration', module, appliesTo: this.ownedRef },
+          '@where': this.ownedIsOwned
+        });
+      }
+
+      remove() {
+        const module = argv.value;
+        return this.session.writeProc({
+          // TODO: Leaves garbage if this is the last appliesTo
+          '@delete': { '@id': '?id', appliesTo: this.ownedRef },
+          '@where': [{ '@id': '?id', '@type': 'Integration', module }, this.ownedIsOwned]
         });
       }
     }(this);

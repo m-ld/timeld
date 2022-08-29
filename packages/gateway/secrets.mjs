@@ -1,6 +1,8 @@
 import { Env } from 'timeld-common';
 import dotenv from 'dotenv';
 import { join } from 'path';
+import prejournalSecrets from 'timeld-prejournal/secrets.mjs';
+import tikiSecrets from 'timeld-tiki/secrets.mjs';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Load local environment from first found .env
@@ -14,9 +16,17 @@ const env = new Env({}, 'timeld-gateway');
 const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Output required secrets
+// Gateway secrets
 console.log(`TIMELD_GATEWAY_ABLY__KEY=${config.ably.key}`);
 // noinspection JSUnresolvedVariable WebStorm incorrectly merges ably property
 console.log(`TIMELD_GATEWAY_ABLY__API_KEY=${config.ably.apiKey}`);
 console.log(`TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=${config.courier.authorizationToken}`);
 console.log(`TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE=${config.courier.activationTemplate}`);
+
+////////////////////////////////////////////////////////////////////////////////
+// Extension secrets
+// TODO: dynamically from config keys & available modules
+if (config.prejournal)
+  prejournalSecrets(config);
+if (config.tiki)
+  tikiSecrets(config);

@@ -1,0 +1,78 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+hide circle
+allowmixing
+
+abstract class Account <<subject>> {
+  timesheet : Timesheet [*]
+  project : Project [*]
+  integration : IntegrationExtension [*]
+}
+
+class Timesheet <<domain>> <<subject>> {
+  project : Project [*]
+  external : Reference [0..1]
+}
+note left of Timesheet::external
+  The original
+  system of record
+end note
+
+Account *--> "*" Timesheet
+
+class IntegrationExtension <<subject>> {
+  module : string
+  appliesTo : Timesheet | Project [*]
+}
+note top of IntegrationExtension
+  Represents another system
+  whose language we speak,
+  for the limited purpose
+  of pushing //updates// and
+  responding //snapshots//
+end note
+
+note right of IntegrationExtension::module
+  NodeJS ESM import of
+  Integration class
+end note
+
+note right of IntegrationExtension::appliesTo
+  Selection of account-
+  owned data
+end note
+
+IntegrationExtension -- "*" Timesheet
+
+Account *--> "*" IntegrationExtension
+
+abstract class Integration <<javascript>> {
+  {static} configKey : string
+  {static} contentType : string
+  constructor(config, ext)
+  entryUpdate(tsId, update, state)
+  reportTimesheet(tsId, state) : Stream
+  accountUpdate(update)
+}
+note right of Integration::constructor
+  passed configuration (inc. secrets)
+  and extension, can have properties
+  storing additional data
+end note
+
+note right of Integration::entryUpdate
+  Update of Timesheet Entries.
+  Provided with the Timesheet
+  ID, raw m-ld update, the
+  current Timesheet state
+end note
+
+note right of Integration::accountUpdate
+  Limited account updates e.g.
+  create/delete Timesheet
+end note
+
+IntegrationExtension -- "implementation" Integration
+
+@enduml

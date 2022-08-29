@@ -4,11 +4,6 @@ import isURL from 'validator/lib/isURL.js';
 import isFQDN from 'validator/lib/isFQDN.js';
 
 /**
- * @typedef {import('@m-ld/m-ld').MeldConfig} MeldConfig
- * @typedef {import('@m-ld/m-ld').AppPrincipal} AppPrincipal
- */
-
-/**
  * Expands a partial set of command-line arguments into a usable m-ld
  * configuration with an `@id`, `@domain`, `@context` and `genesis` flag.
  */
