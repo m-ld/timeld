@@ -1,6 +1,6 @@
 {
   "name": "timeld-tiki",
-  "version": "0.1.1-prejournal.1",
+  "version": "0.1.1",
   "description": "timeld - Tiki Timesheets integration",
   "main": "index.mjs",
   "scripts": {
@@ -23,6 +23,6 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@zeit/fetch": "^6.0.0",
-    "timeld-common": "^0.1.4-prejournal.1"
+    "timeld-common": "^0.1.4"
   }
 }

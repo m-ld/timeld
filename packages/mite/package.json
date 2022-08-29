@@ -1,6 +1,6 @@
 {
   "name": "timeld-mite",
-  "version": "0.1.4-prejournal.1",
+  "version": "0.1.4",
   "description": "timeld - mite.yo.lk integration",
   "main": "index.mjs",
   "devDependencies": {},
