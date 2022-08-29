@@ -3,6 +3,14 @@ import { ResultsReadable } from 'timeld-common';
 import LOG from 'loglevel';
 
 /**
+ * @typedef {object} PrejournalConfig
+ * @property {string} user account (user) name
+ * @property {string} key account key
+ * @property {string} api API URL e.g. https://time.pondersource.com/v1/
+ * @property {string} client default client
+ */
+
+/**
  * @implements Integration
  */
 export default class PrejournalIntegration {
@@ -16,26 +24,19 @@ export default class PrejournalIntegration {
 
   /**
    * Construct with configuration parameters
-   * @param {string} user Prejournal account (user) name
-   * @param {string} key Prejournal account key
-   * @param {string} api API URL e.g. https://time.pondersource.com/v1/
-   * @param {string} client default prejournal client
+   * @param {PrejournalConfig} config
    * @param {GraphSubject} ext
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
-  constructor(
-    { user, key, api, client },
-    ext,
-    fetch = setupFetch()
-  ) {
-    const auth = `Basic ${Buffer.from([user, key].join(':')).toString('base64')}`;
-    const apiRoot = new URL(api);
+  constructor(config, ext, fetch = setupFetch()) {
+    const auth = `Basic ${Buffer.from([config.user, config.key].join(':')).toString('base64')}`;
+    const apiRoot = new URL(config.api);
     if (!apiRoot.pathname.endsWith('/'))
       apiRoot.pathname += '/';
     if (!apiRoot.pathname.endsWith('/v1/'))
       throw new RangeError('Prejournal integration requires v1 API');
     this.ext = ext;
-    this.client = client;
+    this.client = config.client;
     /**
      * @param {WorkedHours} workedHours
      * @returns {Promise<*>}

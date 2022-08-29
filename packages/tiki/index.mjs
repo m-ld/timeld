@@ -2,6 +2,12 @@ import setupFetch from '@zeit/fetch';
 import { domainRelativeIri, lastPathComponent, ResultsReadable } from 'timeld-common';
 
 /**
+ * @typedef {object} TikiConfig
+ * @property {string} api API URL e.g. https://timesheet.dev3.evoludata.com/api/trackers/2/items
+ * @property {string} token OAuth2 token
+ */
+
+/**
  * @implements Integration
  */
 export default class TikiIntegration {
@@ -15,17 +21,12 @@ export default class TikiIntegration {
 
   /**
    * Construct with configuration parameters
-   * @param {string} api API URL e.g. https://timesheet.dev3.evoludata.com/api/trackers/2/items
-   * @param {string} token OAuth2 token
+   * @param {TikiConfig} config
    * @param {GraphSubject} ext
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
-  constructor(
-    { api, token },
-    ext,
-    fetch = setupFetch()
-  ) {
-    const apiRoot = new URL(api);
+  constructor(config, ext, fetch = setupFetch()) {
+    const apiRoot = new URL(config.api);
     if (apiRoot.pathname.endsWith('/'))
       apiRoot.pathname = apiRoot.pathname.slice(0, -1);
     this.ext = ext;
@@ -40,7 +41,7 @@ export default class TikiIntegration {
       const res = await fetch(url.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${(config.token)}`
         },
         method: 'POST',
         body: trackerItem.toString()
