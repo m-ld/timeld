@@ -149,5 +149,19 @@ describe('Environment', () => {
   test('convert string to env var', () => {
     expect(Env.toEnvVar('timeld')).toBe('TIMELD');
     expect(Env.toEnvVar('timeld-gateway')).toBe('TIMELD_GATEWAY');
+    expect(Env.toEnvVar('apiKey')).toBe('API_KEY');
+  });
+
+  test('config to env', () => {
+    const env = new Env();
+    expect(env.asEnv({})).toEqual({});
+    expect(env.asEnv({ genesis: true }))
+      .toEqual({ TIMELD_GENESIS: 'true' });
+    expect(env.asEnv({ apiKey: 'secret' }))
+      .toEqual({ TIMELD_API_KEY: 'secret' });
+    expect(env.asEnv({ smtp: { host: 'ex.org', auth: { user: 'u1' } } }))
+      .toEqual({ TIMELD_SMTP__HOST: 'ex.org', TIMELD_SMTP__AUTH__USER: 'u1' });
+    expect(env.asEnv({ keyA: true, keyB: false }, ['keyA']))
+      .toEqual({ TIMELD_KEY_A: 'true' });
   });
 });

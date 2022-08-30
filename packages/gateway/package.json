@@ -26,13 +26,13 @@
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
     "@m-ld/m-ld": "^0.8.2",
-    "@trycourier/courier": "^3.15.0",
     "cryptr": "^6.0.3",
     "http-graceful-shutdown": "^3.1.8",
     "jsonwebtoken": "^8.5.1",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.0",
     "ndjson": "^2.0.0",
+    "nodemailer": "^6.7.8",
     "restify": "^8.6.1",
     "restify-errors": "^8.0.2",
     "rx-flowable": "^0.1.2",
@@ -46,6 +46,7 @@
   "devDependencies": {
     "@types/cryptr": "^4.0.1",
     "@types/jsonwebtoken": "^8.5.8",
+    "@types/nodemailer": "^6.4.5",
     "@types/restify": "^8.5.5",
     "@types/restify-errors": "^4.3.4",
     "@types/supertest": "^2.0.12",

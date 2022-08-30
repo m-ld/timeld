@@ -1,25 +1,29 @@
-import { CourierClient } from '@trycourier/courier';
+import nodemailer from 'nodemailer';
 
 /**
- * @typedef {import('@trycourier/courier').ICourierClientOptions} CourierOptions
+ * @typedef {import('nodemailer/lib/smtp-transport').Options} SmtpOptions
  */
 
 export default class Notifier {
   /**
-   * @param {CourierOptions & { activationTemplate: string }} options
+   * @param {SmtpOptions & { from: string }} options
    */
   constructor(options) {
-    this.courier = CourierClient(options);
-    this.activationTemplate = options.activationTemplate;
+    this.transporter = nodemailer.createTransport(options);
+    this.from = options.from;
+    let [, domain] = options.from.match(/@(\w+)/) || [];
+    this.domain = domain || 'timeld';
   }
 
   sendActivationCode(email, activationCode) {
-    return this.courier.send({
-      message: {
-        template: this.activationTemplate,
-        to: { email },
-        data: { activationCode }
-      }
+    return this.transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: `Hi from ${this.domain}`, // Subject line
+      text: `Your activation code is ${activationCode}\n\n` +
+        'This code is usable for the next 10 minutes.\n' +
+        'Cheers,\n' +
+        `the ${this.domain} team`
     });
   }
 }

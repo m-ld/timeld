@@ -13,10 +13,11 @@ git clone https://github.com/m-ld/timeld
 cd timeld/packages/gateway
 ```
 
-1. Create a [fly.io](https://fly.io) account (requires a credit card) and install `flyctl`.
-2. Sign up for [Ably](https://ably.com/), create an app in the Ably dashboard, and look for the root key and the api key.
-3. Sign up for [Courier](https://www.courier.com/) and copy the authorization token that gets generated.
-4. Decide your app name!
+You will need:
+1. A [fly.io](https://fly.io) account (requires a credit card); and install `flyctl`.
+2. An [Ably](https://ably.com/) account; create an app in the Ably dashboard, and look for the root key and the api key.
+3. An SMTP service and outbound account, for sending activation codes.
+4. An app name!
 
 ```shell
 flyctl apps create {your great name}
@@ -55,8 +56,10 @@ In preparation for a first deployment ("genesis") you need a local `.env` file (
 
 - `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
 - `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
-- `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN={your courier auth token}`
-- `TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE={courier activation email template ID}`
+- `TIMELD_GATEWAY_SMTP__HOST={your SMTP host}`
+- `TIMELD_GATEWAY_SMTP__FROM={an email account to send activation codes}`
+- `TIMELD_GATEWAY_SMTP__AUTH__USER={your SMTP account}`
+- `TIMELD_GATEWAY_SMTP__AUTH__PASS={your SMTP account password}`
 
 `deploy.sh` takes three optional arguments:
 1. app name (root); defaults to `timeld`

@@ -15,16 +15,17 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} TIMELD_GATEWAY_GENESIS "true" iff the gateway is new
  * @property {string} TIMELD_GATEWAY_ABLY__KEY gateway Ably app key
  * @property {string} TIMELD_GATEWAY_ABLY__API_KEY gateway Ably api key
- * @property {string} TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN
- * @property {string} TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE
+ * @property {string} TIMELD_GATEWAY_SMTP__HOST
+ * @property {string} TIMELD_GATEWAY_SMTP__FROM
+ * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
+ * @property {string} TIMELD_GATEWAY_SMTP__AUTH__PASS
  */
 
 /**
  * @typedef {object} _TimeldGatewayConfig
  * @property {string} gateway domain name or URL of gateway
  * @property {string} ably.apiKey gateway Ably api key
- * @property {string} courier.authorizationToken
- * @property {string} courier.activationTemplate
+ * @property {SmtpOptions} smtp SMTP details for activation emails
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
  */
@@ -47,7 +48,7 @@ if (config['@domain'] == null) {
 // noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
 const ablyApi = new AblyApi(config.ably);
 const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
-const notifier = new Notifier(config.courier);
+const notifier = new Notifier(config.smtp);
 const server = rest({ gateway, notifier });
 
 server.listen(8080, function () {

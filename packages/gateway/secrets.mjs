@@ -16,12 +16,9 @@ const env = new Env({}, 'timeld-gateway');
 const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Gateway secrets
-console.log(`TIMELD_GATEWAY_ABLY__KEY=${config.ably.key}`);
-// noinspection JSUnresolvedVariable WebStorm incorrectly merges ably property
-console.log(`TIMELD_GATEWAY_ABLY__API_KEY=${config.ably.apiKey}`);
-console.log(`TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=${config.courier.authorizationToken}`);
-console.log(`TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE=${config.courier.activationTemplate}`);
+// Gateway secrets: Ably, SMTP
+for (let [envVar, envValue] of Object.entries(env.asEnv(config, ['ably', 'smtp'])))
+  console.log(`${envVar}=${envValue}`);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extension secrets
