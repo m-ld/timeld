@@ -64,7 +64,9 @@ describe('Gateway', () => {
           apiKey: 'ably_api_secret',
           tls: true // random additional property sent to clients
         },
-        courier: { authorizationToken: 'courier_secret' }
+        smtp: {
+          auth: { user: 'smtp_user', pass: 'smtp_secret' }
+        }
       }, clone, ablyApi);
       await gateway.initialise();
     });
@@ -161,7 +163,7 @@ describe('Gateway', () => {
       // Gateway API secrets NOT present
       expect(tsConfig['ably'].key).toBeUndefined();
       expect(tsConfig['ably']['apiKey']).toBeUndefined();
-      expect(tsConfig['courier']).toBeUndefined();
+      expect(tsConfig['smtp']).toBeUndefined();
 
       // Expect to have created the timesheet genesis clone
       expect(clone.mock.lastCall).toMatchObject([
