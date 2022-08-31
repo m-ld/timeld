@@ -1,3 +1,5 @@
+// noinspection JSUnresolvedFunction,JSUnresolvedVariable
+
 import errors from 'restify-errors';
 
 export function toHttpError(e) {

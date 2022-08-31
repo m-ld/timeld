@@ -1,16 +1,19 @@
-import Cli from '../lib/Cli.mjs';
-import { Env } from 'timeld-common';
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
+import Cli from '../lib/Cli.mjs';
+import { CloneFactory, Env } from 'timeld-common';
 import { createWriteStream } from 'fs';
 
 describe('CLI', () => {
   let console;
   let logSpy;
+  let cloneFactory;
 
   beforeEach(() => {
     console = new global.console.Console(createWriteStream('/dev/null'));
     // noinspection JSCheckFunctionSignatures
     logSpy = jest.spyOn(console, 'log');
+    cloneFactory = new class extends CloneFactory {}();
   });
 
   test('open validates user option', async () => {
@@ -50,7 +53,7 @@ describe('CLI', () => {
     }();
     await new Cli(env, {
       args: ['config'], console
-    }).start();
+    }, cloneFactory).start();
     expect(logSpy).toHaveBeenCalledWith(
       expect.any(String), expect.objectContaining({ test: 'Tested' }));
   });
@@ -63,7 +66,7 @@ describe('CLI', () => {
     }();
     await new Cli(env, {
       args: ['config', '--more', 'Written'], console
-    }).start();
+    }, cloneFactory).start();
     expect(logSpy).not.toHaveBeenCalled();
     expect(mockWrite).toHaveBeenCalledWith(
       { test: 'Tested', more: 'Written' });
@@ -77,7 +80,7 @@ describe('CLI', () => {
     }();
     await new Cli(env, {
       args: ['config', '--acc', 'my-account'], console
-    }).start();
+    }, cloneFactory).start();
     expect(logSpy).not.toHaveBeenCalled();
     expect(mockWrite).toHaveBeenCalledWith(
       { test: 'Tested', account: 'my-account' });

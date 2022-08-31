@@ -1,9 +1,10 @@
 // noinspection JSCheckFunctionSignatures,NpmUsedModulesInstalled
+
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import Gateway from '../lib/Gateway.mjs';
-import { dateJsonLd, Env, timeldContext } from 'timeld-common';
+import { CloneFactory, dateJsonLd, Env, timeldContext } from 'timeld-common';
 import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
@@ -12,20 +13,29 @@ import { DeadRemotes, exampleEntryJson } from 'timeld-common/test/fixtures.mjs';
 import { existsSync } from 'fs';
 import { drain } from 'rx-flowable';
 import { consume } from 'rx-flowable/consume';
-import errors from 'restify-errors';
+import * as errors from '../rest/errors.mjs';
 
 describe('Gateway', () => {
   let env;
-  let clone;
+  let cloneFactory;
   let tmpDir;
-  let ablyApi;
+  let keyStore;
 
   beforeEach(() => {
     tmpDir = dirSync({ unsafeCleanup: true });
     env = new Env({ data: join(tmpDir.name, 'data') });
-    clone = jest.fn(config =>
-      meldClone(new MeldMemDown(), DeadRemotes, config));
-    ablyApi = {
+    cloneFactory = new class extends CloneFactory {
+      clone = jest.fn((config) => {
+        return meldClone(new MeldMemDown(), DeadRemotes, config);
+      });
+      reusableConfig(config) {
+        // Random key for testing of reusable config
+        const { tls } = config;
+        // noinspection JSValidateTypes
+        return { ...super.reusableConfig(config), tls };
+      }
+    }();
+    keyStore = {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn()
     };
@@ -36,10 +46,10 @@ describe('Gateway', () => {
     tmpDir.removeCallback();
   });
 
-  test('throws if no ably config', async () => {
+  test('throws if no auth config', async () => {
     await expect(async () => {
       const gateway = new Gateway(
-        env, { '@domain': 'ex.org' }, clone, ablyApi);
+        env, { '@domain': 'ex.org' }, cloneFactory, keyStore);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
@@ -47,7 +57,7 @@ describe('Gateway', () => {
   test('throws if no domain', async () => {
     await expect(async () => {
       const gateway = new Gateway(
-        env, { ably: { key: 'id:secret' } }, clone, ablyApi);
+        env, { auth: { key: 'id:secret' } }, cloneFactory, keyStore);
       return gateway.initialise();
     }).rejects.toBeDefined();
   });
@@ -59,15 +69,10 @@ describe('Gateway', () => {
       gateway = new Gateway(env, {
         '@domain': 'ex.org',
         genesis: true,
-        ably: {
-          key: 'app.id:secret',
-          apiKey: 'ably_api_secret',
-          tls: true // random additional property sent to clients
-        },
-        smtp: {
-          auth: { user: 'smtp_user', pass: 'smtp_secret' }
-        }
-      }, clone, ablyApi);
+        auth: { key: 'app.id:secret' },
+        smtp: { auth: { user: 'smtp_user', pass: 'smtp_secret' } },
+        tls: true
+      }, cloneFactory, keyStore);
       await gateway.initialise();
     });
 
@@ -86,13 +91,13 @@ describe('Gateway', () => {
     });
 
     test('has cloned the gateway domain', () => {
-      expect(clone.mock.calls).toMatchObject([[
+      expect(cloneFactory.clone.mock.calls).toMatchObject([[
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ex.org',
           '@context': timeldContext,
           genesis: true, // has to be true because dead remotes
-          ably: { key: 'app.id:secret' }
+          auth: { key: 'app.id:secret' }
         },
         join(tmpDir.name, 'data', 'gw')
       ]]);
@@ -158,21 +163,22 @@ describe('Gateway', () => {
       expect(tsConfig).toEqual({
         '@domain': 'ts1.test.ex.org',
         genesis: false,
-        ably: { tls: true }
+        tls: true
       });
       // Gateway API secrets NOT present
-      expect(tsConfig['ably'].key).toBeUndefined();
-      expect(tsConfig['ably']['apiKey']).toBeUndefined();
+      expect(tsConfig['auth']).toBeUndefined();
       expect(tsConfig['smtp']).toBeUndefined();
+      expect(tsConfig['tls']).toBe(true);
 
       // Expect to have created the timesheet genesis clone
-      expect(clone.mock.lastCall).toMatchObject([
+      expect(cloneFactory.clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ts1.test.ex.org',
           '@context': timeldContext,
           genesis: true,
-          ably: { key: 'app.id:secret', tls: true }
+          auth: { key: 'app.id:secret' },
+          tls: true
         },
         join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
       ]);
@@ -191,13 +197,14 @@ describe('Gateway', () => {
       await gateway.domain.write({});
       // The gateway should attempt to clone the timesheet.
       // (It will fail due to dead remotes, but we don't care.)
-      expect(clone.mock.lastCall).toMatchObject([
+      expect(cloneFactory.clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ts1.test.ex.org',
           '@context': timeldContext,
           genesis: false,
-          ably: { key: 'app.id:secret', tls: true }
+          auth: { key: 'app.id:secret' },
+          tls: true
         },
         join(tmpDir.name, 'data', 'tsh', 'test', 'ts1')
       ]);

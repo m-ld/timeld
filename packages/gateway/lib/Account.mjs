@@ -68,17 +68,15 @@ export default class Account {
 
   /**
    * Activation of a gateway account requires an initial timesheet.
-   * This is because Ably cannot create a key without at least one capability.
+   * (This is because Ably cannot create a key without at least one capability.)
    *
    * @param {string} email
-   * @returns {Promise<string>} Ably key for the account
+   * @returns {Promise<string>} Authorisation key for the account
    */
   async activate(email) {
-    // Every activation creates a new Ably key (assumes new device)
-    const keyDetails = await this.gateway.ablyApi.createAppKey({
-      name: `${this.name}@${this.gateway.domainName}`,
-      capability: this.keyCapability()
-    });
+    // Every activation creates a new key (assumes new device)
+    const keyDetails = await this.gateway.keyStore
+      .mintKey(`${this.name}@${this.gateway.domainName}`);
     // Store the keyid and the email
     this.keyids.add(keyDetails.id);
     this.emails.add(email);
@@ -89,7 +87,7 @@ export default class Account {
   /**
    * @param {string} keyid user key ID
    * @param {AccessRequest|undefined} [access] request
-   * @returns {Promise<AblyKeyDetail>}
+   * @returns {Promise<AuthKeyDetail>}
    * @throws {import('restify-errors').DefinedHttpError}
    */
   async authorise(keyid, access) {
@@ -102,14 +100,10 @@ export default class Account {
         try {
           if (access != null)
             await this.checkAccess(state, access);
-          // Update the capability of the key to include the timesheet.
-          // This also serves as a check that the key exists.
-          const authorisedTsIds = [...await this.allOwned(state, 'Timesheet')]
-            .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName));
           try {
-            const keyDetail = await this.gateway.ablyApi.updateAppKey(keyid, {
-              capability: this.keyCapability(...authorisedTsIds)
-            });
+            const keyDetail = await this.gateway.keyStore.pingKey(keyid,
+              async () => [...await this.allOwned(state, 'Timesheet')]
+                .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName)));
             return keyDetail.status === 0 ? resolve(keyDetail) :
               reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
@@ -354,19 +348,6 @@ export default class Account {
         });
       });
     });
-  }
-
-  /**
-   * @param {AccountOwnedId} tsIds
-   * @returns {object}
-   */
-  keyCapability(...tsIds) {
-    return Object.assign({
-      // Ably keys must have a capability. Assign a notification channels as a minimum.
-      [`${this.gateway.domainName}:notify`]: ['subscribe']
-    }, ...tsIds.map(tsId => ({
-      [`${tsId.toDomain()}:*`]: ['publish', 'subscribe', 'presence']
-    })));
   }
 
   toJSON() {

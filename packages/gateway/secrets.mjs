@@ -16,8 +16,8 @@ const env = new Env({}, 'timeld-gateway');
 const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Gateway secrets: Ably, SMTP
-for (let [envVar, envValue] of Object.entries(env.asEnv(config, ['ably', 'smtp'])))
+// Gateway secrets: auth, SMTP
+for (let [envVar, envValue] of Object.entries(env.asEnv(config, ['auth', 'smtp'])))
   console.log(`${envVar}=${envValue}`);
 
 ////////////////////////////////////////////////////////////////////////////////

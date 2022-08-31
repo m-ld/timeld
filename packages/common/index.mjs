@@ -1,17 +1,14 @@
 import Env from './lib/Env.mjs';
-import clone from './lib/clone.mjs';
+import CloneFactory from './lib/CloneFactory.mjs';
 import AccountOwnedId from './lib/AccountOwnedId.mjs';
-import AblyKey from './lib/AblyKey.mjs';
+import AuthKey from './lib/AuthKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
 import BaseGateway from './lib/BaseGateway.mjs';
 
 /**
- * @typedef {import('@m-ld/m-ld/ext/ably').MeldAblyConfig & UserKeyConfig} TimeldConfig
- */
-
-/**
  * Useful m-ld types
  * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
+ * @typedef {import('@m-ld/m-ld').ConstructRemotes} ConstructRemotes
  * @typedef {import('@m-ld/m-ld').MeldConfig} MeldConfig
  * @typedef {import('@m-ld/m-ld').AppPrincipal} AppPrincipal
  * @typedef {import('@m-ld/m-ld').GraphSubject} GraphSubject
@@ -23,11 +20,18 @@ import BaseGateway from './lib/BaseGateway.mjs';
  * @typedef {import('@m-ld/m-ld').Query} Query
  */
 
+/**
+ * The basic config used by both CLI and gateway
+ * @typedef {object} _TimeldConfig
+ * @property {string} auth.key Authorisation key
+ * @typedef {_TimeldConfig & MeldConfig} TimeldConfig
+ */
+
 export {
-  clone,
+  CloneFactory,
   Env,
   AccountOwnedId,
-  AblyKey,
+  AuthKey,
   ResultsReadable,
   BaseGateway
 };

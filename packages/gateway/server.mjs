@@ -1,11 +1,12 @@
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { clone, Env } from 'timeld-common';
-import AblyApi from './lib/AblyApi.mjs';
+import { Env } from 'timeld-common';
+import AblyKeyStore from 'timeld-common/ext/ably/AblyKeyStore.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
+import AblyCloneFactory from 'timeld-common/ext/ably/AblyCloneFactory.mjs';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -13,8 +14,7 @@ import gracefulShutdown from 'http-graceful-shutdown';
  * @property {string} [LOG_LEVEL] defaults to "INFO"
  * @property {string} TIMELD_GATEWAY_GATEWAY domain name or URL of gateway
  * @property {string} TIMELD_GATEWAY_GENESIS "true" iff the gateway is new
- * @property {string} TIMELD_GATEWAY_ABLY__KEY gateway Ably app key
- * @property {string} TIMELD_GATEWAY_ABLY__API_KEY gateway Ably api key
+ * @property {string} TIMELD_GATEWAY_AUTH__KEY gateway authorisation key
  * @property {string} TIMELD_GATEWAY_SMTP__HOST
  * @property {string} TIMELD_GATEWAY_SMTP__FROM
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
@@ -24,7 +24,6 @@ import gracefulShutdown from 'http-graceful-shutdown';
 /**
  * @typedef {object} _TimeldGatewayConfig
  * @property {string} gateway domain name or URL of gateway
- * @property {string} ably.apiKey gateway Ably api key
  * @property {SmtpOptions} smtp SMTP details for activation emails
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
@@ -46,9 +45,10 @@ if (config['@domain'] == null) {
 }
 
 // noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
-const ablyApi = new AblyApi(config.ably);
-const gateway = await new Gateway(env, config, clone, ablyApi).initialise();
-const notifier = new Notifier(config.smtp);
+const ablyApi = new AblyKeyStore(config);
+const cloneFactory = new AblyCloneFactory();
+const gateway = await new Gateway(env, config, cloneFactory, ablyApi).initialise();
+const notifier = new Notifier(config);
 const server = rest({ gateway, notifier });
 
 server.listen(8080, function () {

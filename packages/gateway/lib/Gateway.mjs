@@ -2,7 +2,7 @@ import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
 import { uuid } from '@m-ld/m-ld';
-import { AblyKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
+import { AuthKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
@@ -16,10 +16,14 @@ export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {TimeldGatewayConfig} config
-   * @param {(...args: *[]) => import('timeld-common').clone} clone m-ld clone creation function
-   * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
+   * @param {CloneFactory} cloneFactory m-ld clone creation function
+   * @param {AuthKeyStore} keyStore authorisation key store
    */
-  constructor(env, config, clone, ablyApi) {
+  constructor(env,
+    config,
+    cloneFactory,
+    keyStore
+  ) {
     super(config['@domain']);
     this.env = env;
     this.config = /**@type {TimeldGatewayConfig}*/{
@@ -29,9 +33,9 @@ export default class Gateway extends BaseGateway {
     };
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
-    this.ablyKey = new AblyKey(config.ably.key);
-    this.clone = clone;
-    this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
+    this.authKey = new AuthKey(config.auth.key);
+    this.cloneFactory = cloneFactory;
+    this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
     this.integrations = /**@type {{ [id: string]: IntegrationExtension }}*/{};
     this.subs = new Subscription();
@@ -40,7 +44,7 @@ export default class Gateway extends BaseGateway {
   async initialise() {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
-    this.domain = await this.clone(this.config, dataDir);
+    this.domain = await this.cloneFactory.clone(this.config, dataDir);
     await this.domain.status.becomes({ outdated: false });
     // Enliven all timesheets and integrations already in the domain
     await new Promise(resolve => {
@@ -165,7 +169,7 @@ export default class Gateway extends BaseGateway {
       '@id': uuid(), '@domain': tsId.toDomain()
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
-    const ts = await this.clone(config, await this.getDataPath(tsId));
+    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId));
     // Attach integration listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
@@ -250,8 +254,8 @@ export default class Gateway extends BaseGateway {
     if (acc != null && !acc.emails.has(email))
       throw new UnauthorizedError(
         'Email %s not registered to account %s', email, account);
-    // Construct a JWT with the email, using our Ably key
-    const { secret, keyid } = this.ablyKey;
+    // Construct a JWT with the email, using our authorisation key
+    const { secret, keyid } = this.authKey;
     // noinspection JSCheckFunctionSignatures
     const jwt = jsonwebtoken.sign({ email }, secret, {
       keyid, expiresIn: '10m'
@@ -269,7 +273,7 @@ export default class Gateway extends BaseGateway {
   verify(jwt) {
     // Verify the JWT was created by us
     // noinspection JSCheckFunctionSignatures
-    return jsonwebtoken.verify(jwt, this.ablyKey.secret);
+    return jsonwebtoken.verify(jwt, this.authKey.secret);
   }
 
   /**
@@ -279,7 +283,7 @@ export default class Gateway extends BaseGateway {
    * The caller must have already checked user access to the timesheet.
    *
    * @param {AccountOwnedId} tsId
-   * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
+   * @returns {Promise<Partial<MeldConfig>>}
    */
   async timesheetConfig(tsId) {
     // Do we already have a clone of this timesheet?
@@ -293,14 +297,9 @@ export default class Gateway extends BaseGateway {
       });
     }
     // Return the config required for a new clone, using some of our config
-    const { ably, networkTimeout, maxOperationSize, logLevel } = this.config;
-    return Env.mergeConfig({
-      '@domain': tsId.toDomain(),
-      genesis: false, // Definitely not genesis
-      ably, networkTimeout, maxOperationSize, logLevel
-    }, {
-      ably: { key: false, apiKey: false } // Remove our Ably secrets
-    });
+    return Object.assign({
+      '@domain': tsId.toDomain(), genesis: false // Definitely not genesis
+    }, this.cloneFactory.reusableConfig(this.config));
   }
 
   /**

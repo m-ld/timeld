@@ -8,7 +8,7 @@ export default class Notifier {
   /**
    * @param {SmtpOptions & { from: string }} options
    */
-  constructor(options) {
+  constructor({ smtp: options }) {
     this.transporter = nodemailer.createTransport(options);
     this.from = options.from;
     let [, domain] = options.from.match(/@(\w+)/) || [];

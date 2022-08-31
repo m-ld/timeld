@@ -1,4 +1,4 @@
-import { AblyKey, AccountOwnedId } from 'timeld-common';
+import { AuthKey, AccountOwnedId } from 'timeld-common';
 import { verify } from './util.mjs';
 import { BadRequestError, UnauthorizedError } from '../rest/errors.mjs';
 
@@ -32,7 +32,7 @@ export default class Authorization {
         if (!req.authorization.basic?.password)
           throw new UnauthorizedError();
         /**
-         * an Ably key associated with this Account
+         * an authorisation key associated with this Account
          * @type {string}
          */
         this.key = req.authorization.basic.password;
@@ -55,7 +55,7 @@ export default class Authorization {
       try { // Verify the JWT against its declared keyid
         const payload = await verify(this.jwt, async header => {
           const { key } = await userAcc.authorise(header.kid, access);
-          return new AblyKey(key).secret;
+          return new AuthKey(key).secret;
         });
         if (payload.sub !== this.user)
           return Promise.reject(new UnauthorizedError('JWT does not correspond to user'));
@@ -63,8 +63,8 @@ export default class Authorization {
         throw new UnauthorizedError(e);
       }
     } else {
-      const ablyKey = new AblyKey(this.key);
-      const { key: actualKey } = await userAcc.authorise(ablyKey.keyid, access);
+      const authKey = new AuthKey(this.key);
+      const { key: actualKey } = await userAcc.authorise(authKey.keyid, access);
       if (this.key !== actualKey)
         throw new UnauthorizedError();
     }

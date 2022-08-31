@@ -1,5 +1,5 @@
 import { uuid } from '@m-ld/m-ld';
-import { AblyKey, Env, timeldContext } from 'timeld-common';
+import { AuthKey, Env, timeldContext } from 'timeld-common';
 import isURL from 'validator/lib/isURL.js';
 import isFQDN from 'validator/lib/isFQDN.js';
 
@@ -56,7 +56,7 @@ export default class DomainConfigurator {
       if (!isURL(this.argv.user))
         throw 'Gateway-less use requires the user to be identified by a URL.';
       // see https://faqs.ably.com/how-do-i-find-my-app-id
-      const ablyKey = this.argv.ably?.key;
+      const ablyKey = this.argv['ably']?.key;
       if (ablyKey == null)
         throw 'Gateway-less use requires an Ably API key.\n' +
         'See https://faqs.ably.com/what-is-an-app-api-key';
@@ -64,7 +64,7 @@ export default class DomainConfigurator {
       // just in case there are other real apps running in the same Ably App.
       return {
         config: this.noGatewayConfig(
-          `timeld.${new AblyKey(ablyKey).appId.toLowerCase()}`),
+          `timeld.${new AuthKey(ablyKey).appId.toLowerCase()}`),
         principal: { '@id': this.argv.user /*, TODO: sign*/ }
       };
     } else {

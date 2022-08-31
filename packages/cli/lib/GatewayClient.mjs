@@ -5,7 +5,7 @@ import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
 import dns from 'dns/promises';
-import { AblyKey, BaseGateway } from 'timeld-common';
+import { AuthKey, BaseGateway } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
@@ -15,19 +15,19 @@ export default class GatewayClient extends BaseGateway {
   /**
    * @param {string} gateway
    * @param {string} user
-   * @param {string} [key] available Ably key, if missing, {@link activate}
+   * @param {string} [key] available authorisation key, if missing, {@link activate}
    * must be called before other methods
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
   constructor({
     gateway,
     user,
-    ably: { key } = {}
+    auth: { key } = {}
   }, fetch = setupFetch()) {
     const { apiRoot, domainName } = GatewayClient.resolveApiRoot(gateway);
     super(domainName);
     this.user = user;
-    this.ablyKey = key != null ? new AblyKey(key) : null;
+    this.authKey = key != null ? new AuthKey(key) : null;
     this.apiRoot = apiRoot;
     /**
      * Resolve our user name against the gateway to get the canonical user URI.
@@ -97,7 +97,7 @@ export default class GatewayClient extends BaseGateway {
    * @param {(question: string) => Promise<string>} ask
    */
   async activate(ask) {
-    if (this.ablyKey == null) {
+    if (this.authKey == null) {
       const email = await ask(
         'Please enter your email address to register this device: ');
       if (!isEmail(email))
@@ -115,15 +115,15 @@ export default class GatewayClient extends BaseGateway {
       const { key } = await this.fetchApi(`key/${this.user}`,
         { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.ablyKey = new AblyKey(key);
+      this.authKey = new AuthKey(key);
     }
   }
 
   /**
-   * @returns {{ably: {key: string}}}
+   * @returns {{auth: {key: string}}}
    */
   get accessConfig() {
-    return { ably: { key: this.ablyKey.toString() } };
+    return { auth: { key: this.authKey.toString() } };
   }
 
   /**
@@ -171,7 +171,7 @@ export default class GatewayClient extends BaseGateway {
    * @returns {Promise<string>} JWT
    */
   async userJwt() {
-    const { secret, keyid } = this.ablyKey;
+    const { secret, keyid } = this.authKey;
     return await signJwt({}, secret, {
       subject: this.user, keyid, expiresIn: '1m'
     });
