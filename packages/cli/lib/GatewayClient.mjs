@@ -1,11 +1,9 @@
 import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
-import isFQDN from 'validator/lib/isFQDN.js';
 import isEmail from 'validator/lib/isEmail.js';
 import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
-import dns from 'dns/promises';
-import { AuthKey, BaseGateway } from 'timeld-common';
+import { AuthKey, BaseGateway, resolveGateway } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
@@ -24,11 +22,12 @@ export default class GatewayClient extends BaseGateway {
     user,
     auth: { key } = {}
   }, fetch = setupFetch()) {
-    const { apiRoot, domainName } = GatewayClient.resolveApiRoot(gateway);
+    const { root, domainName } = resolveGateway(gateway);
     super(domainName);
     this.user = user;
-    this.authKey = key != null ? new AuthKey(key) : null;
-    this.apiRoot = apiRoot;
+    this.authKey = key != null ? AuthKey.fromString(key) : null;
+    this.gatewayRoot = root;
+    // noinspection HttpUrlsUsage
     /**
      * Resolve our user name against the gateway to get the canonical user URI.
      * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
@@ -55,7 +54,8 @@ export default class GatewayClient extends BaseGateway {
     // Add the user as a query parameter, unless disabled
     if (options.user !== false)
       (options.params ||= {}).user = this.user;
-    const url = new URL(path, await this.apiRoot);
+    // noinspection JSCheckFunctionSignatures
+    const url = new URL(`api/${path}`, await this.gatewayRoot);
     // Add the query parameters to the URL
     if (options.params != null)
       Object.entries(options.params).forEach(([name, value]) =>
@@ -67,30 +67,6 @@ export default class GatewayClient extends BaseGateway {
       options.body = JSON.stringify(options.json);
     }
     return this.fetch(url.toString(), options);
-  }
-
-  /**
-   * @param {string} address
-   * @returns {{ apiRoot: URL | Promise<URL>, domainName: string }}
-   */
-  static resolveApiRoot(address) {
-    if (isFQDN(address)) {
-      return { apiRoot: new URL(`https://${address}/api/`), domainName: address };
-    } else {
-      const url = new URL('/api/', address);
-      const domainName = url.hostname;
-      if (domainName.endsWith('.local')) {
-        return {
-          apiRoot: dns.lookup(domainName).then(a => {
-            url.hostname = a.address;
-            return url;
-          }),
-          domainName
-        };
-      } else {
-        return { apiRoot: url, domainName };
-      }
-    }
   }
 
   /**
@@ -115,7 +91,7 @@ export default class GatewayClient extends BaseGateway {
       const { key } = await this.fetchApi(`key/${this.user}`,
         { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.authKey = new AuthKey(key);
+      this.authKey = AuthKey.fromString(key);
     }
   }
 

@@ -64,7 +64,7 @@ export default class DomainConfigurator {
       // just in case there are other real apps running in the same Ably App.
       return {
         config: this.noGatewayConfig(
-          `timeld.${new AuthKey(ablyKey).appId.toLowerCase()}`),
+          `timeld.${AuthKey.fromString(ablyKey).appId.toLowerCase()}`),
         principal: { '@id': this.argv.user /*, TODO: sign*/ }
       };
     } else {

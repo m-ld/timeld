@@ -10,7 +10,12 @@ describe('Ably as a key store', () => {
     keyStore = new AblyKeyStore({
       '@domain': 'ex.org', ably: { key: 'appid.topId.topSecret', apiKey: 'apiKey' }
     });
-    keyStore.fetchJson = jest.fn();
+    keyStore.fetchJson = jest.fn(async () => ({
+      id: 'keyid',
+      name: 'hello',
+      key: 'appid.keyid:secret',
+      capability: {} // ignored
+    }));
   });
 
   test('mint key sets base capability', async () => {

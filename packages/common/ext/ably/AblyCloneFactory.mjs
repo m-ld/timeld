@@ -6,11 +6,10 @@ import { CloneFactory, Env } from '../../index.mjs';
  */
 export default class AblyCloneFactory extends CloneFactory {
   async clone(config, dataDir, principal) {
-    return super.clone({
-      ...config,
+    return super.clone(Env.mergeConfig(config, {
       // When using Ably, the authorisation key is an Ably key
       ably: { key: config.auth.key }
-    }, dataDir, principal);
+    }), dataDir, principal);
   }
 
   /**

@@ -1,4 +1,5 @@
 import { fetchJson } from '@m-ld/io-web-runtime/dist/server/fetch';
+import { AuthKey } from '../../index.mjs';
 
 /**
  * @implements AuthKeyStore
@@ -23,10 +24,10 @@ export default class AblyKeyStore {
   /**
    * @see https://ably.com/docs/api/control-api#tag/keys/paths/~1apps~1{app_id}~1keys/post
    */
-  mintKey(name) {
-    return this.fetchJson('keys', {}, {
+  async mintKey(name) {
+    return this.ablyToAuthDetail(await this.fetchJson('keys', {}, {
       method: 'POST', body: { name, capability: this.keyCapability() }
-    });
+    }));
   }
 
   /**
@@ -36,9 +37,19 @@ export default class AblyKeyStore {
    * @see https://ably.com/docs/api/control-api#tag/keys/paths/~1apps~1{app_id}~1keys/post
    */
   async pingKey(keyid, getAuthorisedTsIds) {
-    return this.fetchJson(`keys/${keyid}`, {}, {
+    return this.ablyToAuthDetail(await this.fetchJson(`keys/${keyid}`, {}, {
       method: 'PATCH', body: { capability: this.keyCapability(...await getAuthorisedTsIds()) }
-    });
+    }));
+  }
+
+  /**
+   * @param {string} key The complete authorisation key including secret
+   * @param {string} name Friendly name for reference
+   * @param {0|1} status The revocation status of the key, 1 = revoked
+   * @returns {AuthKeyDetail}}
+   */
+  ablyToAuthDetail({ key, name, status }) {
+    return { key: AuthKey.fromString(key), name, revoked: status === 1 };
   }
 
   /**

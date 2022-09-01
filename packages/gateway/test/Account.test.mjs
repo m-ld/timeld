@@ -3,7 +3,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, uuid } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
-import { AccountOwnedId, BaseGateway, timeldContext } from 'timeld-common';
+import { AccountOwnedId, AuthKey, BaseGateway, timeldContext } from 'timeld-common';
 import Account from '../lib/Account.mjs';
 
 /**
@@ -59,7 +59,7 @@ describe('Gateway account', () => {
   test('activate', async () => {
     const acc = new Account(gateway, { name: 'test' });
     gateway.keyStore.mintKey.mockImplementation(name => Promise.resolve({
-      id: 'keyid', key: 'appid.keyid:secret', name
+      key: AuthKey.fromString('appid.keyid:secret'), name, revoked: false
     }));
     const key = await acc.activate('test@ex.org');
     expect(gateway.keyStore.mintKey).toBeCalledWith('test@ex.org');
@@ -82,7 +82,7 @@ describe('Gateway account', () => {
     gateway.keyStore.pingKey.mockImplementation(async (keyid, getAuthorisedTsIds) => {
       await expect(getAuthorisedTsIds()).resolves.toEqual([]);
       return {
-        id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
       };
     });
     await expect(acc.authorise('keyid')).resolves.toMatchObject({});
@@ -98,7 +98,7 @@ describe('Gateway account', () => {
       await expect(getAuthorisedTsIds()).resolves.toEqual(
         [AccountOwnedId.fromString('test/ts1@ex.org')]);
       return {
-        id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
       };
     });
     await expect(acc.authorise('keyid', {
@@ -122,7 +122,7 @@ describe('Gateway account', () => {
         AccountOwnedId.fromString('test/ts2@ex.org')
       ]);
       return {
-        id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
       };
     });
     await expect(acc.authorise('keyid', {
@@ -143,7 +143,7 @@ describe('Gateway account', () => {
         AccountOwnedId.fromString('org1/ts1@ex.org')
       ]);
       return {
-        id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
       };
     });
     await expect(acc.authorise('keyid', {
@@ -167,7 +167,7 @@ describe('Gateway account', () => {
         AccountOwnedId.fromString('org1/ts1@ex.org')
       ]);
       return {
-        id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
       };
     });
     await expect(acc.authorise('keyid', {
@@ -186,7 +186,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org')
@@ -205,7 +205,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org2/ts1@ex.org')
@@ -222,7 +222,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -238,7 +238,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -253,7 +253,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -265,7 +265,7 @@ describe('Gateway account', () => {
       name: 'test', keyids: [], timesheets: [{ '@id': 'test/ts1' }]
     });
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -287,7 +287,7 @@ describe('Gateway account', () => {
       name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
     });
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 1
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: true
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -301,7 +301,7 @@ describe('Gateway account', () => {
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/pr1@ex.org')
@@ -317,7 +317,7 @@ describe('Gateway account', () => {
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      id: keyid, key: 'appid.keyid:secret', name: 'test@ex.org', status: 0
+      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
     }));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/pr1@ex.org')

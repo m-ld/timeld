@@ -2,7 +2,7 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { CloneFactory, dateJsonLd, Env } from 'timeld-common';
+import { AuthKey, CloneFactory, dateJsonLd, Env } from 'timeld-common';
 import { join } from 'path';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
@@ -28,7 +28,9 @@ describe('Gateway REST API', () => {
       mintKey: jest.fn(),
       pingKey: jest.fn().mockImplementation(
         keyid => Promise.resolve({
-          id: keyid, key: `app.${keyid}:secret`, name: 'test@ex.org', status: 0
+          key: AuthKey.fromString(`app.${keyid}:secret`),
+          name: 'test@ex.org',
+          revoked: false
         }))
     };
     gateway = new Gateway(env, {
@@ -78,7 +80,7 @@ describe('Gateway REST API', () => {
       }]);
     });
 
-    test('rejects without authorisation report', async () => {
+    test('rejects report without authorisation', async () => {
       await gateway.domain.write({
         '@insert': { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } }
       });

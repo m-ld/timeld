@@ -23,7 +23,7 @@ export default class CloneFactory {
 
   /**
    * @param {MeldConfig} config
-   * @returns {Promise<ConstructRemotes>}
+   * @returns {ConstructRemotes | Promise<ConstructRemotes>}
    */
   remotes(config) {
     throw undefined;

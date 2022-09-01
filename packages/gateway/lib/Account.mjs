@@ -1,7 +1,6 @@
 import { propertyValue } from '@m-ld/m-ld';
-import { AccountOwnedId, isDomainEntity, Session } from 'timeld-common';
-import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
-import { accountHasTimesheet, Ask, timesheetHasProject, userIsAdmin } from './statements.mjs';
+import { AccountOwnedId, idSet, isDomainEntity, safeRefsIn, Session } from 'timeld-common';
+import { Ask, accountHasTimesheet, timesheetHasProject, userIsAdmin } from './statements.mjs';
 import ReadPatterns from './ReadPatterns.mjs';
 import WritePatterns from './WritePatterns.mjs';
 import { each } from 'rx-flowable';
@@ -20,7 +19,7 @@ import { batch } from 'rx-flowable/operators';
 export default class Account {
   /**
    * @param {Gateway} gateway
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    */
   static fromJSON(gateway, src) {
     // noinspection JSCheckFunctionSignatures
@@ -40,8 +39,8 @@ export default class Account {
    * @param {Iterable<string>} emails verifiable account identities
    * @param {Iterable<string>} keyids per-device keys
    * @param {Iterable<string>} admins admin (primary accountable) IRIs
-   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet ID Refs
-   * @param {import('@m-ld/m-ld').Reference[]} projects project ID Refs
+   * @param {Reference[]} timesheets timesheet ID Refs
+   * @param {Reference[]} projects project ID Refs
    */
   constructor(gateway, {
     name,
@@ -78,10 +77,10 @@ export default class Account {
     const keyDetails = await this.gateway.keyStore
       .mintKey(`${this.name}@${this.gateway.domainName}`);
     // Store the keyid and the email
-    this.keyids.add(keyDetails.id);
+    this.keyids.add(keyDetails.key.keyid);
     this.emails.add(email);
     await this.gateway.domain.write(this.toJSON());
-    return keyDetails.key;
+    return keyDetails.key.toString();
   }
 
   /**
@@ -98,13 +97,13 @@ export default class Account {
     return new Promise(async (resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
+          // noinspection JSIncompatibleTypesComparison
           if (access != null)
             await this.checkAccess(state, access);
           try {
-            const keyDetail = await this.gateway.keyStore.pingKey(keyid,
-              async () => [...await this.allOwned(state, 'Timesheet')]
-                .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName)));
-            return keyDetail.status === 0 ? resolve(keyDetail) :
+            const keyDetail = await this.gateway.keyStore.pingKey(
+              keyid, () => this.allOwnedTimesheetIds(state));
+            return !keyDetail.revoked ? resolve(keyDetail) :
               reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
             // TODO: Assuming this is a Not Found
@@ -170,7 +169,16 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Read} query
+   * @param {MeldReadState} state
+   * @returns {Promise<AccountOwnedId[]>}
+   */
+  async allOwnedTimesheetIds(state) {
+    return [...await this.allOwned(state, 'Timesheet')]
+      .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName));
+  }
+
+  /**
+   * @param {Read} query
    * @returns {Promise<Results>} results
    */
   async read(query) {
@@ -192,7 +200,7 @@ export default class Account {
 
   /**
    * @param {MeldReadState} state the current domain state
-   * @param {import('@m-ld/m-ld').Reference} tsRef the timesheet ref
+   * @param {Reference} tsRef the timesheet ref
    * @returns {Promise<void>}
    */
   beforeInsertTimesheet = async (state, tsRef) => {
@@ -247,7 +255,7 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Query} query
+   * @param {Query} query
    */
   async write(query) {
     const matchingPattern =
@@ -285,7 +293,7 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @returns {Promise<void>}
    */
   async importOwned(src) {
@@ -305,7 +313,7 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @param {{ [key: string]: Session }} sessions
    * @returns {Promise<void>}
    */

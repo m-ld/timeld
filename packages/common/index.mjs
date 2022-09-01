@@ -15,9 +15,11 @@ import BaseGateway from './lib/BaseGateway.mjs';
  * @typedef {import('@m-ld/m-ld').Subject} Subject
  * @typedef {import('@m-ld/m-ld').Reference} Reference
  * @typedef {import('@m-ld/m-ld').Update} Update
+ * @typedef {import('@m-ld/m-ld').MeldState} MeldState
  * @typedef {import('@m-ld/m-ld').MeldReadState} MeldReadState
  * @typedef {import('@m-ld/m-ld').MeldUpdate} MeldUpdate
  * @typedef {import('@m-ld/m-ld').Query} Query
+ * @typedef {import('@m-ld/m-ld').Read} Read
  */
 
 /**
@@ -46,10 +48,12 @@ export {
 } from './data/index.mjs';
 
 export {
+  idSet,
   mustBe,
   dateJsonLd,
   safeRefsIn,
   isReference,
+  resolveGateway,
   domainRelativeIri,
   lastPathComponent
 } from './lib/util.mjs';

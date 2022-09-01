@@ -1,12 +1,14 @@
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
 import { Env } from 'timeld-common';
-import AblyKeyStore from 'timeld-common/ext/ably/AblyKeyStore.mjs';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
-import AblyCloneFactory from 'timeld-common/ext/ably/AblyCloneFactory.mjs';
+import DomainKeyStore from 'timeld-common/ext/m-ld/DomainKeyStore.mjs';
+import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
+import { shortId } from '@m-ld/m-ld';
+import socketIo from './rest/socket-io.mjs';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -44,16 +46,25 @@ if (config['@domain'] == null) {
     config.gateway : new URL(config.gateway).hostname;
 }
 
-// noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
-const ablyApi = new AblyKeyStore(config);
-const cloneFactory = new AblyCloneFactory();
-const gateway = await new Gateway(env, config, cloneFactory, ablyApi).initialise();
+const keyStore = new DomainKeyStore({ appId: shortId(config['@domain']) });
+const cloneFactory = new IoCloneFactory();
+const gateway = new Gateway(env, config, cloneFactory, keyStore);
 const notifier = new Notifier(config);
 const server = rest({ gateway, notifier });
+const io = socketIo({ gateway, server });
+io.on('error', LOG.error);
+io.on('debug', LOG.debug);
 
-server.listen(8080, function () {
+server.listen(8080, async () => {
   // noinspection JSUnresolvedVariable
-  console.log('%s listening at %s', server.name, server.url);
+  LOG.info('%s listening at %s', server.name, server.url);
+  cloneFactory.address = server.url;
+  try {
+    await gateway.initialise();
+    LOG.info('Gateway initialised');
+  } catch (e) {
+    LOG.error('Gateway failed to initialise', e);
+  }
 });
 
 gracefulShutdown(server, {

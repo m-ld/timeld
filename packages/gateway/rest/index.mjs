@@ -47,6 +47,7 @@ async function sendStream(res, results) {
 /**
  * @param {Gateway} gateway
  * @param {Notifier} notifier
+ * @returns {import('restify').Server}
  */
 export default function rest({ gateway, notifier }) {
   const server = restify.createServer({
@@ -82,7 +83,7 @@ export default function rest({ gateway, notifier }) {
   server.get('/api/key/:user',
     async (req, res, next) => {
       try {
-        const auth = new Authorization(req);
+        const auth = Authorization.fromRequest(req);
         const { email } = gateway.verify(auth.jwt);
         if (!email || !isEmail(email))
           return next(new BadRequestError('Bad email %s', email));
@@ -102,7 +103,7 @@ export default function rest({ gateway, notifier }) {
       try {
         const id = gateway.ownedId(account, timesheet).validate();
         try {
-          await new Authorization(req).verifyUser(
+          await Authorization.fromRequest(req).verifyUser(
             gateway, { id, forWrite: 'Timesheet' });
           res.json(await gateway.timesheetConfig(id));
         } catch (e) {
@@ -119,7 +120,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/read', restify.plugins.bodyParser(),
     async (req, res, next) => {
       try {
-        const acc = await new Authorization(req).verifyUser(gateway);
+        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
         await sendStream(res, await acc.read(req.body));
         next();
       } catch (e) {
@@ -130,7 +131,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/write', restify.plugins.bodyParser(),
     async (req, res, next) => {
       try {
-        const acc = await new Authorization(req).verifyUser(gateway);
+        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
         await acc.write(req.body);
         res.send(200);
         next();
@@ -144,7 +145,7 @@ export default function rest({ gateway, notifier }) {
       const { account, owned } = req.params;
       try {
         const id = gateway.ownedId(account, owned).validate();
-        await new Authorization(req).verifyUser(gateway, { id });
+        await Authorization.fromRequest(req).verifyUser(gateway, { id });
         await sendStream(res, await gateway.report(id));
         next();
       } catch (e) {
@@ -155,7 +156,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/import',
     async (req, res, next) => {
       try {
-        const acc = await new Authorization(req).verifyUser(gateway);
+        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
         await acc.import(consume(req.pipe(ndjson.parse())));
         res.send(200);
         next();

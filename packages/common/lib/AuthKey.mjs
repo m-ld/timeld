@@ -2,20 +2,32 @@
  * An authorisation key with app, keyid and secret components
  */
 export default class AuthKey {
-  constructor(keyStr) {
+  static fromString(keyStr) {
     const [keyName, secret] = keyStr.split(':');
     const [appId, keyid] = keyName.split('.');
+    const authKey = new AuthKey({ appId, keyid, secret });
+    if (authKey.toString() !== keyStr)
+      throw new RangeError(`${keyStr} is not a valid authorisation key`);
+    return authKey;
+  }
+
+  constructor({ appId, keyid, secret }) {
     this.appId = appId;
     this.keyid = keyid;
     this.secret = secret;
-    if (this.toString() !== keyStr)
-      throw new RangeError(`${keyStr} is not a valid authorisation key`);
   }
 
   toString() {
     return `${this.appId}.${this.keyid}:${this.secret}`;
   }
 }
+
+/**
+ * @typedef {object} AuthKeyDetail full details of an authorisation key
+ * @property {AuthKey} key The complete key including secret
+ * @property {string} name Friendly name
+ * @property {boolean} revoked The revocation status
+ */
 
 /**
  * A persistent store of keys
@@ -40,12 +52,4 @@ export default class AuthKey {
  * authorised Timesheet IDs for the requested key, if this key store supports
  * fine-grained privileges
  * @returns {Promise<AuthKeyDetail>}
- */
-
-/**
- * @typedef {object} AuthKeyDetail full details of an authorisation key
- * @property {string} id The keyid
- * @property {string} name Friendly name for reference
- * @property {0|1} status The status of the key. 0 is enabled, 1 is revoked
- * @property {string} key The complete authorisation key including secret
  */

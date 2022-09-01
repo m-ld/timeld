@@ -1,8 +1,10 @@
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import Authorization from '../lib/Authorization.mjs';
 import { AccountOwnedId } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
-import errors from 'restify-errors';
+import * as errors from '../rest/errors.mjs';
+import AuthKey from 'timeld-common/lib/AuthKey.mjs';
 
 describe('Authorization helper', () => {
   let gateway, account;
@@ -21,14 +23,14 @@ describe('Authorization helper', () => {
       expiresIn: '1m', keyid: 'keyid', subject: 'test'
     });
     // noinspection JSCheckFunctionSignatures
-    const auth = new Authorization({
+    const auth = Authorization.fromRequest({
       params: { user: 'test' },
       authorization: { scheme: 'Bearer', credentials: jwt }
     });
     expect(auth.user).toBe('test');
     expect(auth.jwt).toBe(jwt);
 
-    account.authorise.mockImplementation(() => ({ key: 'appid.keyid:secret' }));
+    account.authorise.mockImplementation(() => ({ key: AuthKey.fromString('appid.keyid:secret') }));
     const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
     await auth.verifyUser(gateway, access);
     expect(account.authorise).toBeCalledWith('keyid', access);
@@ -39,7 +41,7 @@ describe('Authorization helper', () => {
       expiresIn: '1m', keyid: 'keyid', subject: 'garbage'
     });
     // noinspection JSCheckFunctionSignatures
-    const auth = new Authorization({
+    const auth = Authorization.fromRequest({
       params: { user: 'test' },
       authorization: { scheme: 'Bearer', credentials: jwt }
     });
@@ -53,7 +55,7 @@ describe('Authorization helper', () => {
       expiresIn: '1m', keyid: 'keyid', subject: 'test'
     });
     // noinspection JSCheckFunctionSignatures
-    const auth = new Authorization({
+    const auth = Authorization.fromRequest({
       params: { user: 'test' },
       authorization: { scheme: 'Bearer', credentials: jwt }
     });
@@ -64,7 +66,7 @@ describe('Authorization helper', () => {
 
   test('initialises from basic', async () => {
     // noinspection JSCheckFunctionSignatures
-    const auth = new Authorization({
+    const auth = Authorization.fromRequest({
       params: {},
       authorization: {
         scheme: 'Basic',

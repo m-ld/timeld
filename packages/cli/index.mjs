@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import Cli from './lib/Cli.mjs';
 import { Env } from 'timeld-common';
-import AblyCloneFactory from 'timeld-common/ext/ably/AblyCloneFactory.mjs';
+import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
 
 /**
  * @typedef {object} _TimeldCliConfig
@@ -18,5 +18,5 @@ const env = new Env({
   config: process.env.TIMELD_CLI_CONFIG_PATH,
   data: process.env.TIMELD_CLI_DATA_PATH
 });
-const cloneFactory = new AblyCloneFactory();
+const cloneFactory = new IoCloneFactory();
 await new Cli(env, {}, cloneFactory).start();

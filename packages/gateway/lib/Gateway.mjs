@@ -6,7 +6,7 @@ import { AuthKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-com
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import { accountHasTimesheet, Ask } from './statements.mjs';
+import { Ask, accountHasTimesheet } from './statements.mjs';
 import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
@@ -33,7 +33,7 @@ export default class Gateway extends BaseGateway {
     };
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
-    this.authKey = new AuthKey(config.auth.key);
+    this.authKey = AuthKey.fromString(config.auth.key);
     this.cloneFactory = cloneFactory;
     this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
@@ -45,6 +45,8 @@ export default class Gateway extends BaseGateway {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
     this.domain = await this.cloneFactory.clone(this.config, dataDir);
+    // TODO: This is for the DomainKeyStore, should be in the interface
+    this.keyStore.state = this.domain;
     await this.domain.status.becomes({ outdated: false });
     // Enliven all timesheets and integrations already in the domain
     await new Promise(resolve => {
