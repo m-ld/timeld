@@ -22,8 +22,7 @@ export default class IoCloneFactory extends CloneFactory {
           auth: {
             ...config.auth,
             // The user may be undefined, if this is a Gateway
-            user: config['user'],
-            '@domain': config['@domain']
+            user: config['user']
           }
         }
       }

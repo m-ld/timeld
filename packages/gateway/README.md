@@ -18,8 +18,8 @@ You will need:
 3. An SMTP service and account, for sending activation codes.
 4. An app name!
 
-```shell
-flyctl apps create {your great name}
+```
+flyctl apps create ≪your-great-name≫
 ```
 
 If developing off the `main` branch, the deploy script (below) will use your current branch name as a suffix; in preparation you should run the above command with the suffixed name e.g. `timeld-edge`.
@@ -53,12 +53,19 @@ chmod +x deploy.sh
 
 In preparation for a first deployment ("genesis") you need a local `.env` file (in this directory or in the repo root), containing:
 
-- `TIMELD_GATEWAY_AUTH__KEY={some root access key, you choose}`
-- `TIMELD_GATEWAY_SMTP__HOST={your SMTP host}`
-- `TIMELD_GATEWAY_SMTP__FROM={an email account to send activation codes}`
-- `TIMELD_GATEWAY_SMTP__AUTH__USER={your SMTP account}`
-- `TIMELD_GATEWAY_SMTP__AUTH__PASS={your SMTP account password}`
+- `TIMELD_GATEWAY_AUTH__KEY=≪some-root-access-key≫` (see below)
+- `TIMELD_GATEWAY_SMTP__HOST=≪your-smtp-host≫`
+- `TIMELD_GATEWAY_SMTP__FROM=≪an-email-account-to-send-activation-codes≫`
+- `TIMELD_GATEWAY_SMTP__AUTH__USER=≪your-smtp-account≫`
+- `TIMELD_GATEWAY_SMTP__AUTH__PASS=≪your-smtp-account-password≫`
 - Any additional secrets for extensions, e.g. see ../prejournal/secrets.mjs
+
+The root access key is invented by you; it must be of the form `≪appid≫.≪keyid≫:≪secret≫`, where:
+- `appid` is some application identifier (the app name will do)
+- `keyid` is the key identifier (at least 5 characters), used for logging
+- `secret` is the secret key material (at least 20 characters)
+
+e.g. `timeld.rootkey:123456789abcdefghijk`
 
 `deploy.sh` takes three optional arguments:
 1. app name (root); defaults to `timeld`

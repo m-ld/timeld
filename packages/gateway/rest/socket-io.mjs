@@ -13,7 +13,8 @@ export default function socketIo({ gateway, server }) {
   const io = new Server(server.server);
   // Attach authorisation
   io.use(async (socket, next) => {
-    const { user, key, '@domain': domainName } = socket.handshake.auth;
+    const { user, key } = socket.handshake.auth;
+    const { '@domain': domainName } = socket.handshake.query;
     try {
       if (user) {
         // A user is trying to access a Timesheet
