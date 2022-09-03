@@ -15,8 +15,7 @@ cd timeld/packages/gateway
 
 You will need:
 1. A [fly.io](https://fly.io) account (requires a credit card); and install `flyctl`.
-2. An [Ably](https://ably.com/) account; create an app in the Ably dashboard, and look for the root key and the api key.
-3. An SMTP service and outbound account, for sending activation codes.
+3. An SMTP service and account, for sending activation codes.
 4. An app name!
 
 ```shell
@@ -54,12 +53,12 @@ chmod +x deploy.sh
 
 In preparation for a first deployment ("genesis") you need a local `.env` file (in this directory or in the repo root), containing:
 
-- `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
-- `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
+- `TIMELD_GATEWAY_AUTH__KEY={some root access key, you choose}`
 - `TIMELD_GATEWAY_SMTP__HOST={your SMTP host}`
 - `TIMELD_GATEWAY_SMTP__FROM={an email account to send activation codes}`
 - `TIMELD_GATEWAY_SMTP__AUTH__USER={your SMTP account}`
 - `TIMELD_GATEWAY_SMTP__AUTH__PASS={your SMTP account password}`
+- Any additional secrets for extensions, e.g. see ../prejournal/secrets.mjs
 
 `deploy.sh` takes three optional arguments:
 1. app name (root); defaults to `timeld`
