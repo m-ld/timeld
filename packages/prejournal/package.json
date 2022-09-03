@@ -1,6 +1,6 @@
 {
   "name": "timeld-prejournal",
-  "version": "0.1.1",
+  "version": "0.1.2-no-ably.0",
   "description": "timeld - prejournal integration",
   "main": "index.mjs",
   "scripts": {
@@ -24,6 +24,6 @@
   "dependencies": {
     "@zeit/fetch": "^6.0.0",
     "loglevel": "^1.8.0",
-    "timeld-common": "^0.1.4"
+    "timeld-common": "^0.1.5-no-ably.0"
   }
 }
