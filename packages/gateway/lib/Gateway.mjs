@@ -178,11 +178,15 @@ export default class Gateway extends BaseGateway {
     ts.follow(async (update, state) => {
       for (let integration of Object.values(this.integrations)) {
         if (integration.appliesTo.includes(tsIri)) {
-          // TODO: These will queue up on the write lock, and could overflow
-          // Integrations should be guaranteed fast and async their heavy stuff
-          await this.domain.write(async gwState =>
-            gwState.write(await integration.entryUpdate(tsId, update, state))
-          ).catch(err => LOG.warn(integration.module, 'update failed', tsIri, err));
+          try {
+            // TODO: Integrations should be guaranteed fast and async any heavy stuff
+            const gwUpdate = await integration.entryUpdate(tsId, update, state);
+            // Push the Gateway domain update async to prevent a deadlock
+            this.domain.write(async gwState => gwState.write(gwUpdate))
+              .catch(e => LOG.warn(integration.module, 'gateway update failed', tsIri, e));
+          } catch (e) {
+            LOG.warn(integration.module, 'update failed', tsIri, e);
+          }
         }
       }
     });
