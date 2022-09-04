@@ -1,6 +1,6 @@
-import { AblyKey, AccountOwnedId } from 'timeld-common';
+import { AuthKey, AccountOwnedId } from 'timeld-common';
 import { verify } from './util.mjs';
-import { BadRequestError, UnauthorizedError } from '../rest/errors.mjs';
+import { UnauthorizedError } from '../rest/errors.mjs';
 
 /**
  * @typedef {object} AccessRequest
@@ -12,34 +12,37 @@ export default class Authorization {
   /**
    * @param {import('restify').Request} req
    */
-  constructor(req) {
+  static fromRequest(req) {
     if (req.authorization == null)
       throw new UnauthorizedError();
-    this.user = req.params.user || req.authorization.basic?.username;
-    if (!AccountOwnedId.isComponentId(this.user))
-      throw new UnauthorizedError('Bad user %s', this.user);
+    const user = req.params.user || req.authorization.basic?.username;
     switch (req.authorization.scheme) {
       case 'Bearer':
-        if (!req.authorization.credentials)
-          throw new UnauthorizedError();
-        /**
-         * a JWT containing a keyid associated with this Account
-         * @type {string}
-         */
-        this.jwt = req.authorization.credentials;
-        break;
+        return new Authorization({
+          user, jwt: req.authorization.credentials
+        });
       case 'Basic':
-        if (!req.authorization.basic?.password)
-          throw new UnauthorizedError();
-        /**
-         * an Ably key associated with this Account
-         * @type {string}
-         */
-        this.key = req.authorization.basic.password;
-        break;
+        return new Authorization({
+          user, key: req.authorization.basic?.password
+        });
       default:
-        throw new BadRequestError('Unrecognised authorization');
+        throw new UnauthorizedError('Unrecognised authorization');
     }
+  }
+
+  /**
+   * @param {string} user
+   * @param {string} [jwt] a JWT containing a keyid associated with this Account
+   * @param {string} [key] an authorisation key associated with this Account
+   */
+  constructor({ user, jwt, key }) {
+    if (!AccountOwnedId.isComponentId(user))
+      throw new UnauthorizedError('Bad user %s', user);
+    if (!jwt && !key)
+      throw new UnauthorizedError('No user credentials presented');
+    this.user = user;
+    this.jwt = jwt;
+    this.key = key;
   }
 
   /**
@@ -55,7 +58,7 @@ export default class Authorization {
       try { // Verify the JWT against its declared keyid
         const payload = await verify(this.jwt, async header => {
           const { key } = await userAcc.authorise(header.kid, access);
-          return new AblyKey(key).secret;
+          return key.secret;
         });
         if (payload.sub !== this.user)
           return Promise.reject(new UnauthorizedError('JWT does not correspond to user'));
@@ -63,9 +66,9 @@ export default class Authorization {
         throw new UnauthorizedError(e);
       }
     } else {
-      const ablyKey = new AblyKey(this.key);
-      const { key: actualKey } = await userAcc.authorise(ablyKey.keyid, access);
-      if (this.key !== actualKey)
+      const authKey = AuthKey.fromString(this.key);
+      const { key: actualKey } = await userAcc.authorise(authKey.keyid, access);
+      if (this.key !== actualKey.toString())
         throw new UnauthorizedError();
     }
     return userAcc;

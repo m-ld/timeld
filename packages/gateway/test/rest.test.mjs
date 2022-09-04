@@ -1,8 +1,8 @@
-// noinspection JSCheckFunctionSignatures
+// noinspection JSCheckFunctionSignatures,JSUnresolvedFunction,NpmUsedModulesInstalled
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { dateJsonLd, Env } from 'timeld-common';
+import { AuthKey, CloneFactory, dateJsonLd, Env } from 'timeld-common';
 import { join } from 'path';
 import { clone as meldClone } from '@m-ld/m-ld';
 import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
@@ -19,20 +19,25 @@ describe('Gateway REST API', () => {
   beforeEach(async () => {
     tmpDir = dirSync({ unsafeCleanup: true });
     const env = new Env({ data: join(tmpDir.name, 'data') });
-    const clone = jest.fn(config =>
-      meldClone(new MeldMemDown(), DeadRemotes, config));
-    const ablyApi = {
-      createAppKey: jest.fn(),
-      updateAppKey: jest.fn().mockImplementation(
-        (keyid, { capability }) => Promise.resolve({
-          id: keyid, key: `app.${keyid}:secret`, name: 'test@ex.org', capability, status: 0
+    const cloneFactory = new class extends CloneFactory {
+      async clone(config) {
+        return meldClone(new MeldMemDown(), DeadRemotes, config);
+      }
+    }();
+    const keyStore = {
+      mintKey: jest.fn(),
+      pingKey: jest.fn().mockImplementation(
+        keyid => Promise.resolve({
+          key: AuthKey.fromString(`app.${keyid}:secret`),
+          name: 'test@ex.org',
+          revoked: false
         }))
     };
     gateway = new Gateway(env, {
       '@domain': 'ex.org',
       genesis: true,
-      ably: { key: 'app.id:secret' }
-    }, clone, ablyApi);
+      auth: { key: 'app.id:secret' }
+    }, cloneFactory, keyStore);
     await gateway.initialise();
     // noinspection JSValidateTypes
     notifier = { sendActivationCode: jest.fn() };
@@ -75,7 +80,7 @@ describe('Gateway REST API', () => {
       }]);
     });
 
-    test('rejects without authorisation report', async () => {
+    test('rejects report without authorisation', async () => {
       await gateway.domain.write({
         '@insert': { '@id': 'test', project: { '@id': 'test/pr1', '@type': 'Project' } }
       });

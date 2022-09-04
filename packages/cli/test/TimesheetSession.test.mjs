@@ -1,3 +1,4 @@
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import { DeadRemotes, toBeISODateString } from 'timeld-common/test/fixtures.mjs';
 import { clone, uuid } from '@m-ld/m-ld';

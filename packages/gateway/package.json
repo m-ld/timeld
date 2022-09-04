@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.2.5",
+  "version": "0.2.6-no-ably.0",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
@@ -38,9 +38,11 @@
     "rx-flowable": "^0.1.2",
     "rxjs": "^7.5.6",
     "simple-peer": "^9.11.1",
-    "timeld-common": "^0.1.4",
-    "timeld-prejournal": "^0.1.1",
-    "timeld-tiki": "^0.1.1",
+    "socket.io": "^4.5.1",
+    "socket.io-client": "^4.5.1",
+    "timeld-common": "^0.1.5-no-ably.0",
+    "timeld-prejournal": "^0.1.2-no-ably.0",
+    "timeld-tiki": "^0.1.2-no-ably.0",
     "validator": "^13.7.0"
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
 import { propertyValue } from '@m-ld/m-ld';
+import dns from 'dns/promises';
+import isFQDN from 'validator/lib/isFQDN.js';
 
 /**
  * @param {import('@m-ld/m-ld').Subject} subject may contain the property
@@ -86,4 +88,28 @@ export const domainRelativeIri = (iri, domainName) =>
  */
 export function lastPathComponent(pathname) {
   return pathname.substring(pathname.lastIndexOf('/') + 1);
+}
+
+/**
+ * @param {string} address
+ * @returns {{ root: URL | Promise<URL>, domainName: string }}
+ */
+export function resolveGateway(address) {
+  if (isFQDN(address)) {
+    return { root: new URL(`https://${address}/`), domainName: address };
+  } else {
+    const url = new URL('/', address);
+    const domainName = url.hostname;
+    if (domainName.endsWith('.local')) {
+      return {
+        root: dns.lookup(domainName).then(a => {
+          url.hostname = a.address;
+          return url;
+        }),
+        domainName
+      };
+    } else {
+      return { root: url, domainName };
+    }
+  }
 }

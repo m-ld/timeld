@@ -72,7 +72,7 @@ export default class AdminSession extends Repl {
         'Show your API access key',
         yargs => yargs,
         () => ctx.exec(() =>
-          new SyncProc(Readable.from([this.gateway.ablyKey.toString()])))
+          new SyncProc(Readable.from([this.gateway.authKey.toString()])))
       )
       .command(
         ['list <detail>', 'ls'],
