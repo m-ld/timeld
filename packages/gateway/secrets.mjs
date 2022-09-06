@@ -1,9 +1,6 @@
 import { Env } from 'timeld-common';
 import dotenv from 'dotenv';
 import { join } from 'path';
-import caldavSecrets from 'timeld-caldav/secrets.mjs';
-import prejournalSecrets from 'timeld-prejournal/secrets.mjs';
-import tikiSecrets from 'timeld-tiki/secrets.mjs';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Load local environment from first found .env
@@ -17,16 +14,7 @@ const env = new Env({}, 'timeld-gateway');
 const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Gateway secrets: auth, SMTP
-for (let [envVar, envValue] of Object.entries(env.asEnv(config, ['auth', 'smtp'])))
+// Gateway & extension secrets: auth, SMTP, caldav, prejournal, tiki
+const keys = ['auth', 'smtp', 'caldav', 'prejournal', 'tiki'];
+for (let [envVar, envValue] of Object.entries(env.asEnv(config, keys)))
   console.log(`${envVar}=${envValue}`);
-
-////////////////////////////////////////////////////////////////////////////////
-// Extension secrets
-// TODO: dynamically from config keys & available modules
-if (config['caldav'])
-  caldavSecrets(config);
-if (config['prejournal'])
-  prejournalSecrets(config);
-if (config['tiki'])
-  tikiSecrets(config);
