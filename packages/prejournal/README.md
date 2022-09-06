@@ -1,4 +1,17 @@
-⚠️ This package is an untested sketch for [prejournal](https://prejournal.org/) timesheets  sync integration.
+# timeld - Prejournal integration
+
+This packages supports live update of timesheet entries from **timeld** to [prejournal](https://prejournal.org/).
+
+## installation
+
+This integration package is included in the gateway.
+
+To activate the integration for a timesheet "my-work":
+
+```shell
+timeld admin
+alice> add integration timeld-prejournal --ts my-work
+```
 
 ## API docs
 

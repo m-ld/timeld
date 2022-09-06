@@ -1,6 +1,7 @@
 import { Env } from 'timeld-common';
 import dotenv from 'dotenv';
 import { join } from 'path';
+import caldavSecrets from 'timeld-caldav/secrets.mjs';
 import prejournalSecrets from 'timeld-prejournal/secrets.mjs';
 import tikiSecrets from 'timeld-tiki/secrets.mjs';
 
@@ -23,7 +24,9 @@ for (let [envVar, envValue] of Object.entries(env.asEnv(config, ['auth', 'smtp']
 ////////////////////////////////////////////////////////////////////////////////
 // Extension secrets
 // TODO: dynamically from config keys & available modules
-if (config.prejournal)
+if (config['caldav'])
+  caldavSecrets(config);
+if (config['prejournal'])
   prejournalSecrets(config);
-if (config.tiki)
+if (config['tiki'])
   tikiSecrets(config);

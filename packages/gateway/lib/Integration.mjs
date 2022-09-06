@@ -1,19 +1,46 @@
 import { array, propertyValue } from '@m-ld/m-ld';
 import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
+import { Readable } from 'stream';
+import { Subscription } from 'rxjs';
+import LOG from 'loglevel';
+import { Env } from 'timeld-common';
 
 /**
- * @typedef {object} Integration
- * @static {string} configKey
- * @static {string} contentType
- * @property {(
- * tsId: AccountOwnedId,
- * update: MeldUpdate,
- * state: MeldReadState
- * ) => Promise<*>} entryUpdate
- * @property {(
- * tsId: AccountOwnedId,
- * state: MeldReadState
- * ) => Promise<*>} reportTimesheet
+ * @interface Integration
+ * @static {string} configKey used to provide the configuration
+ * @static {string} contentType used to negotiate content types
+ */
+
+/**
+ * Called to synchronise the timesheet with the external system. If the `state`
+ * parameter is provided, the integration may read and write it as required, but
+ * not after the returned promise is settled. Updates in the returned observable
+ * represent external updates and will be applied in order to the timesheet.
+ *
+ * @function
+ * @name Integration#syncTimesheet
+ * @param {AccountOwnedId} tsId
+ * @param {MeldState} [state] the local timesheet state
+ * @returns {Promise<import('rxjs').Observable<Update> | null>}
+ */
+
+/**
+ * Called when a timesheet entry is updated, to be pushed to the external system
+ * @function
+ * @name Integration#entryUpdate
+ * @param {AccountOwnedId} tsId
+ * @param {MeldUpdate} update
+ * @param {MeldReadState} state the timesheet state
+ * @returns Promise<*>
+ */
+
+/**
+ * Called to report the timesheet in the native format of the external system
+ * @function
+ * @name Integration#reportTimesheet
+ * @param {AccountOwnedId} tsId
+ * @param {MeldReadState} state the timesheet state
+ * @returns {Readable} timesheet content in some native format
  */
 
 /**
@@ -27,18 +54,23 @@ export default class IntegrationExtension {
     // noinspection JSCheckFunctionSignatures
     return new IntegrationExtension({
       module: propertyValue(src, 'module', String),
-      appliesTo: idSet(safeRefsIn(src, 'appliesTo'))
+      appliesTo: idSet(safeRefsIn(src, 'appliesTo')),
+      config: propertyValue(src, 'config', Array, String).map(JSON.parse)[0]
     }, src);
   }
 
+  /**@type {Promise<*>}*/asyncTasks = Promise.resolve();
+
   /**
-   * @param {string} module
-   * @param {Iterable<string>} appliesTo
+   * @param {string} module ESM module to import for integration implementation
+   * @param {Iterable<string>} appliesTo set of timesheet or project IRIs
+   * @param {*} config instance-specific configuration
    * @param {GraphSubject} [src]
    */
-  constructor({ module, appliesTo }, src) {
+  constructor({ module, appliesTo, config }, src) {
     this.module = module;
     this.appliesTo = [...appliesTo];
+    this.config = config;
     this.resetUpdate();
     this.src = new Proxy(src || {}, {
       set: (src, p, value) => {
@@ -46,43 +78,74 @@ export default class IntegrationExtension {
           if (this.update['@delete'] == null || !(p in this.update['@delete']))
             (this.update['@delete'] ||= { '@id': src['@id'] })[p] = src[p];
         }
-        (this.update['@insert'] ||= { '@id': src['@id'] })[p] = value;
-        return Reflect.set(src, p, value);
+        if (array(value).length) {
+          (this.update['@insert'] ||= { '@id': src['@id'] })[p] = value;
+          return Reflect.set(src, p, value);
+        } else {
+          return Reflect.deleteProperty(src, p);
+        }
       }
     });
+    this.subs = new Subscription();
   }
 
   /**
-   * @param {object} config
+   * @param {Gateway} gateway
    * @returns {Promise<this>}
    */
-  async initialise(config) {
+  async initialise(gateway) {
+    this.gateway = gateway;
     const Impl = (await import(this.module)).default;
-    this.integration =
-      /**@type {Integration}*/new Impl(config[Impl.configKey], this.src);
+    this.integration = /**@type {Integration}*/new Impl(
+      Env.mergeConfig(gateway.config[Impl.configKey], this.config), this.src);
     this.contentType = Impl.contentType;
     return this;
   }
 
-  /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldUpdate} update
-   * @param {MeldReadState} state
-   * @returns {Promise<Update>} an update applicable to the gateway state
-   */
-  async entryUpdate(tsId, update, state) {
-    await this.integration.entryUpdate(tsId, update, state);
-    // TODO: Consider separate concurrently-edited timesheets
-    return this.resetUpdate();
+  get name() {
+    return this.integration.constructor.name;
+  }
+
+  async syncTimesheet(tsId, state) {
+    const updates = await this.integration.syncTimesheet?.(tsId, state);
+    if (updates) {
+      this.subs.add(updates.subscribe(update =>
+        this.asyncTasks = this.asyncTasks.then(
+          () => this.writeIncomingUpdate(tsId, update))));
+    }
+    return updates; // Only for conformance with interface
   }
 
   /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldReadState} state
+   * @returns {Promise<Update>} an update applicable to the gateway state
    */
+  async entryUpdate(tsId, update, state) {
+    await this.integration.entryUpdate?.(tsId, update, state);
+    this.updateGateway(tsId);
+  }
+
   reportTimesheet(tsId, state) {
-    return this.integration.reportTimesheet(tsId, state);
+    return this.integration.reportTimesheet?.(tsId, state) || Readable.from([]);
   };
+
+  async writeIncomingUpdate(tsId, update) {
+    try {
+      const ts = await this.gateway.initTimesheet(tsId, false);
+      await ts.write(update);
+      this.updateGateway(tsId);
+    } catch (e) {
+      LOG.warn(this.name, 'cannot write to', tsId, e);
+    }
+  }
+
+  updateGateway(tsId) {
+    // TODO: Consider separate concurrently-edited timesheets
+    // Pushing the Gateway domain update async to prevent a deadlock
+    const update = this.resetUpdate();
+    if (Object.keys(update).length)
+      this.gateway.domain.write(update)
+        .catch(e => LOG.warn(this.name, 'gateway update failed', tsId, e));
+  }
 
   /**
    * Called when the extension subject itself is updated
@@ -109,6 +172,11 @@ export default class IntegrationExtension {
     return update;
   }
 
+  async close() {
+    this.subs.unsubscribe();
+    await this.asyncTasks;
+  }
+
   /**
    * @returns {Subject}
    */
@@ -117,7 +185,8 @@ export default class IntegrationExtension {
       '@type': 'Integration',
       module: this.module,
       appliesTo: [...this.appliesTo].map(iri => ({ '@id': iri })),
+      config: this.config ? JSON.stringify(this.config) : [],
       ...this.src
-    }
+    };
   }
 }

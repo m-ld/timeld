@@ -4,9 +4,7 @@ import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
 import { consume } from 'rx-flowable/consume';
-import { exampleEntryJson, toBeISODateString } from 'timeld-common/test/fixtures.mjs';
-import { readResult } from '@m-ld/m-ld';
-import { EMPTY } from 'rxjs';
+import { toBeISODateString } from 'timeld-common/test/fixtures.mjs';
 import MockIntegration from 'timeld-common/test/MockIntegration.mjs';
 import { AccountOwnedId } from 'timeld-common';
 
@@ -15,7 +13,6 @@ expect.extend({ toBeISODateString });
 describe('Administration session', () => {
   let gateway;
   let outLines, errLines;
-  let tsEntries;
 
   beforeEach(async () => {
     gateway = new MockGateway({ domainName: 'ex.org', mock: {} });
@@ -24,12 +21,10 @@ describe('Administration session', () => {
       name: 'test', emails: ['test@ex.org']
     });
     await gateway.initialise(userAccount);
-    tsEntries = EMPTY;
     // noinspection JSCheckFunctionSignatures
     gateway.initTimesheet.mockResolvedValue({
       // Required for integration revup
-      read: jest.fn(arg => typeof arg == 'function' ?
-        arg({}) : readResult(tsEntries))
+      write: jest.fn(proc => proc({}))
     });
     errLines = jest.fn();
     outLines = jest.fn();
@@ -154,14 +149,15 @@ describe('Administration session', () => {
 
     test('Adds integration for timesheet', async () => {
       await session.execute('add ts ts1', outLines, errLines);
-      const entry = exampleEntryJson();
-      tsEntries = consume([entry]);
       await session.execute(
-        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        'add integration timeld-common/test/MockIntegration.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
         outLines, errLines);
-      expect(MockIntegration.created.entryUpdate).toHaveBeenCalledWith(
-        AccountOwnedId.fromString('test/ts1@ex.org'),
-        { '@delete': [], '@insert': [entry] }, expect.any(Object));
+      expect(MockIntegration.created.syncTimesheet).toHaveBeenCalledWith(
+        AccountOwnedId.fromString('test/ts1@ex.org'), expect.any(Object));
+      expect(MockIntegration.created.ext).toMatchObject({
+        config: JSON.stringify({ uri: 'http://ext.org/' })
+      });
       await session.execute('ls integration --timesheet ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
     });

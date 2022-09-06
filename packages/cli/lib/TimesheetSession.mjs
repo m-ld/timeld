@@ -5,9 +5,9 @@ import { createReadStream } from 'fs';
 import { truncate as truncateFile } from 'fs/promises';
 import { ResultsProc } from './ResultsProc.mjs';
 import {
-  durationFromInterval, parseDate, parseDuration, toDate, toDuration, toIri
+  parseDate, parseDuration, toDate, toDuration, toIri
 } from './util.mjs';
-import { Entry, Session } from 'timeld-common';
+import { Entry, Session, durationFromInterval } from 'timeld-common';
 import { DefaultFormat, ENTRY_FORMAT_OPTIONS, getSubjectFormat } from './DisplayFormat.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { Writable } from 'stream';

@@ -102,7 +102,8 @@ export default class WritePatterns {
                 '@type': { enum: ['Integration'] },
                 module: { type: 'string' },
                 appliesTo: isReference
-              }
+              },
+              optionalProperties: { config: { type: 'string' } }
             },
             // TODO: Support projects
             '@where': whereAccount({ timesheet: isReference })

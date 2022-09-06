@@ -9,7 +9,6 @@ import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
 import IntegrationExtension from './Integration.mjs';
-import { batch } from 'rx-flowable/operators';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -223,7 +222,7 @@ export default class Account {
    */
   beforeInsertIntegration = async (state, src) => {
     // Create a temporary integration (the real one will be loaded later)
-    const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway.config);
+    const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway);
     // Flow matched entries to the extension
     await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
     return ext.toJSON();
@@ -240,18 +239,8 @@ export default class Account {
       throw new BadRequestError('Timesheet not found: %s', tsId);
     const tsClone = await this.gateway.initTimesheet(tsId, false);
     // TODO: This holds locks on both gateway and timesheet state!
-    await new Promise((resolve, reject) => {
-      tsClone.read(state =>
-        each(tsClone.read({
-          '@describe': '?entry',
-          '@where': { '@id': '?entry', '@type': 'Entry' }
-        }).consume.pipe(batch(10)), srcBatch => {
-          // noinspection JSCheckFunctionSignatures
-          return ext.entryUpdate(tsId, {
-            '@delete': [], '@insert': srcBatch
-          }, state);
-        }).then(resolve, reject));
-    });
+    // Note this may mutate the extension object
+    await tsClone.write(state => ext.syncTimesheet(tsId, state));
   }
 
   /**

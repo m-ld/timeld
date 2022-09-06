@@ -1,6 +1,7 @@
 import setupFetch from '@zeit/fetch';
 import { ResultsReadable } from 'timeld-common';
 import LOG from 'loglevel';
+import { each } from 'rx-flowable';
 
 /**
  * @typedef {object} PrejournalConfig
@@ -29,6 +30,11 @@ export default class PrejournalIntegration {
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
   constructor(config, ext, fetch = setupFetch()) {
+    const missingConfig = ['user', 'key', 'api', 'client'].filter(k => !config[k]);
+    if (missingConfig.length)
+      throw new Error(`Missing prejournal config: ${missingConfig.join(', ')}`);
+
+    this.client = config.client;
     const auth = `Basic ${Buffer.from([config.user, config.key].join(':')).toString('base64')}`;
     const apiRoot = new URL(config.api);
     if (!apiRoot.pathname.endsWith('/'))
@@ -36,7 +42,6 @@ export default class PrejournalIntegration {
     if (!apiRoot.pathname.endsWith('/v1/'))
       throw new RangeError('Prejournal integration requires v1 API');
     this.ext = ext;
-    this.client = config.client;
     /**
      * @param {WorkedHours} workedHours
      * @returns {Promise<*>}
@@ -60,38 +65,44 @@ export default class PrejournalIntegration {
     };
   }
 
-  /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldUpdate} update
-   * @param {MeldReadState} state
-   */
+  async syncTimesheet(tsId, state) {
+    if (state) {
+      await each(state.read({
+        '@describe': '?entry', '@where': { '@id': '?entry', '@type': 'Entry' }
+      }).consume, src => this.postWorkedHours(tsId, src));
+    }
+  }
+
   entryUpdate(tsId, update, state) {
     // Look for new Entries, and IDs for which we already have a Movement
     return Promise.all(update['@insert'].map(async src => {
       if (src['@id'] in this.ext) {
         // Load the whole state for the entry
         // noinspection JSCheckFunctionSignatures
-        src = await state.get(src['@id']);
-        const movementId = this.ext[src['@id']];
-        LOG.debug('Updated Movement', movementId, 'from Entry', src['@id']);
-        await this.post(new WorkedHours(tsId, src, this.client, movementId));
+        await this.updateWorkedHours(tsId, await state.get(src['@id']));
       } else if (src['@type'] === 'Entry') {
-        // Inserting worked-hours
-        const res = await this.post(new WorkedHours(tsId, src, this.client));
-        // Store the movement ID for the entry
-        // (If available: https://github.com/pondersource/prejournal/issues/127)
-        const movementId = res[0]['movementId'];
-        LOG.debug('Inserted Movement', movementId, 'from Entry', src['@id']);
-        if (movementId)
-          this.ext[src['@id']] = movementId;
+        await this.postWorkedHours(tsId, src);
       }
     }));
   }
 
-  /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldReadState} state
-   */
+  async updateWorkedHours(tsId, src) {
+    const movementId = this.ext[src['@id']];
+    LOG.debug('Updated Movement', movementId, 'from Entry', src['@id']);
+    await this.post(new WorkedHours(tsId, src, this.client, movementId));
+  }
+
+  async postWorkedHours(tsId, src) {
+    // Inserting worked-hours
+    const res = await this.post(new WorkedHours(tsId, src, this.client));
+    // Store the movement ID for the entry
+    // (If available: https://github.com/pondersource/prejournal/issues/127)
+    const movementId = res[0]['movementId'];
+    LOG.debug('Inserted Movement', movementId, 'from Entry', src['@id']);
+    if (movementId)
+      this.ext[src['@id']] = movementId;
+  }
+
   reportTimesheet(tsId, state) {
     return new ResultsReadable(state.read({
       '@describe': '?entry', '@where': { '@id': '?id', '@type': 'Entry' }

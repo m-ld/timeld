@@ -125,8 +125,10 @@ export default class Gateway extends BaseGateway {
    */
   async loadIntegration(src) {
     try {
-      this.integrations[src['@id']] =
-        await IntegrationExtension.fromJSON(src).initialise(this.config);
+      const ext = await IntegrationExtension.fromJSON(src).initialise(this);
+      await Promise.all(ext.appliesTo.map(id =>
+        ext.syncTimesheet(this.ownedRefAsId({ '@id': id }))));
+      this.integrations[src['@id']] = ext;
       LOG.info('Loaded integration', src);
     } catch (e) {
       LOG.warn('Could not load integration', src, e);
@@ -143,6 +145,7 @@ export default class Gateway extends BaseGateway {
       if (src['@id'] in this.integrations) {
         if ('module' in src) {
           // If an integration's key property vanishes, remove it
+          this.integrations[src['@id']].close();
           delete this.integrations[src['@id']];
           LOG.info('Unloaded integration', src);
         } else {
@@ -180,10 +183,7 @@ export default class Gateway extends BaseGateway {
         if (integration.appliesTo.includes(tsIri)) {
           try {
             // TODO: Integrations should be guaranteed fast and async any heavy stuff
-            const gwUpdate = await integration.entryUpdate(tsId, update, state);
-            // Push the Gateway domain update async to prevent a deadlock
-            this.domain.write(async gwState => gwState.write(gwUpdate))
-              .catch(e => LOG.warn(integration.module, 'gateway update failed', tsIri, e));
+            await integration.entryUpdate(tsId, update, state);
           } catch (e) {
             LOG.warn(integration.module, 'update failed', tsIri, e);
           }
@@ -392,7 +392,8 @@ export default class Gateway extends BaseGateway {
     // Close the gateway domain
     return Promise.all([
       this.domain?.close(),
-      ...Object.values(this.timesheetDomains).map(d => d.close())
+      ...Object.values(this.timesheetDomains).map(d => d.close()),
+      ...Object.values(this.integrations).map(i => i.close())
     ]);
   }
 }

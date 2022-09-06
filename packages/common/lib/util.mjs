@@ -113,3 +113,13 @@ export function resolveGateway(address) {
     }
   }
 }
+
+/**
+ * @param {Date} start
+ * @param {Date} end
+ * @returns {number} duration in fractional minutes
+ */
+export function durationFromInterval(start, end) {
+  // Round to the second then convert to minutes
+  return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
+}

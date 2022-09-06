@@ -17,6 +17,7 @@ export default class MockIntegration {
     this.config = config;
     this.ext = ext;
     // Abusing the config to pass in mock methods
+    this.syncTimesheet = config.syncTimesheet || jest.fn();
     this.entryUpdate = config.entryUpdate || jest.fn();
     this.reportTimesheet = config.reportTimesheet || jest.fn();
     MockIntegration.created = this;

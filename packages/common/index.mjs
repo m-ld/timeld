@@ -55,5 +55,6 @@ export {
   isReference,
   resolveGateway,
   domainRelativeIri,
-  lastPathComponent
+  lastPathComponent,
+  durationFromInterval
 } from './lib/util.mjs';
