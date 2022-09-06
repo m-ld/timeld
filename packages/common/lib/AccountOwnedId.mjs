@@ -1,3 +1,5 @@
+// noinspection HttpUrlsUsage
+
 import { domainRelativeIri } from './util.mjs';
 
 /**
@@ -87,7 +89,7 @@ export default class AccountOwnedId {
       && AccountOwnedId.isComponentId(this.account) && AccountOwnedId.isComponentId(this.name);
   }
 
-  /** Validates this Id */
+  /** Validates this ID */
   validate() {
     // Gateway is allowed to be undefined or false
     if (!this.isRelative)
@@ -128,6 +130,10 @@ export default class AccountOwnedId {
 
   toRelativeIri() {
     return `${this.account}/${this.name}`;
+  }
+
+  ownerIri() {
+    return `http://${this.gateway}/${this.account}`;
   }
 
   toReference() {

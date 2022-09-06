@@ -118,12 +118,22 @@ The output of all the `list` and `report` commands in a session can be piped to 
 report my-project --format json-ld > my-project-report.json
 ```
 
-You can synchronise your timesheets with other federated time-tracking systems (currently Ponder Source's [PreJournal](https://github.com/pondersource/prejournal/) and Evoludata's [Tiki](https://timesheet.dev3.evoludata.com/Timesheets-homepage)).  This is done individually for each timesheet; here's how:
+You can synchronise your timesheets with other federated time-tracking systems; currently:
+
+| system                                                                       | integration module                                                   |
+|------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| Ponder Source's [PreJournal](https://github.com/pondersource/prejournal/)    | [timeld-prejournal](https://www.npmjs.com/package/timeld-prejournal) |
+| Evoludata's [Tiki](https://timesheet.dev3.evoludata.com/Timesheets-homepage) | [timeld-tiki](https://www.npmjs.com/package/timeld-tiki)             |
+| [CalDAV](https://www.rfc-editor.org/rfc/rfc4791)                             | [timeld-caldav](https://www.npmjs.com/package/timeld-caldav)         |
+
+This is done individually for each timesheet; here's how:
 
 ```
-add integration integration-module --timesheet my-timesheet
+add integration ≪integration-module≫ --timesheet my-timesheet --config.≪key≫ ≪config-value≫
 ```
-where `integration-module` is either `timeld-prejournal` or `timeld-tiki`.
+where:
+- `≪integration-module≫` is `timeld-prejournal`, `timeld-tiki`, or `timeld-caldav`
+- `≪key≫` and `≪config-value≫` are any configuration required for the integration (see integration module links above)
 
 ## help
 

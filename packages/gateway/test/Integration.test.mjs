@@ -4,6 +4,7 @@ import IntegrationExtension from '../lib/Integration.mjs';
 import { AccountOwnedId } from 'timeld-common';
 import { of } from 'rxjs';
 import { exampleEntryJson } from 'timeld-common/test/fixtures.mjs';
+import MockIntegration from 'timeld-common/test/MockIntegration.mjs';
 
 describe('Integration extension', () => {
   let /**@type Gateway*/gateway;
@@ -19,6 +20,7 @@ describe('Integration extension', () => {
       '@id': 'mockIntegration',
       '@type': 'Integration',
       module: 'timeld-common/test/MockIntegration.mjs',
+      config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       customProp1: 'hello',
       customProp2: 'hi'
@@ -38,6 +40,10 @@ describe('Integration extension', () => {
 
   test('constructs the integration module', async () => {
     expect(ext.contentType).toBe('application/x-mock');
+    expect(MockIntegration.created.config).toMatchObject({
+      testing: 'config',
+      'uri': 'https://ex.org/api/'
+    });
   });
 
   test('updates after sync', async () => {
@@ -71,7 +77,7 @@ describe('Integration extension', () => {
       '@id': 'mockIntegration',
       '@type': 'Integration',
       module: 'timeld-common/test/MockIntegration.mjs',
-      config: [],
+      config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       testing: 'ts1:config',
       customProp1: 'hello',
@@ -98,7 +104,7 @@ describe('Integration extension', () => {
       '@id': 'mockIntegration',
       '@type': 'Integration',
       module: 'timeld-common/test/MockIntegration.mjs',
-      config: [],
+      config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       customProp1: 'goodbye'
       // customProp2 has been removed

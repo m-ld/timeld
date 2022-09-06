@@ -5,12 +5,12 @@ import LOG from 'loglevel';
 
 /**
  * @typedef {object} CalDavConfig
- * @property {string} owner Calendar owner IRI
  * @property {string} uri API URL e.g. https://p116-caldav.icloud.com/151157399/calendars/work
+ * @property {string} [owner] Calendar owner IRI
  * @property {object} [auth] CalDAV authorisation
  * @property {object} [auth.user] WebDAV user
  * @property {object} [auth.pass] WebDAV password
- * @property {number} pollInterval CalDAV polling interval millis
+ * @property {number} [pollInterval] CalDAV polling interval millis
  */
 
 /**
@@ -33,7 +33,7 @@ export default class CalDavIntegration {
     ext,
     Calendar = ScrapeGoat
   ) {
-    const missingConfig = ['uri', 'owner'].filter(k => !config[k]);
+    const missingConfig = ['uri'].filter(k => !config[k]);
     if (missingConfig.length)
       throw new Error(`Missing CalDAV config: ${missingConfig.join(', ')}`);
     this.uri = new URL(config.uri);
@@ -47,7 +47,7 @@ export default class CalDavIntegration {
     const session = new Session();
     if (state) {
       const events = /**@type {object[]}*/await this.calendar.getAllEvents();
-      await state.write({ '@insert': this.eventsInsert(events, session) });
+      await state.write({ '@insert': this.eventsInsert(tsId, events, session) });
     }
     let running = false; // To prevent buffer overflow in concatMap
     return interval(this.pollInterval).pipe(
@@ -75,7 +75,7 @@ export default class CalDavIntegration {
               const events = /**@type {object[]}*/await this.calendar.getEvents(eventsToLoad);
               update['@delete'].push(...events.map((event, i) =>
                 this.eventDelete(this.getEventId(event), i)));
-              update['@insert'].push(...this.eventsInsert(events, session));
+              update['@insert'].push(...this.eventsInsert(tsId, events, session));
             }
             return update;
           }
@@ -103,7 +103,13 @@ export default class CalDavIntegration {
     });
   }
 
-  eventsInsert(events, session) {
+  /**
+   * @param {AccountOwnedId} tsId
+   * @param {object[]} events
+   * @param {Session} session
+   * @returns {*[]}
+   */
+  eventsInsert(tsId, events, session) {
     return [
       session.toJSON(),
       ...events.map(event => {
@@ -119,7 +125,7 @@ export default class CalDavIntegration {
           activity,
           start,
           duration: durationFromInterval(start, end),
-          providerId: this.owner,
+          providerId: this.owner || tsId.ownerIri(),
           externalId: eventId
         }).toJSON();
       })
