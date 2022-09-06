@@ -35,7 +35,7 @@ npm install timeld-cli -g
   timeld config --ably.key your-ably-key --user http://you.example.org/#profile
   ```
 
-When creating timesheets, their identity will have two parts: an 'account' name and a timesheet name. You can set up a default account name:
+To create a timesheet, you need an identity that the timesheet will be associated with.  This will govern the permissions on that timesheet.  The identity has two parts: an 'account' name and a timesheet name. Here's how you set up a default account name:
 
 ```bash
 timeld config --account your-account-name
@@ -50,11 +50,11 @@ You can also use a different account for each timesheet you create, see below.
 In the session, you can add new time entries like this:
 - `add the-activity`
 
-  (If your activity name has spaces in it, put it in quotes e.g. `add "the activity"`.)
+  (If your activity has spaces in it, put it in quotes e.g. `add "the activity"`.)
 
   **timeld** will confirm what you have added.
   
-  If you want the activity to have an end, you can set a duration using a time unit e.g. `add the-activity 1h`.
+  If you want the activity to have an end time, you can set a duration using a time unit e.g. `add the-activity 1h`.
 
   You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`.
 
@@ -70,7 +70,7 @@ You can `exit` the session and return to the normal terminal. To re-open it, use
 
 _Only available with a Gateway._
 
-`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; and report on projects and timesheets.
+`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; report on projects and timesheets; and manage integrations with other federated time-tracking systems.
 
 By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option. When the session is open you will see a prompt with the account name, e.g. `my-org>`.
 
@@ -79,7 +79,6 @@ Then, for a user account, you can:
 - `list email` will show the email addresses for the user, which can be used to register new devices
 - `add email alice@ex.org` will add an email address to the account
 - `remove email alice@ex.org` will remove an email address from the account
-
 
 - `list organisation` will show the organisations that the user is an admin of
 - `add org my-org` will create an organisation called "my-org"
@@ -95,23 +94,20 @@ For organisation accounts, you can:
 
 For **both** user and organisation accounts, you can:
 
-- `list timesheet` will show the timesheets owned by the account (typically, this means the account is working on the timesheet)
+- `list timesheet` will show the timesheets owned by the account (typically, this means the account that is working on the timesheet)
 - `add timesheet my-timesheet` will add a new empty timesheet "my-timesheet" to the account (which can then be opened with a timesheet session, see above)
 - `remove timesheet my-timesheet` will delete "my-timesheet" from the account
  
   ⚠️ This will delete the timesheet and all its entries and links
 
-
 - `list project` will show all projects owned by the account (typically, this means the account is having someone work on these projects)
 - `add project my-project` will add a new empty project "my-project" to the account
 - `remove project my-project` will delete "my-project" (timesheets in the project will continue to exist)
 
- 
 - `list link --project my-project` will list the timesheets that are linked to "my-project"
 - `list link --timesheet my-timesheet` will list the projects that are linked to "my-timesheet"
 - `add link my-timesheet --project my-project` will link the timesheet to the project. The project name can be prefixed with another account, such as `them/their-project`. This means that the owner of the project (e.g. "them") will be able to report on the timesheet.
 - `remove link my-timesheet --project my-project` will remove the link between the timesheet and the project. This means that the owner of the project will not be able to report on the timesheet (unless they own it anyway)
-
 
 - `report my-timesheet` will show the entries in "my-timesheet", if you have access to it. The name can be prefixed with another account, such as `them/their-timesheet`
 - `report my-project` will show all timesheets and their entries linked to "my-project"
@@ -121,6 +117,13 @@ The output of all the `list` and `report` commands in a session can be piped to 
 ```
 report my-project --format json-ld > my-project-report.json
 ```
+
+You can synchronise your timesheets with other federated time-tracking systems (currently Ponder Source's [PreJournal](https://github.com/pondersource/prejournal/) and Evoludata's [Tiki](https://timesheet.dev3.evoludata.com/Timesheets-homepage)).  This is done individually for each timesheet; here's how:
+
+```
+add integration integration-module --timesheet my-timesheet
+```
+where `integration-module` is either `timeld-prejournal` or `timeld-tiki`.
 
 ## help
 
