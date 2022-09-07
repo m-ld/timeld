@@ -2,7 +2,8 @@ import { array } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, isReference } from 'timeld-common';
 import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
-import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
+import { ConflictError, ForbiddenError, NotFoundError } from '../rest/errors.mjs';
+import { Ask } from './statements.mjs';
 
 /**
  * @typedef {object} BeforeWriteTriggers
@@ -120,6 +121,10 @@ export default class WritePatterns {
             this.matchesApplies(query, 'project'));
       }
       async check(state, query) {
+        const matching = { ...query['@insert'] }; // @type, module, appliesTo
+        delete matching.config;
+        if (await new Ask(state).exists(matching))
+          throw new ConflictError('Integration already exists');
         query['@insert'] = await triggers.beforeInsertIntegration(state, query['@insert']);
         return super.check(state, query);
       }

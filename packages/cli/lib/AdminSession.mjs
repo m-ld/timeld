@@ -34,7 +34,7 @@ export default class AdminSession extends Repl {
   }
 
   get detailParamChoices() {
-    return ['ts', 'timesheet', 'project', 'link', 'integration']
+    return ['ts', 'timesheet', 'project', 'link', 'integration', 'connector']
       .concat(this.isUserAccount ?
         ['email', 'org', 'organisation'] :
         // Technically you could administer emails and organisations from an org
@@ -170,6 +170,7 @@ export default class AdminSession extends Repl {
       case 'link':
         return this.linkDetail(argv);
       case 'integration':
+      case 'connector':
         return this.integrationDetail(argv);
       default:
         throw `${argv.detail} not available`;

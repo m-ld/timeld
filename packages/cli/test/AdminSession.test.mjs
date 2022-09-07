@@ -162,6 +162,18 @@ describe('Administration session', () => {
       expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
     });
 
+    test('Cannot re-add integration for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add integration timeld-common/test/MockIntegration.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
+        outLines, errLines);
+      await expect(session.execute(
+        // The duplicate check does not care about config
+        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        outLines, errLines)).rejects.toThrow();
+    });
+
     test('Removes integration for timesheet', async () => {
       await session.execute('add ts ts1', outLines, errLines);
       await session.execute(

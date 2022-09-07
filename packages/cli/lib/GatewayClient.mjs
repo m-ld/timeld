@@ -126,7 +126,7 @@ export default class GatewayClient extends BaseGateway {
    * @param {import('@m-ld/m-ld').Write} pattern
    */
   async write(pattern) {
-    checkSuccessRes(await this.fetchApi('write', { json: pattern }));
+    await checkSuccessRes(await this.fetchApi('write', { json: pattern }));
   }
 
   /**
@@ -158,11 +158,11 @@ export default class GatewayClient extends BaseGateway {
  * @param {import('@zeit/fetch').Response} res
  * @returns {import('@zeit/fetch').Response}
  */
-const checkSuccessRes = res => {
+const checkSuccessRes = async res => {
   if (res.ok)
     return res;
   else
-    throw `Fetch from ${res.url} failed with ${res.status}: ${res.statusText}`;
+    throw (await res.json().catch(() => ({})))?.message || res.statusText;
 };
 
 /**

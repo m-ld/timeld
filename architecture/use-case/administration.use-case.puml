@@ -22,6 +22,7 @@ package "Account administration" {
     add org: org
     must not exist
   end note
+
   note right of userAdminOrg
     ≪constraint≫
     remove org: cascade all
@@ -42,17 +43,20 @@ package "Account administration" {
     add timesheet: init
     ts domain as genesis
   end note
+
   note right of ownedAdmin
     ≪constraint≫
     add: owned @id
     must have account
   end note
+
   note right of ownedAdmin
     ≪constraint≫
     owned is //composition//,
     cascade create & delete
     of account property
   end note
+
   note right of ownedAdmin
     ≪constraint≫
     timesheet provider is account
@@ -71,6 +75,13 @@ package "Account administration" {
     ≪constraint≫
     timesheet or project must exist
   end note
+
+  note right of integrations
+    ≪constraint≫
+    add: integration module
+    must not exist for target
+  end note
+
   note right of integrations
     ≪trigger≫
     garbage collect integration

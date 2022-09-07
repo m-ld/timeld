@@ -98,7 +98,8 @@ export default class CalDavIntegration {
     if (permanent)
       this.ext[eventId] = [];
     return ({
-      '@id': `?s${uid}`, [`?p${uid}`]: `?o${uid}`,
+      // Note re-use of ?event variable in eventsInsert when an update
+      '@id': `?event${uid}`, [`?p${uid}`]: `?o${uid}`,
       external: { '@id': eventId }
     });
   }
@@ -112,14 +113,13 @@ export default class CalDavIntegration {
   eventsInsert(tsId, events, session) {
     return [
       session.toJSON(),
-      ...events.map(event => {
+      ...events.map((event, i) => {
         const start = new Date(event.data.start);
         const end = new Date(event.data.end);
         const eventId = this.getEventId(event);
-        this.ext[eventId] = event.etag;
         const activity = [event.data.title, event.data.description].filter(s => s).join(': ');
         LOG.debug('Saving entry', activity);
-        return new Entry({
+        const src = new Entry({
           seqNo: session.claimEntryId(),
           sessionId: session.id,
           activity,
@@ -128,6 +128,10 @@ export default class CalDavIntegration {
           providerId: this.owner || tsId.ownerIri(),
           externalId: eventId
         }).toJSON();
+        if (this.ext[eventId]) // We already have it, so it's an update
+          src['@id'] = `?event${i}`; // See eventDelete
+        this.ext[eventId] = event.etag;
+        return src;
       })
     ];
   }

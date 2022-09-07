@@ -221,11 +221,15 @@ export default class Account {
    * @returns {Promise<Subject>}
    */
   beforeInsertIntegration = async (state, src) => {
-    // Create a temporary integration (the real one will be loaded later)
-    const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway);
-    // Flow matched entries to the extension
-    await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
-    return ext.toJSON();
+    try { // Create a temporary integration (the real one will be loaded later)
+      const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway);
+      // Flow matched entries to the extension
+      await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
+      return ext.toJSON();
+    } catch (e) {
+      // An error here is almost certainly due to misconfiguration
+      throw new BadRequestError('Unable to initialise integration', e);
+    }
   };
 
   /**

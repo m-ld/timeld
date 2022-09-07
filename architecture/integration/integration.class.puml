@@ -51,6 +51,7 @@ abstract class Integration <<javascript>> {
   {static} configKey : string
   {static} contentType : string
   constructor(config, ext)
+  syncTimesheet(tsId, state): Observable
   entryUpdate(tsId, update, state)
   reportTimesheet(tsId, state) : Stream
   accountUpdate(update)
@@ -59,6 +60,12 @@ note right of Integration::constructor
   passed configuration (inc. secrets)
   and extension, can have properties
   storing additional data
+end note
+
+note right of Integration::syncTimesheet
+  Establish sync, e.g. initial
+  import or export; then provide
+  ongoing updates
 end note
 
 note right of Integration::entryUpdate
