@@ -9,9 +9,9 @@ import { each } from 'rx-flowable';
  */
 
 /**
- * @implements Integration
+ * @implements Connector
  */
-export default class TikiIntegration {
+export default class TikiConnector {
   // noinspection JSUnusedGlobalSymbols
   /** Used by the gateway to provide the configuration constructor parameter */
   static configKey = 'tiki';

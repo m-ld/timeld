@@ -1,14 +1,14 @@
 // noinspection JSCheckFunctionSignatures,NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
-import IntegrationExtension from '../lib/Integration.mjs';
+import ConnectorExtension from '../lib/Connector.mjs';
 import { AccountOwnedId } from 'timeld-common';
 import { of } from 'rxjs';
 import { exampleEntryJson } from 'timeld-common/test/fixtures.mjs';
-import MockIntegration from 'timeld-common/test/MockIntegration.mjs';
+import MockConnector from 'timeld-common/test/MockConnector.mjs';
 
-describe('Integration extension', () => {
+describe('Connector extension', () => {
   let /**@type Gateway*/gateway;
-  let /**@type IntegrationExtension*/ ext;
+  let /**@type ConnectorExtension*/ ext;
   let /**@type Mock*/syncTimesheet;
   let /**@type Mock*/entryUpdate;
   let /**@type Mock*/reportTimesheet;
@@ -16,10 +16,10 @@ describe('Integration extension', () => {
 
   beforeEach(async () => {
     // noinspection JSCheckFunctionSignatures
-    ext = IntegrationExtension.fromJSON({
-      '@id': 'mockIntegration',
-      '@type': 'Integration',
-      module: 'timeld-common/test/MockIntegration.mjs',
+    ext = ConnectorExtension.fromJSON({
+      '@id': 'mockConnector',
+      '@type': 'Connector',
+      module: 'timeld-common/test/MockConnector.mjs',
       config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       customProp1: 'hello',
@@ -38,9 +38,9 @@ describe('Integration extension', () => {
     await ext.initialise(gateway);
   });
 
-  test('constructs the integration module', async () => {
+  test('constructs the connector module', async () => {
     expect(ext.contentType).toBe('application/x-mock');
-    expect(MockIntegration.created.config).toMatchObject({
+    expect(MockConnector.created.config).toMatchObject({
       testing: 'config',
       'uri': 'https://ex.org/api/'
     });
@@ -58,7 +58,7 @@ describe('Integration extension', () => {
     await ext.asyncTasks;
     expect(mockTimesheet.write).toHaveBeenCalledWith(insertEntry);
     expect(gateway.domain.write).toHaveBeenCalledWith({
-      '@insert': { '@id': 'mockIntegration', testing: true }
+      '@insert': { '@id': 'mockConnector', testing: true }
     });
   });
 
@@ -71,12 +71,12 @@ describe('Integration extension', () => {
     await ext.entryUpdate(
       AccountOwnedId.fromString('test/ts1@ex.org'), tsUpdate, tsState);
     expect(gateway.domain.write).toHaveBeenCalledWith({
-      '@insert': { '@id': 'mockIntegration', testing: 'ts1:config' }
+      '@insert': { '@id': 'mockConnector', testing: 'ts1:config' }
     });
     expect(ext.toJSON()).toEqual({
-      '@id': 'mockIntegration',
-      '@type': 'Integration',
-      module: 'timeld-common/test/MockIntegration.mjs',
+      '@id': 'mockConnector',
+      '@type': 'Connector',
+      module: 'timeld-common/test/MockConnector.mjs',
       config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       testing: 'ts1:config',
@@ -97,13 +97,13 @@ describe('Integration extension', () => {
       AccountOwnedId.fromString('test/ts1@ex.org'), tsUpdate, tsState);
     // Expect config to have been reported for update
     expect(gateway.domain.write).toHaveBeenCalledWith({
-      '@delete': { '@id': 'mockIntegration', customProp1: 'hello', customProp2: 'hi' },
-      '@insert': { '@id': 'mockIntegration', customProp1: 'goodbye' }
+      '@delete': { '@id': 'mockConnector', customProp1: 'hello', customProp2: 'hi' },
+      '@insert': { '@id': 'mockConnector', customProp1: 'goodbye' }
     });
     expect(ext.toJSON()).toEqual({
-      '@id': 'mockIntegration',
-      '@type': 'Integration',
-      module: 'timeld-common/test/MockIntegration.mjs',
+      '@id': 'mockConnector',
+      '@type': 'Connector',
+      module: 'timeld-common/test/MockConnector.mjs',
       config: '{"uri":"https://ex.org/api/"}',
       appliesTo: { '@id': 'test/ts1' },
       customProp1: 'goodbye'

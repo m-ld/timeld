@@ -6,19 +6,19 @@ import LOG from 'loglevel';
 import { Env } from 'timeld-common';
 
 /**
- * @interface Integration
+ * @interface Connector
  * @static {string} configKey used to provide the configuration
  * @static {string} contentType used to negotiate content types
  */
 
 /**
  * Called to synchronise the timesheet with the external system. If the `state`
- * parameter is provided, the integration may read and write it as required, but
+ * parameter is provided, the connector may read and write it as required, but
  * not after the returned promise is settled. Updates in the returned observable
  * represent external updates and will be applied in order to the timesheet.
  *
  * @function
- * @name Integration#syncTimesheet
+ * @name Connector#syncTimesheet
  * @param {AccountOwnedId} tsId
  * @param {MeldState} [state] the local timesheet state
  * @returns {Promise<import('rxjs').Observable<Update> | null>}
@@ -27,7 +27,7 @@ import { Env } from 'timeld-common';
 /**
  * Called when a timesheet entry is updated, to be pushed to the external system
  * @function
- * @name Integration#entryUpdate
+ * @name Connector#entryUpdate
  * @param {AccountOwnedId} tsId
  * @param {MeldUpdate} update
  * @param {MeldReadState} state the timesheet state
@@ -37,22 +37,22 @@ import { Env } from 'timeld-common';
 /**
  * Called to report the timesheet in the native format of the external system
  * @function
- * @name Integration#reportTimesheet
+ * @name Connector#reportTimesheet
  * @param {AccountOwnedId} tsId
  * @param {MeldReadState} state the timesheet state
  * @returns {Readable} timesheet content in some native format
  */
 
 /**
- * @implements {Integration} but note return type of entryUpdate
+ * @implements {Connector} but note return type of entryUpdate
  */
-export default class IntegrationExtension {
+export default class ConnectorExtension {
   /**
    * @param {GraphSubject} src
    */
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
-    return new IntegrationExtension({
+    return new ConnectorExtension({
       module: propertyValue(src, 'module', String),
       appliesTo: idSet(safeRefsIn(src, 'appliesTo')),
       config: propertyValue(src, 'config', Array, String).map(JSON.parse)[0]
@@ -62,7 +62,7 @@ export default class IntegrationExtension {
   /**@type {Promise<*>}*/asyncTasks = Promise.resolve();
 
   /**
-   * @param {string} module ESM module to import for integration implementation
+   * @param {string} module ESM module to import for connector implementation
    * @param {Iterable<string>} appliesTo set of timesheet or project IRIs
    * @param {*} config instance-specific configuration
    * @param {GraphSubject} [src]
@@ -96,18 +96,18 @@ export default class IntegrationExtension {
   async initialise(gateway) {
     this.gateway = gateway;
     const Impl = (await import(this.module)).default;
-    this.integration = /**@type {Integration}*/new Impl(
+    this.connector = /**@type {Connector}*/new Impl(
       Env.mergeConfig(gateway.config[Impl.configKey], this.config), this.src);
     this.contentType = Impl.contentType;
     return this;
   }
 
   get name() {
-    return this.integration.constructor.name;
+    return this.connector.constructor.name;
   }
 
   async syncTimesheet(tsId, state) {
-    const updates = await this.integration.syncTimesheet?.(tsId, state);
+    const updates = await this.connector.syncTimesheet?.(tsId, state);
     if (updates) {
       this.subs.add(updates.subscribe(update =>
         this.asyncTasks = this.asyncTasks.then(
@@ -120,12 +120,12 @@ export default class IntegrationExtension {
    * @returns {Promise<Update>} an update applicable to the gateway state
    */
   async entryUpdate(tsId, update, state) {
-    await this.integration.entryUpdate?.(tsId, update, state);
+    await this.connector.entryUpdate?.(tsId, update, state);
     this.updateGateway(tsId);
   }
 
   reportTimesheet(tsId, state) {
-    return this.integration.reportTimesheet?.(tsId, state) || Readable.from([]);
+    return this.connector.reportTimesheet?.(tsId, state) || Readable.from([]);
   };
 
   async writeIncomingUpdate(tsId, update) {
@@ -182,7 +182,7 @@ export default class IntegrationExtension {
    */
   toJSON() {
     return {
-      '@type': 'Integration',
+      '@type': 'Connector',
       module: this.module,
       appliesTo: [...this.appliesTo].map(iri => ({ '@id': iri })),
       config: this.config ? JSON.stringify(this.config) : [],

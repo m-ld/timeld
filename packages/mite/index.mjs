@@ -6,7 +6,7 @@ export default class MiteFormat {
    */
   constructor({ account_name }) {
     if (!account_name)
-      throw new Error('Mite integration needs account_name configuration');
+      throw new Error('Mite connector needs account_name configuration');
     // Not including the format suffix for purity
     this.idIri = path => `https://${account_name}.mite.yo.lk/users/${path}`;
   }

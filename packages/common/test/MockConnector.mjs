@@ -2,12 +2,12 @@
 import { jest } from '@jest/globals';
 
 /**
- * @implements Integration
+ * @implements Connector
  */
-export default class MockIntegration {
+export default class MockConnector {
   static configKey = 'mock';
   static contentType = 'application/x-mock';
-  static created/**@type MockIntegration*/;
+  static created/**@type MockConnector*/;
 
   /**
    * @param {object} config
@@ -20,6 +20,6 @@ export default class MockIntegration {
     this.syncTimesheet = config.syncTimesheet || jest.fn();
     this.entryUpdate = config.entryUpdate || jest.fn();
     this.reportTimesheet = config.reportTimesheet || jest.fn();
-    MockIntegration.created = this;
+    MockConnector.created = this;
   }
 }

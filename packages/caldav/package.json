@@ -1,7 +1,7 @@
 {
   "name": "timeld-caldav",
   "version": "0.1.0",
-  "description": "timeld - CalDAV integration",
+  "description": "timeld - CalDAV connector",
   "main": "index.mjs",
   "scripts": {
     "ver": "echo $npm_package_version"

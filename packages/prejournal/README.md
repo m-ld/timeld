@@ -1,4 +1,4 @@
-# timeld - Prejournal integration
+# timeld - Prejournal connector
 
 This packages supports live update of timesheet entries:
 - _from_ **timeld**
@@ -6,26 +6,26 @@ This packages supports live update of timesheet entries:
 
 ## installation & configuration
 
-This integration package is included in the gateway.
+This connector package is included in the gateway.
 
-The integration requires the following configuration:
+The connector requires the following configuration:
 - `user`: Prejournal account (user) name (required)
 - `key`: Prejournal account key (required)
 - `api`: API URL e.g. `https://time.pondersource.com/v1/` (required)
 - `client`: default timesheet "client" (for whom the work is being done; required)
 
-Configuration defaults may already be included in the gateway. Timesheet-specific configuration can also be included when adding the integration, see below.
+Configuration defaults may already be included in the gateway. Timesheet-specific configuration can also be included when adding the connector, see below.
 
-To activate the integration for a timesheet "my-work" (note this assumes authorisation and API defaults in the gateway).
+To activate the connector for a timesheet "my-work" (note this assumes authorisation and API defaults in the gateway).
 
 ```shell
 timeld admin
-alice> add integration timeld-prejournal --ts my-work --config.client "Federated Timesheets Virtual Organisation"
+alice> add connector timeld-prejournal --ts my-work --config.client "Federated Timesheets Virtual Organisation"
 ```
 
 ## Prejournal API reference
 
-- https://github.com/pondersource/prejournal#usage-timepondersourcecom
+- https://github.com/pondersource/prejournal/blob/main/docs/api.md
 
 ```typescript
 /**

@@ -1,7 +1,7 @@
 {
   "name": "timeld-tiki",
   "version": "0.1.2",
-  "description": "timeld - Tiki Timesheets integration",
+  "description": "timeld - Tiki Timesheets connector",
   "main": "index.mjs",
   "scripts": {
     "ver": "echo $npm_package_version"

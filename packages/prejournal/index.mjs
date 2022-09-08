@@ -12,9 +12,9 @@ import { each } from 'rx-flowable';
  */
 
 /**
- * @implements Integration
+ * @implements Connector
  */
-export default class PrejournalIntegration {
+export default class PrejournalConnector {
   // noinspection JSUnusedGlobalSymbols
   /** Used by the gateway to provide the configuration constructor parameter */
   static configKey = 'prejournal';
@@ -40,7 +40,7 @@ export default class PrejournalIntegration {
     if (!apiRoot.pathname.endsWith('/'))
       apiRoot.pathname += '/';
     if (!apiRoot.pathname.endsWith('/v1/'))
-      throw new RangeError('Prejournal integration requires v1 API');
+      throw new RangeError('Prejournal connector requires v1 API');
     this.ext = ext;
     /**
      * @param {WorkedHours} workedHours
@@ -117,7 +117,7 @@ class WorkedHours {
   /**
    * Note:
    *
-   * - The configured Prejournal account (see PrejournalIntegration constructor)
+   * - The configured Prejournal account (see PrejournalConnector constructor)
    * must have an access control 'claim' over the given worker account.
    *
    * @param {AccountOwnedId} tsId

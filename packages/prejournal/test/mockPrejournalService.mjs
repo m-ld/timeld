@@ -15,7 +15,7 @@ const server = createServer(async (req, res) => {
   if (command.startsWith('update')) {
     res.end();
   } else {
-    // Only the movement ID is interesting to the integration
+    // Only the movement ID is interesting to the connector
     res.end(JSON.stringify([{
       movementId: ++movementId
     }]));

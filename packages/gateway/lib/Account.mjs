@@ -8,7 +8,7 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
-import IntegrationExtension from './Integration.mjs';
+import ConnectorExtension from './Connector.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -220,24 +220,24 @@ export default class Account {
    * @param {GraphSubject} src
    * @returns {Promise<Subject>}
    */
-  beforeInsertIntegration = async (state, src) => {
-    try { // Create a temporary integration (the real one will be loaded later)
-      const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway);
+  beforeInsertConnector = async (state, src) => {
+    try { // Create a temporary connector (the real one will be loaded later)
+      const ext = await ConnectorExtension.fromJSON(src).initialise(this.gateway);
       // Flow matched entries to the extension
-      await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
+      await Promise.all(ext.appliesTo.map(id => this.revupConnector(state, ext, id)));
       return ext.toJSON();
     } catch (e) {
       // An error here is almost certainly due to misconfiguration
-      throw new BadRequestError('Unable to initialise integration', e);
+      throw new BadRequestError('Unable to initialise connector', e);
     }
   };
 
   /**
    * @param {MeldReadState} state
-   * @param {IntegrationExtension} ext
+   * @param {ConnectorExtension} ext
    * @param {string} timesheetId
    */
-  async revupIntegration(state, ext, timesheetId) {
+  async revupConnector(state, ext, timesheetId) {
     const tsId = this.gateway.ownedRefAsId({ '@id': timesheetId });
     if (await this.gateway.isGenesisTs(state, tsId))
       throw new BadRequestError('Timesheet not found: %s', tsId);

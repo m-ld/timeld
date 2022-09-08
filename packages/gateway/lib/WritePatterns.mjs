@@ -14,7 +14,7 @@ import { Ask } from './statements.mjs';
  * @property {(
  * state: MeldReadState,
  * src: GraphSubject
- * ) => Promise<Subject>} beforeInsertIntegration
+ * ) => Promise<Subject>} beforeInsertConnector
  */
 
 export default class WritePatterns {
@@ -94,13 +94,13 @@ export default class WritePatterns {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
 
-    class InsertIntegrationPattern extends QueryPattern {
+    class InsertConnectorPattern extends QueryPattern {
       constructor(whereAccount) {
         super({
           properties: {
             '@insert': {
               properties: {
-                '@type': { enum: ['Integration'] },
+                '@type': { enum: ['Connector'] },
                 module: { type: 'string' },
                 appliesTo: isReference
               },
@@ -124,13 +124,13 @@ export default class WritePatterns {
         const matching = { ...query['@insert'] }; // @type, module, appliesTo
         delete matching.config;
         if (await new Ask(state).exists(matching))
-          throw new ConflictError('Integration already exists');
-        query['@insert'] = await triggers.beforeInsertIntegration(state, query['@insert']);
+          throw new ConflictError('Connector already exists');
+        query['@insert'] = await triggers.beforeInsertConnector(state, query['@insert']);
         return super.check(state, query);
       }
     }
 
-    class DeleteIntegrationPattern extends QueryPattern {
+    class DeleteConnectorPattern extends QueryPattern {
       constructor(whereAccount) {
         super({
           properties: {
@@ -146,7 +146,7 @@ export default class WritePatterns {
         this.wherePattern = new ReadPattern({
           properties: {
             '@id': isVariable,
-            '@type': { enum: ['Integration'] },
+            '@type': { enum: ['Connector'] },
             module: { type: 'string' }
           }
         }, whereAccount({ timesheet: isReference }));
@@ -289,10 +289,10 @@ export default class WritePatterns {
           '@where': thisAccountIsAdmin({ timesheet: isReference })
         }
       }))),
-      new InsertIntegrationPattern(isThisAccount),
-      new InsertIntegrationPattern(thisAccountIsAdmin),
-      new DeleteIntegrationPattern(isThisAccount),
-      new DeleteIntegrationPattern(thisAccountIsAdmin)
+      new InsertConnectorPattern(isThisAccount),
+      new InsertConnectorPattern(thisAccountIsAdmin),
+      new DeleteConnectorPattern(isThisAccount),
+      new DeleteConnectorPattern(thisAccountIsAdmin)
     ];
   }
 

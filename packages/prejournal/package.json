@@ -1,7 +1,7 @@
 {
   "name": "timeld-prejournal",
   "version": "0.1.2",
-  "description": "timeld - prejournal integration",
+  "description": "timeld - prejournal connector",
   "main": "index.mjs",
   "scripts": {
     "ver": "echo $npm_package_version"

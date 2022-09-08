@@ -14,9 +14,9 @@ import LOG from 'loglevel';
  */
 
 /**
- * @implements Integration
+ * @implements Connector
  */
-export default class CalDavIntegration {
+export default class CalDavConnector {
   // noinspection JSUnusedGlobalSymbols used to provide the configuration
   static configKey = 'caldav';
   // noinspection JSUnusedGlobalSymbols used to negotiate content types
@@ -141,7 +141,7 @@ export default class CalDavIntegration {
   }
 
   entryUpdate(tsId, update, state) {
-    // This integration is inbound-only
+    // This connector is inbound-only
   }
 
   reportTimesheet(tsId, state) {

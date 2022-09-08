@@ -69,22 +69,22 @@ package "Account administration" {
     project must exist
   end note
 
-  usecase integrations as ([list | add | rm] ts or project integration)
-  User --> integrations
-  note right of integrations
+  usecase connectors as ([list | add | rm] ts or project connector)
+  User --> connectors
+  note right of connectors
     ≪constraint≫
     timesheet or project must exist
   end note
 
-  note right of integrations
+  note right of connectors
     ≪constraint≫
-    add: integration module
+    add: connector module
     must not exist for target
   end note
 
-  note right of integrations
+  note right of connectors
     ≪trigger≫
-    garbage collect integration
+    garbage collect connector
     stored data
   end note
 
