@@ -144,10 +144,11 @@ export default class Gateway extends BaseGateway {
     for (let src of update['@delete']) {
       if (src['@id'] in this.connectors) {
         if ('module' in src) {
-          // If an connector's key property vanishes, remove it
-          this.connectors[src['@id']].close();
+          // If a connector's key property vanishes, remove it
+          this.connectors[src['@id']]?.close()
+            .then(() => LOG.info('Unloaded connector', src))
+            .catch(e => LOG.warn(e));
           delete this.connectors[src['@id']];
-          LOG.info('Unloaded connector', src);
         } else {
           this.connectors[src['@id']].onUpdate(src, 'delete');
         }
@@ -156,8 +157,11 @@ export default class Gateway extends BaseGateway {
     for (let src of update['@insert']) {
       // If a new connector appears, load it
       if (src['@type'] === 'Connector') {
-        // noinspection JSIgnoredPromiseFromCall happy for this to be async
-        this.loadConnector(src);
+        // Re-load the connector in full, in case only the type changed (migration)
+        // noinspection JSCheckFunctionSignatures
+        state.get(src['@id'])
+          .then(src => this.loadConnector(src))
+          .catch(e => LOG.warn(e));
       } else if (src['@id'] in this.connectors) {
         this.connectors[src['@id']].onUpdate(src, 'insert');
       }

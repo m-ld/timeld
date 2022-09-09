@@ -4,7 +4,7 @@
 hide circle
 allowmixing
 
-class Gateway <<domain>> <<ably app>> <<service>> {
+class Gateway <<domain>> <<service>> {
   appMasterKey <<secret>>
 }
 
@@ -43,7 +43,7 @@ note left of UserAccount::email
   for account activation
 end note
 note left of UserAccount::keyid
-  Matches ""ably.key""
+  Matches ""auth.key""
   Can be revoked
 end note
 UserAccount --|> Account
@@ -99,7 +99,7 @@ component CLI [
   CLI
 
   ---
-  ably.key <<secret>>
+  auth.key <<secret>>
   account<sub>u</sub> (aka user)
   timesheets : domain [*]
 ]
@@ -107,7 +107,7 @@ note top of CLI
   Installed on a device
   under an OS account.
   Registered to user account
-  via ably.key.
+  via auth.key.
 end note
 
 UserAccount .. "*" CLI
@@ -123,23 +123,15 @@ note bottom on link
     account<sub>p</sub>.vf:primaryAccountable
 end note
 
-package Ably <<service>> {
-  class AblyKey {
-    keyid
-    name
-    secret
-    capabilities : string
-  }
-  note left of AblyKey::name
-    account<sub>u</sub>
-  end note
-  note left of AblyKey::capabilities
-    Defines channel
-    access and thus,
-    timesheet access
-  end note
-
-  UserAccount "1" -- "*" AblyKey
+class Key <<subject>> {
+  keyid : string
+  name : string
+  secret : string
 }
+note left of Key::name
+  account<sub>u</sub>
+end note
+
+UserAccount "1" -- "*" Key
 
 @enduml

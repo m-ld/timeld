@@ -79,4 +79,4 @@ e.g. `timeld.rootkey:123456789abcdefghijk`
 ### random
 
 - `engines.node` is set to 16.x in `package.json` due to a [bug in Restify](https://github.com/restify/node-restify/issues/1888).
-- `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).
+- When using Ably, `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1038px" preserveAspectRatio="none" style="width:630px;height:1038px;background:#FFFFFF;" version="1.1" viewBox="0 0 630 1038" width="630px" zoomAndPan="magnify"><defs><filter height="300%" id="f7ssblshvgduc" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[b6753b7234a365fdd29a26c497ea643f]
+cluster User Device--><polygon fill="#FFFFFF" filter="url(#f7ssblshvgduc)" points="20,142.5,30,132.5,467,132.5,467,339.5,457,349.5,20,349.5,20,142.5" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="457" x2="467" y1="142.5" y2="132.5"/><line style="stroke:#000000;stroke-width:1.5;" x1="20" x2="457" y1="142.5" y2="142.5"/><line style="stroke:#000000;stroke-width:1.5;" x1="457" x2="457" y1="142.5" y2="349.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="84" x="197.5" y="159.0352">User Device</text><!--MD5=[e3a89b72019d8d69b73b0a9ebb84eda6]
+cluster cli--><rect fill="#FFFFFF" filter="url(#f7ssblshvgduc)" height="129" style="stroke:#000000;stroke-width:1.5;" width="303" x="132" y="188.5"/><rect fill="#FFFFFF" height="10" style="stroke:#000000;stroke-width:1.5;" width="15" x="415" y="193.5"/><rect fill="#FFFFFF" height="2" style="stroke:#000000;stroke-width:1.5;" width="4" x="413" y="195.5"/><rect fill="#FFFFFF" height="2" style="stroke:#000000;stroke-width:1.5;" width="4" x="413" y="199.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="79" x="244" y="215.0352">Timeld CLI</text><!--MD5=[141bd623b5422baa539519c35dcf968e]
+cluster cloud platform--><path d="M76.3673,514.5065 C90.2084,497.6278 105.3275,500.5986 113.9878,519.8944 C124.3161,502.0028 139.6377,503.9088 150.0419,519.8133 C157.6018,501.2452 168.5659,499.5239 181.7019,514.5597 C191.656,495.3152 210.1317,494.9979 221.7001,512.8175 C231.5824,493.5061 249.1047,494.0261 258.7268,513.0687 C272.2476,493.2666 284.5776,495.827 298.5168,512.6137 C310.6279,496.6043 324.8663,498.4894 332.4051,517.0905 C345.056,498.9095 358.6875,495.8006 371.7068,516.7202 C383.0844,501.298 398.3171,501.5533 408.7009,517.8784 C416.8659,499.9877 433.9649,495.1372 446.0184,513.9218 C455.9025,498.8968 473.0211,498.3195 482.1472,514.7913 C493.5246,499.0064 508.4315,498.6656 517.4148,517.248 C527.4398,500.3894 543.5324,502.5362 552.8653,518.0069 C565.1789,501.2307 584.7308,502.4254 594,521.5 C595.7443,519.4413 597.7388,519.5481 598.9715,522.0569 C617.2229,532.6634 617.7372,550.9192 598.288,560.8617 C617.5284,570.4801 617.256,588.7779 600.0187,600.009 C620.7095,612.8936 619.0679,626.3734 599.0813,638.2612 C617.8113,647.5623 620.7227,659.58 603.493,673.3963 C618.8014,684.7835 623.6353,701.2104 602.5817,711.7333 C621.1926,725.6937 618.2022,740.8652 598.0312,750.2431 C617.6973,762.521 620.5715,778.7345 599.8931,792.7784 C616.6113,805.7465 612.813,818.6892 596.4067,828.4168 C617.7323,839.4729 616.7136,853.3895 598.789,866.8769 C612.0322,885.8751 608.797,897.9272 587,906.5 C590.2877,904.2185 592.4524,905.9487 593.117,909.3324 C579.1821,927.1818 565.7031,927.7769 551.1823,910.0224 C540.8323,926.9847 530.1615,929.5218 517.5828,912.2071 C508.9413,932.1292 490.3632,933.6792 478.5715,915.4263 C467.0107,931.1392 453.3126,933.7932 440.5149,916.8685 C430.801,930.6745 414.9968,931.2682 406.0293,915.9837 C396.8071,934.1411 382.1242,935.6743 369.7461,919.2996 C359.5928,938.5712 342.5544,936.2814 332.7845,918.9129 C322.7262,936.3161 303.3416,939.1004 294.0651,918.1241 C280.6381,930.3415 268.9021,933.6598 259.7216,913.6051 C249.8757,934.6564 231.8845,932.9252 219.6483,916.1365 C208.6784,929.614 198.6439,928.3865 188.2191,915.487 C172.8259,933.9444 158.8464,937.5566 145.4393,913.489 C132.6948,926.4516 120.4871,929.5613 111.1131,909.9385 C91.6944,925.8317 73.6561,927.6697 64,899.5 C67.0477,899.819 68.0352,901.3372 67.1932,904.2635 C48.5476,891.6026 49.5944,876.1255 69.1481,865.3854 C48.0887,856.7769 42.5027,839.6748 62.4816,824.3924 C44.7252,813.2597 44.3394,799.3507 63.2321,788.9949 C44.7425,777.5813 42.0701,762.4591 62.3805,750.1939 C47.3744,740.4654 46.1943,726.184 62.7293,716.7848 C41.9312,703.6729 46.435,690.877 62.685,677.7231 C43.4767,665.4424 43.1292,647.4223 63.1411,635.566 C49.368,624.1829 51.6011,606.2974 67.6917,598.5895 C51.4165,588.6101 45.5769,573.8819 64.4194,560.8569 C46.8763,546.1466 45.0186,523.0317 71,514.5 C72.7649,512.2779 74.6077,512.3039 76.3673,514.5065 " fill="#FFFFFF" filter="url(#f7ssblshvgduc)" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="107" x="275.5" y="533.0352">cloud platform</text><!--MD5=[51ae4f31bc9b6dd1b52650aa5c1d3c66]
+cluster NodeJS--><polygon fill="#FFFFFF" filter="url(#f7ssblshvgduc)" points="106,559.5,116,549.5,444,549.5,444,880.5,434,890.5,106,890.5,106,559.5" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="434" x2="444" y1="559.5" y2="549.5"/><line style="stroke:#000000;stroke-width:1.5;" x1="106" x2="434" y1="559.5" y2="559.5"/><line style="stroke:#000000;stroke-width:1.5;" x1="434" x2="434" y1="559.5" y2="890.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="51" x="245.5" y="576.0352">NodeJS</text><!--MD5=[a96875dd8cb2e433dc952b8d34d153d3]
+cluster gw--><rect fill="#FFFFFF" filter="url(#f7ssblshvgduc)" height="253" style="stroke:#000000;stroke-width:1.5;" width="274" x="138" y="605.5"/><rect fill="#FFFFFF" height="10" style="stroke:#000000;stroke-width:1.5;" width="15" x="392" y="610.5"/><rect fill="#FFFFFF" height="2" style="stroke:#000000;stroke-width:1.5;" width="4" x="390" y="612.5"/><rect fill="#FFFFFF" height="2" style="stroke:#000000;stroke-width:1.5;" width="4" x="390" y="616.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="60" x="245" y="632.0352">Gateway</text><!--MD5=[d4fd26f9614fa07fe76bdcffa998e3d3]
+entity local--><rect fill="#FEFECE" filter="url(#f7ssblshvgduc)" height="52.9766" rx="35" ry="35" style="stroke:#000000;stroke-width:1.5;" width="72" x="36" y="236"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="32" x="46" y="259.5352">local</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="52" x="46" y="276.0234">storage</text><!--MD5=[31645f96b287453a53d0c32a4f054582]
+entity cliTs--><path d="M156.5,241.5 C156.5,231.5 202,231.5 202,231.5 C202,231.5 247.5,231.5 247.5,241.5 L247.5,283.4766 C247.5,293.4766 202,293.4766 202,293.4766 C202,293.4766 156.5,293.4766 156.5,283.4766 L156.5,241.5 " fill="#FEFECE" filter="url(#f7ssblshvgduc)" style="stroke:#000000;stroke-width:1.5;"/><path d="M156.5,241.5 C156.5,251.5 202,251.5 202,251.5 C202,251.5 247.5,251.5 247.5,241.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="166.5" y="269.0352">Timesheet</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53" x="166.5" y="285.5234">Domain</text><path d="M282.5,242 L282.5,258.5 L247.62,262.5 L282.5,266.5 L282.5,282.6211 A0,0 0 0 0 282.5,282.6211 L391.5,282.6211 A0,0 0 0 0 391.5,282.6211 L391.5,252 L381.5,242 L282.5,242 A0,0 0 0 0 282.5,242 " fill="#FBFB77" filter="url(#f7ssblshvgduc)" style="stroke:#A80036;stroke-width:1.0;"/><path d="M381.5,242 L381.5,252 L391.5,252 L381.5,242 " fill="#FBFB77" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="77" x="288.5" y="259.5684">m-ld clones</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="88" x="288.5" y="274.8789">are embedded</text><!--MD5=[ac40dd4c03671801018102ca7be9c337]
+entity rest--><ellipse cx="81" cy="679.5" fill="#FEFECE" filter="url(#f7ssblshvgduc)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="60" x="51" y="710.0352">REST API</text><!--MD5=[107003500c5c42cbbef62457b4e1bbc7]
+entity volume--><rect fill="#FEFECE" filter="url(#f7ssblshvgduc)" height="36.4883" rx="35" ry="35" style="stroke:#000000;stroke-width:1.5;" width="126" x="460" y="785"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="106" x="470" y="808.5352">storage volume</text><!--MD5=[46b642179bef18e2bd7c96e43185f725]
+entity gwDomain--><path d="M310.5,658.5 C310.5,648.5 349,648.5 349,648.5 C349,648.5 387.5,648.5 387.5,658.5 L387.5,700.4766 C387.5,710.4766 349,710.4766 349,710.4766 C349,710.4766 310.5,710.4766 310.5,700.4766 L310.5,658.5 " fill="#FEFECE" filter="url(#f7ssblshvgduc)" style="stroke:#000000;stroke-width:1.5;"/><path d="M310.5,658.5 C310.5,668.5 349,668.5 349,668.5 C349,668.5 387.5,668.5 387.5,658.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57" x="320.5" y="686.0352">Gateway</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53" x="320.5" y="702.5234">Domain</text><!--MD5=[93705d805e56b26c731f3efbe283b036]
+entity gwTs--><path d="M181,658.5 C181,648.5 228,648.5 228,648.5 C228,648.5 275,648.5 275,658.5 L275,700.4766 C275,710.4766 228,710.4766 228,710.4766 C228,710.4766 181,710.4766 181,700.4766 L181,658.5 " fill="#FEFECE" filter="url(#f7ssblshvgduc)" style="stroke:#000000;stroke-width:1.5;"/><path d="M181,658.5 C181,668.5 228,668.5 228,668.5 C228,668.5 275,668.5 275,658.5 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="191" y="686.0352">Timesheet</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="74" x="191" y="702.5234">Domain [*]</text><!--MD5=[4d14b4c0ea7251d856fa2d4d8f267f17]
+entity con--><rect fill="#FEFECE" filter="url(#f7ssblshvgduc)" height="62.9766" style="stroke:#A80036;stroke-width:1.5;" width="112" x="181" y="771.5"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="273" y="776.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="271" y="778.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="271" y="782.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-style="italic" lengthAdjust="spacing" textLength="69" x="197.5" y="805.0352">«abstract»</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="72" x="196" y="821.5234">Connector</text><!--MD5=[fee662a292a0353a69bd162820bae93b]
+entity User--><ellipse cx="427" cy="14" fill="#FEFECE" filter="url(#f7ssblshvgduc)" rx="8" ry="8" style="stroke:#A80036;stroke-width:1.5;"/><path d="M427,22 L427,49 M414,30 L440,30 M427,49 L414,64 M427,49 L440,64 " fill="none" filter="url(#f7ssblshvgduc)" style="stroke:#A80036;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="31" x="411.5" y="83.0352">User</text><!--MD5=[a1a4a0e044844ab277e54ca29cdfed23]
+entity connected--><rect fill="#FEFECE" filter="url(#f7ssblshvgduc)" height="62.9766" style="stroke:#A80036;stroke-width:1.5;" width="162" x="156" y="961.5"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="298" y="966.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="296" y="968.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="296" y="972.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-style="italic" lengthAdjust="spacing" textLength="69" x="197.5" y="995.0352">«abstract»</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122" x="171" y="1011.5234">connected system</text><!--MD5=[ce1c0195088fc6ead5c2a3aeac01380f]
+entity external--><rect fill="#FEFECE" filter="url(#f7ssblshvgduc)" height="62.9766" style="stroke:#A80036;stroke-width:1.5;" width="148" x="7" y="396.5"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="135" y="401.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="133" y="403.5"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="133" y="407.5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-style="italic" lengthAdjust="spacing" textLength="69" x="41.5" y="430.0352">«abstract»</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="108" x="22" y="446.5234">external system</text><!--MD5=[e734486994736961a9152bf4b0b82c18]
+link cliTs to local--><path d="M156.5,262.5 C142.11,262.5 127.73,262.5 113.35,262.5 " fill="none" id="cliTs-to-local" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="108.05,262.5,117.05,266.5,113.05,262.5,117.05,258.5,108.05,262.5" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[3214af9b3e8aa8ab916c005392bb8f81]
+link User to cli--><path d="M427,85.53 C427,100.84 427,119.2719 427,138.3619 C427,147.9069 427,157.6164 427,167.1825 C427,171.9655 427,176.7127 427,181.3856 C427,183.722 427,186.0398 427,188.3342 " fill="none" id="User-cli" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[773624552ef9c95acaea775a208b9bb6]
+link gwTs to con--><path d="M230.22,710.53 C231.6,729.09 233.36,752.82 234.74,771.47 " fill="none" id="gwTs-con" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[51aa9caff0b0543d7c3e054f939b3fa9]
+link gw to rest--><path d="M137.9839,679.5 C137.9117,679.5 137.8396,679.5 137.7674,679.5 C137.4788,679.5 137.1902,679.5 136.9015,679.5 C136.3243,679.5 135.747,679.5 135.1697,679.5 C134.0151,679.5 132.8605,679.5 131.7059,679.5 C127.0875,679.5 122.4688,679.5 117.85,679.5 C108.6125,679.5 99.375,679.5 90.14,679.5 " fill="none" id="gw-rest" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[ee8f2226c3c39d2151f62a04c41cf825]
+link gwDomain to volume--><path d="M387.62,707.46 C419.87,729.99 465.13,761.59 494.27,781.94 " fill="none" id="gwDomain-to-volume" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="498.44,784.85,493.3627,776.4107,494.3445,781.9817,488.7735,782.9635,498.44,784.85" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f540e4ad1b0a646717de0e28725e9f3a]
+link gwTs to volume--><path d="M275.08,702.59 C281.09,705.3 287.18,708 293,710.5 C354.66,736.97 426.66,765.19 473.46,783.18 " fill="none" id="gwTs-to-volume" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="478.19,784.99,471.2373,778.0144,473.5262,783.1874,468.3532,785.4764,478.19,784.99" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f10bba244b63f651b5ac88e124393836]
+link cliTs to gwTs--><path d="M203.89,293.68 C208.69,370.34 221.32,571.9 226.12,648.43 " fill="none" id="cliTs-gwTs" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="29" x="230.5" y="425.5684">sync</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="58" x="216" y="440.8789">Socket.io</text><!--MD5=[4fdf11ee67e989227234b32b96388001]
+link cli to rest--><path d="M422.5079,317.9013 C422.4422,318.2181 422.3755,318.5351 422.3078,318.8524 C422.1726,319.4869 422.0336,320.1223 421.8909,320.7584 C421.32,323.3026 420.6884,325.8569 419.99,328.4039 C417.1962,338.5919 413.3325,348.6625 408,357.5 C370.96,418.89 347.03,427.22 283,459.5 C220.34,491.09 180.02,449.28 130,498.5 C82.86,544.88 79.75,631.79 80.42,665.06 " fill="none" id="cli-to-rest" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="80.56,670.28,84.3273,661.1802,80.4315,665.2817,76.33,661.3858,80.56,670.28" style="stroke:#A80036;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="96" x="382" y="418.0684">administration,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="77" x="391.5" y="433.3789">registration,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="91" x="384.5" y="448.6895">domain config</text><!--MD5=[94218600ee5f2e5555534b4b254bdb8c]
+link con to connected--><path d="M237,839.68 C237,873.08 237,922.72 237,956.16 " fill="none" id="con-connected" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="237,961.39,241,952.39,237,956.39,233,952.39,237,961.39" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="237,834.62,233,843.62,237,839.62,241,843.62,237,834.62" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[686f6fc51421dd91466229c2e40b1041]
+link external to rest--><path d="M81,459.59 C81,514.16 81,626.21 81,664.96 " fill="none" id="external-to-rest" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="81,670.13,85,661.13,81,665.13,77,661.13,81,670.13" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[27450b03dc86d336a9eeda6822c659ee]
+@startuml
+'https://plantuml.com/deployment-diagram
+
+actor User
+
+node "User Device" {
+  component "Timeld CLI" as cli {
+    database "Timesheet\nDomain" as cliTs
+  note right of cliTs
+    m-ld clones
+    are embedded
+  end note
+  }
+  storage "local\nstorage" as local
+  cliTs -> local
+}
+
+User - - cli
+
+cloud "cloud platform" {
+  node "NodeJS" {
+    component Gateway as gw {
+      database "Gateway\nDomain" as gwDomain
+      database "Timesheet\nDomain [*]" as gwTs
+      [Connector] <<abstract>> as con
+      gwTs - - con
+    }
+  }
+  () "REST API" as rest
+  gw - rest
+  storage "storage volume" as volume
+  gwDomain - -> volume
+  gwTs - -> volume
+}
+
+cliTs .. gwTs: sync\n//Socket.io//
+cli - - -> rest: administration,\nregistration,\ndomain config
+
+[connected system] <<abstract>> as connected
+con <- -> connected
+[external system] <<abstract>> as external
+external - -> rest
+
+@enduml
+
+@startuml
+
+actor User
+
+node "User Device" {
+  component "Timeld CLI" as cli {
+    database "Timesheet\nDomain" as cliTs
+  note right of cliTs
+    m-ld clones
+    are embedded
+  end note
+  }
+  storage "local\nstorage" as local
+  cliTs -> local
+}
+
+User - - cli
+
+cloud "cloud platform" {
+  node "NodeJS" {
+    component Gateway as gw {
+      database "Gateway\nDomain" as gwDomain
+      database "Timesheet\nDomain [*]" as gwTs
+      [Connector] <<abstract>> as con
+      gwTs - - con
+    }
+  }
+  () "REST API" as rest
+  gw - rest
+  storage "storage volume" as volume
+  gwDomain - -> volume
+  gwTs - -> volume
+}
+
+cliTs .. gwTs: sync\n//Socket.io//
+cli - - -> rest: administration,\nregistration,\ndomain config
+
+[connected system] <<abstract>> as connected
+con <- -> connected
+[external system] <<abstract>> as external
+external - -> rest
+
+@enduml
+
+PlantUML version 1.2021.10(Mon Aug 30 14:43:48 BST 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>
