@@ -6,8 +6,6 @@
 
 You need an Apple Mac, Windows PC or a Linux device.
 
-- **If not using a [timeld Gateway](https://github.com/m-ld/timeld#gateway)**, the manager of your timesheets (maybe just you) needs an account with the global messaging provider Ably. Whoever led you here may have an Ably "key" for you; otherwise sign up for a [free Ably account here](https://ably.com/signup).
-
 ## install
 
 Install version 16 or higher of [Node.js](https://nodejs.org/). Then, in a terminal:
@@ -20,55 +18,56 @@ npm install timeld-cli -g
 
 ## configure
 
-- **If using a Gateway**:
-
-  ```bash
-  timeld config --gateway gateway-domain-or-url --user my-name
-  ```
-  
-  The `gateway-domain-or-url` can be a plain domain name e.g. `timeld.org` or a URL e.g. `http://my-iMac.local:8080`. The user name you provide may be registered with the Gateway when you first work on a timesheet.
-
-
-- **If not using a Gateway**, you need to provide your ably key, and the user as a URI, such as your favourite social media profile page:
-  
-  ```bash
-  timeld config --ably.key your-ably-key --user http://you.example.org/#profile
-  ```
-
-To create a timesheet, you need an identity that the timesheet will be associated with.  This will govern the permissions on that timesheet.  The identity has two parts: an 'account' name and a timesheet name. Here's how you set up a default account name:
-
 ```bash
-timeld config --account your-account-name
+timeld config --gateway timeld.org --user my-name
 ```
 
-You can also use a different account for each timesheet you create, see below.
+`timeld.org` is a **timeld** web service, called a 'gateway', on the internet. If you have your own gateway, you can use its domain name instead, or a URL e.g. `http://my-iMac.local:8080`. The user name you provide will be registered with the gateway when you first open a timesheet or an admin session, unless it already exists.
+
+When you create a timesheet, it will belong to your user account; and to start with, only you will be able to view it. You can make a timesheet visible to others later by adding it to a project. Also, it's possible to create organisation accounts with shared timesheets; see the admin section below.
+
+When you become a member of an organisation, you can configure the app to use that account by default instead of your user account, like this:
+
+```bash
+timeld config --account your-organisation
+```
+
+You can also use a different account for each timesheet you create.
 
 ## timesheeting
 
-`timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you didn't set up a default account (above), or you want to open a timesheet against a different account, include it in the name like this: `the-account/your-timesheet`.
+`timeld open your-timesheet` creates or opens a timesheet called "your-timesheet" and opens a session for you to start adding time entries. If you want to open a timesheet from a different account, include it in the name like this: `the-account/your-timesheet`.
 
 In the session, you can add new time entries like this:
-- `add the-activity`
+```
+add the-activity
+```
 
-  (If your activity has spaces in it, put it in quotes e.g. `add "the activity"`.)
+(If your activity has spaces in it, put it in quotes e.g. `add "the activity"`.)
 
-  **timeld** will confirm what you have added.
+**timeld** will confirm what you have added.
   
-  If you want the activity to have an end time, you can set a duration using a time unit e.g. `add the-activity 1h`.
+If you want the activity to have an end time, you can set a duration using a time unit e.g. `add the-activity 1h`.
 
-  You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`.
+You can also set the start time and/or the end time e.g. `add the-activity --start 11am --end 12pm`. You can use natural language to set these times, e.g. `--start last Tuesday 10am`.
 
 Once you've added an entry, you can always modify it e.g.
-- `modify the-activity --end now`
+```
+modify the-activity --end now
+```
+
+`modify` has the same options as `add`.
 
 To see all the entries you have added, use
-- `list`
+```
+list
+```
 
-You can `exit` the session and return to the normal terminal. To re-open it, use `timeld open your-timesheet` (without the `--create` option).
+After you've used `list`, you can use the list numbers instead of activity names to modify entries, e.g. `modify 2 --end tomorrow`.
+
+You can `exit` the session and return to the normal terminal. To re-open it, use `timeld open your-timesheet`.
 
 ## admin
-
-_Only available with a Gateway._
 
 `timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; report on projects and timesheets; and manage connectors with other federated time-tracking systems.
 
@@ -153,10 +152,8 @@ In a timesheet or admin session you can just press `<Enter>` to see the availabl
 add --help
 ```
 
-## switching devices
+## switching devices and going offline
 
-If using a Gateway, your timesheets are stored on the gateway and are accessible from any device with a network connection to it. Each new device will be registered the first time you use it.
+Your timesheets are stored on the gateway and can be opened from any device with a network connection to it. Each new device will be registered the first time you use it.
 
-If not using a Gateway, your timesheets are not stored on the cloud or on any servers, only on your devices.
-
-Still, you can open and modify a timesheet that you've created on one device, on a different device. Just use `timeld open your-timesheet` on the new device _while you have a session open on the first device._ After that, you can use your devices independently, and they will synchronise whenever they both have a session open.
+Once opened the first time, timesheets are also stored on the device, so you can continue working if the internet is not available. Entries in the timesheet will be synchronised between all devices as soon as the internet is available again.
