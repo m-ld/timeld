@@ -1,12 +1,12 @@
 # timeld - Prejournal connector
 
-This packages supports live update of timesheet entries:
+This package supports live update of timesheet entries:
 - _from_ **timeld**
 - _to_ [prejournal](https://prejournal.org/).
 
 ## installation & configuration
 
-This connector package is included in the gateway.
+This connector package is included in the Gateway.
 
 The connector requires the following configuration:
 - `user`: Prejournal account (user) name (required)
@@ -14,7 +14,7 @@ The connector requires the following configuration:
 - `api`: API URL e.g. `https://time.pondersource.com/v1/` (required)
 - `client`: default timesheet "client" (for whom the work is being done; required)
 
-Configuration defaults may already be included in the gateway. Timesheet-specific configuration can also be included when adding the connector, see below.
+Configuration defaults may already be included in the Gateway. Timesheet-specific configuration can also be included when adding the connector, see below.
 
 To activate the connector for a timesheet "my-work" (note this assumes authorisation and API defaults in the gateway).
 
