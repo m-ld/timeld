@@ -40,6 +40,7 @@
     "simple-peer": "^9.11.1",
     "socket.io": "^4.5.1",
     "socket.io-client": "^4.5.1",
+    "timeld-caldav": "^0.1.0",
     "timeld-common": "^0.1.5",
     "timeld-prejournal": "^0.1.2",
     "timeld-tiki": "^0.1.2",

@@ -4,10 +4,8 @@ import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
 import { consume } from 'rx-flowable/consume';
-import { exampleEntryJson, toBeISODateString } from 'timeld-common/test/fixtures.mjs';
-import { readResult } from '@m-ld/m-ld';
-import { EMPTY } from 'rxjs';
-import MockIntegration from 'timeld-common/test/MockIntegration.mjs';
+import { toBeISODateString } from 'timeld-common/test/fixtures.mjs';
+import MockConnector from 'timeld-common/test/MockConnector.mjs';
 import { AccountOwnedId } from 'timeld-common';
 
 expect.extend({ toBeISODateString });
@@ -15,7 +13,6 @@ expect.extend({ toBeISODateString });
 describe('Administration session', () => {
   let gateway;
   let outLines, errLines;
-  let tsEntries;
 
   beforeEach(async () => {
     gateway = new MockGateway({ domainName: 'ex.org', mock: {} });
@@ -24,12 +21,10 @@ describe('Administration session', () => {
       name: 'test', emails: ['test@ex.org']
     });
     await gateway.initialise(userAccount);
-    tsEntries = EMPTY;
     // noinspection JSCheckFunctionSignatures
     gateway.initTimesheet.mockResolvedValue({
-      // Required for integration revup
-      read: jest.fn(arg => typeof arg == 'function' ?
-        arg({}) : readResult(tsEntries))
+      // Required for connector revup
+      write: jest.fn(proc => proc({}))
     });
     errLines = jest.fn();
     outLines = jest.fn();
@@ -146,35 +141,48 @@ describe('Administration session', () => {
       expect(outLines).toHaveBeenCalledWith('Timesheet org1/ts1');
     });
 
-    test('Lists no integrations for timesheet', async () => {
+    test('Lists no connectors for timesheet', async () => {
       await session.execute('add ts ts1', outLines, errLines);
-      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
     });
 
-    test('Adds integration for timesheet', async () => {
+    test('Adds connector for timesheet', async () => {
       await session.execute('add ts ts1', outLines, errLines);
-      const entry = exampleEntryJson();
-      tsEntries = consume([entry]);
       await session.execute(
-        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        'add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
         outLines, errLines);
-      expect(MockIntegration.created.entryUpdate).toHaveBeenCalledWith(
-        AccountOwnedId.fromString('test/ts1@ex.org'),
-        { '@delete': [], '@insert': [entry] }, expect.any(Object));
-      await session.execute('ls integration --timesheet ts1', outLines, errLines);
-      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
+      expect(MockConnector.created.syncTimesheet).toHaveBeenCalledWith(
+        AccountOwnedId.fromString('test/ts1@ex.org'), expect.any(Object));
+      expect(MockConnector.created.ext).toMatchObject({
+        config: JSON.stringify({ uri: 'http://ext.org/' })
+      });
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockConnector.mjs');
     });
 
-    test('Removes integration for timesheet', async () => {
+    test('Cannot re-add connector for timesheet', async () => {
       await session.execute('add ts ts1', outLines, errLines);
       await session.execute(
-        'add integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        'add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
+        outLines, errLines);
+      await expect(session.execute(
+        // The duplicate check does not care about config
+        'add connector timeld-common/test/MockConnector.mjs --timesheet ts1',
+        outLines, errLines)).rejects.toThrow();
+    });
+
+    test('Removes connector for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add connector timeld-common/test/MockConnector.mjs --timesheet ts1',
         outLines, errLines);
       await session.execute(
-        'rm integration timeld-common/test/MockIntegration.mjs --timesheet ts1',
+        'rm connector timeld-common/test/MockConnector.mjs --timesheet ts1',
         outLines, errLines);
-      await session.execute('ls integration --timesheet ts1', outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
     });
   });
@@ -259,11 +267,11 @@ describe('Administration session', () => {
       expect(outLines).not.toHaveBeenCalled();
     });
 
-    test('Adds integration for timesheet', async () => {
+    test('Adds connector for timesheet', async () => {
       await session.execute('add timesheet ts1', outLines, errLines);
-      await session.execute('add integration timeld-common/test/MockIntegration.mjs --timesheet ts1', outLines, errLines);
-      await session.execute('ls integration --timesheet ts1', outLines, errLines);
-      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockIntegration.mjs');
+      await session.execute('add connector timeld-common/test/MockConnector.mjs --timesheet ts1', outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockConnector.mjs');
     });
   });
 });

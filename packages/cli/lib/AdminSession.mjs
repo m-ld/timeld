@@ -3,10 +3,10 @@ import { ResultsProc } from './ResultsProc.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { ENTRY_FORMAT_OPTIONS, getSubjectFormat, TableFormat } from './DisplayFormat.mjs';
 import isEmail from 'validator/lib/isEmail.js';
-import { AccountOwnedId, dateJsonLd } from 'timeld-common';
+import { AccountOwnedId, dateJsonLd, durationFromInterval } from 'timeld-common';
 import { EMPTY } from 'rxjs';
 import { any } from '@m-ld/m-ld';
-import { durationFromInterval, parseDate, parseDuration } from './util.mjs';
+import { parseDate, parseDuration } from './util.mjs';
 import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import { Readable } from 'stream';
 
@@ -34,7 +34,7 @@ export default class AdminSession extends Repl {
   }
 
   get detailParamChoices() {
-    return ['ts', 'timesheet', 'project', 'link', 'integration']
+    return ['ts', 'timesheet', 'project', 'link', 'connector']
       .concat(this.isUserAccount ?
         ['email', 'org', 'organisation'] :
         // Technically you could administer emails and organisations from an org
@@ -44,8 +44,8 @@ export default class AdminSession extends Repl {
 
   get describeValueParam() {
     return this.isUserAccount ?
-      'timesheet or project name, email address, organisation name, or integration module' :
-      'timesheet or project name, admin user name, or integration module';
+      'timesheet or project name, email address, organisation name, or connector module' :
+      'timesheet or project name, admin user name, or connector module';
   }
 
   buildCommands(yargs, ctx) {
@@ -169,8 +169,8 @@ export default class AdminSession extends Repl {
         return this.ownedDetail(argv, 'Project');
       case 'link':
         return this.linkDetail(argv);
-      case 'integration':
-        return this.integrationDetail(argv);
+      case 'connector':
+        return this.connectorDetail(argv);
       default:
         throw `${argv.detail} not available`;
     }
@@ -436,10 +436,11 @@ export default class AdminSession extends Repl {
    * @param {object} argv
    * @param {string} [argv.project] command option
    * @param {string} [argv.timesheet] command option
-   * @param {string} [argv.value] the integration module
+   * @param {string} [argv.value] the connector module
+   * @param {object} [argv.config] any module configuration
    * @returns {AccountDetail}
    */
-  integrationDetail(argv) {
+  connectorDetail(argv) {
     if ((argv.project != null) === (argv.timesheet != null))
       throw new RangeError('Must provide timesheet or project');
     return new class extends AccountDetail {
@@ -461,7 +462,7 @@ export default class AdminSession extends Repl {
         return this.session.listProc({
           '@select': '?module', '@where': [
             {
-              '@type': 'Integration',
+              '@type': 'Connector',
               module: '?module',
               appliesTo: this.ownedRef
             },
@@ -473,7 +474,12 @@ export default class AdminSession extends Repl {
       add() {
         const module = argv.value;
         return this.session.writeProc({
-          '@insert': { '@type': 'Integration', module, appliesTo: this.ownedRef },
+          '@insert': {
+            '@type': 'Connector',
+            module,
+            appliesTo: this.ownedRef,
+            config: JSON.stringify(argv.config)
+          },
           '@where': this.ownedIsOwned
         });
       }
@@ -483,7 +489,7 @@ export default class AdminSession extends Repl {
         return this.session.writeProc({
           // TODO: Leaves garbage if this is the last appliesTo
           '@delete': { '@id': '?id', appliesTo: this.ownedRef },
-          '@where': [{ '@id': '?id', '@type': 'Integration', module }, this.ownedIsOwned]
+          '@where': [{ '@id': '?id', '@type': 'Connector', module }, this.ownedIsOwned]
         });
       }
     }(this);

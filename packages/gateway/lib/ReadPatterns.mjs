@@ -75,14 +75,14 @@ export default class ReadPatterns {
         ...this.accountIsAdmin,
         ...projectOrTimesheet(isReference)
       }, timesheetProperty),
-      // Read timesheet or project integrations from user account
+      // Read timesheet or project connectors from user account
       new class extends ReadPattern {
         matches(query) {
           return super.matches(query) && hasOwnedTimesheetJoin(query);
         }
       }({
         properties: {
-          '@type': { enum: ['Integration'] },
+          '@type': { enum: ['Connector'] },
           appliesTo: isReference
         },
         additionalProperties: true
@@ -90,7 +90,7 @@ export default class ReadPatterns {
         ...this.isThisAccount,
         ...projectOrTimesheet(isReference)
       }),
-      // Read timesheet or project integrations from account the user is admin of
+      // Read timesheet or project connectors from account the user is admin of
       new class extends ReadPattern {
         matches(query) {
           return super.matches(query) &&
@@ -99,7 +99,7 @@ export default class ReadPatterns {
         }
       }({
         properties: {
-          '@type': { enum: ['Integration'] },
+          '@type': { enum: ['Connector'] },
           appliesTo: isReference
         },
         additionalProperties: true

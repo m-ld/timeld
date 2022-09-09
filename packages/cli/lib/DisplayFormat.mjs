@@ -1,4 +1,4 @@
-import { Entry } from 'timeld-common';
+import { Entry, lastPathComponent } from 'timeld-common';
 import stringify from 'json-stringify-pretty-compact';
 import { formatDate, formatDuration } from './util.mjs';
 
@@ -89,7 +89,7 @@ export class DefaultFormat extends DisplayFormat {
    * @returns {string}
    */
   static entryLabel(entry) {
-    return `"${entry.activity}" (${formatDate(entry.start)}` +
+    return `"${entry.activity}" (${lastPathComponent(entry.providerId)}, ${formatDate(entry.start)}` +
       (entry.duration != null ? `, ${formatDuration(entry.duration)}` : '') + `)`;
   }
 }

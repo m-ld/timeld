@@ -70,7 +70,7 @@ You can `exit` the session and return to the normal terminal. To re-open it, use
 
 _Only available with a Gateway._
 
-`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; report on projects and timesheets; and manage integrations with other federated time-tracking systems.
+`timeld admin` opens a session for you to administer your gateway account, including personal details, organisations and projects; report on projects and timesheets; and manage connectors with other federated time-tracking systems.
 
 By default, this will open your user account, or your default account, if configured. To open an organisation account use the `--account` option. When the session is open you will see a prompt with the account name, e.g. `my-org>`.
 
@@ -118,12 +118,22 @@ The output of all the `list` and `report` commands in a session can be piped to 
 report my-project --format json-ld > my-project-report.json
 ```
 
-You can synchronise your timesheets with other federated time-tracking systems (currently Ponder Source's [PreJournal](https://github.com/pondersource/prejournal/) and Evoludata's [Tiki](https://timesheet.dev3.evoludata.com/Timesheets-homepage)).  This is done individually for each timesheet; here's how:
+You can synchronise your timesheets with other federated time-tracking systems; currently:
+
+| system                                                                       | connector module                                                   |
+|------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| Ponder Source's [PreJournal](https://github.com/pondersource/prejournal/)    | [timeld-prejournal](https://www.npmjs.com/package/timeld-prejournal) |
+| Evoludata's [Tiki](https://timesheet.dev3.evoludata.com/Timesheets-homepage) | [timeld-tiki](https://www.npmjs.com/package/timeld-tiki)             |
+| [CalDAV](https://www.rfc-editor.org/rfc/rfc4791)                             | [timeld-caldav](https://www.npmjs.com/package/timeld-caldav)         |
+
+This is done individually for each timesheet; here's how:
 
 ```
-add integration integration-module --timesheet my-timesheet
+add connector ≪connector-module≫ --timesheet my-timesheet --config.≪key≫ ≪config-value≫
 ```
-where `integration-module` is either `timeld-prejournal` or `timeld-tiki`.
+where:
+- `≪connector-module≫` is one of `timeld-prejournal`, `timeld-tiki`, or `timeld-caldav`
+- `≪key≫` and `≪config-value≫` are any configuration required for the connector (see connector module links above)
 
 ## help
 

@@ -10,7 +10,7 @@ import { Ask, accountHasTimesheet } from './statements.mjs';
 import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
-import IntegrationExtension from './Integration.mjs';
+import ConnectorExtension from './Connector.mjs';
 
 export default class Gateway extends BaseGateway {
   /**
@@ -37,7 +37,7 @@ export default class Gateway extends BaseGateway {
     this.cloneFactory = cloneFactory;
     this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
-    this.integrations = /**@type {{ [id: string]: IntegrationExtension }}*/{};
+    this.connectors = /**@type {{ [id: string]: ConnectorExtension }}*/{};
     this.subs = new Subscription();
   }
 
@@ -48,14 +48,14 @@ export default class Gateway extends BaseGateway {
     // TODO: This is for the DomainKeyStore, should be in the interface
     this.keyStore.state = this.domain;
     await this.domain.status.becomes({ outdated: false });
-    // Enliven all timesheets and integrations already in the domain
+    // Enliven all timesheets and connectors already in the domain
     await new Promise(resolve => {
       this.subs.add(this.domain.read(state => Promise.all([
         this.initTimesheets(state),
-        this.initIntegrations(state)
+        this.initConnectors(state)
       ]).then(resolve), (update, state) => Promise.all([
         this.onUpdateTimesheets(update),
-        this.onUpdateIntegrations(update, state)
+        this.onUpdateConnectors(update, state)
       ])));
     });
     return this;
@@ -93,16 +93,16 @@ export default class Gateway extends BaseGateway {
   /**
    * @param {MeldReadState} state
    */
-  initIntegrations(state) {
-    // FIXME: Integration must be tied to exactly one gateway instance!
+  initConnectors(state) {
+    // FIXME: Connector must be tied to exactly one gateway instance!
     // noinspection JSCheckFunctionSignatures
     return this.readAsync(state.read({
       '@describe': '?ext',
       '@where': {
-        // Only load the integration if it applies to anything
-        '@id': '?ext', '@type': 'Integration', appliesTo: '?'
+        // Only load the connector if it applies to anything
+        '@id': '?ext', '@type': 'Connector', appliesTo: '?'
       }
-    }), src => this.loadIntegration(src));
+    }), src => this.loadConnector(src));
   }
 
   /**
@@ -123,13 +123,15 @@ export default class Gateway extends BaseGateway {
    * @param {GraphSubject} src
    * @returns {Promise<void>}
    */
-  async loadIntegration(src) {
+  async loadConnector(src) {
     try {
-      this.integrations[src['@id']] =
-        await IntegrationExtension.fromJSON(src).initialise(this.config);
-      LOG.info('Loaded integration', src);
+      const ext = await ConnectorExtension.fromJSON(src).initialise(this);
+      await Promise.all(ext.appliesTo.map(id =>
+        ext.syncTimesheet(this.ownedRefAsId({ '@id': id }))));
+      this.connectors[src['@id']] = ext;
+      LOG.info('Loaded connector', src);
     } catch (e) {
-      LOG.warn('Could not load integration', src, e);
+      LOG.warn('Could not load connector', src, e);
     }
   }
 
@@ -138,25 +140,30 @@ export default class Gateway extends BaseGateway {
    * @param {MeldReadState} state
    * @returns {Promise<*>}
    */
-  onUpdateIntegrations(update, state) {
+  onUpdateConnectors(update, state) {
     for (let src of update['@delete']) {
-      if (src['@id'] in this.integrations) {
+      if (src['@id'] in this.connectors) {
         if ('module' in src) {
-          // If an integration's key property vanishes, remove it
-          delete this.integrations[src['@id']];
-          LOG.info('Unloaded integration', src);
+          // If a connector's key property vanishes, remove it
+          this.connectors[src['@id']]?.close()
+            .then(() => LOG.info('Unloaded connector', src))
+            .catch(e => LOG.warn(e));
+          delete this.connectors[src['@id']];
         } else {
-          this.integrations[src['@id']].onUpdate(src, 'delete');
+          this.connectors[src['@id']].onUpdate(src, 'delete');
         }
       }
     }
     for (let src of update['@insert']) {
-      // If a new integration appears, load it
-      if (src['@type'] === 'Integration') {
-        // noinspection JSIgnoredPromiseFromCall happy for this to be async
-        this.loadIntegration(src);
-      } else if (src['@id'] in this.integrations) {
-        this.integrations[src['@id']].onUpdate(src, 'insert');
+      // If a new connector appears, load it
+      if (src['@type'] === 'Connector') {
+        // Re-load the connector in full, in case only the type changed (migration)
+        // noinspection JSCheckFunctionSignatures
+        state.get(src['@id'])
+          .then(src => this.loadConnector(src))
+          .catch(e => LOG.warn(e));
+      } else if (src['@id'] in this.connectors) {
+        this.connectors[src['@id']].onUpdate(src, 'insert');
       }
     }
   }
@@ -172,20 +179,17 @@ export default class Gateway extends BaseGateway {
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
     const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId));
-    // Attach integration listener
+    // Attach connector listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
     ts.follow(async (update, state) => {
-      for (let integration of Object.values(this.integrations)) {
-        if (integration.appliesTo.includes(tsIri)) {
+      for (let connector of Object.values(this.connectors)) {
+        if (connector.appliesTo.includes(tsIri)) {
           try {
-            // TODO: Integrations should be guaranteed fast and async any heavy stuff
-            const gwUpdate = await integration.entryUpdate(tsId, update, state);
-            // Push the Gateway domain update async to prevent a deadlock
-            this.domain.write(async gwState => gwState.write(gwUpdate))
-              .catch(e => LOG.warn(integration.module, 'gateway update failed', tsIri, e));
+            // TODO: connectors should be guaranteed fast and async any heavy stuff
+            await connector.entryUpdate(tsId, update, state);
           } catch (e) {
-            LOG.warn(integration.module, 'update failed', tsIri, e);
+            LOG.warn(connector.module, 'update failed', tsIri, e);
           }
         }
       }
@@ -392,7 +396,8 @@ export default class Gateway extends BaseGateway {
     // Close the gateway domain
     return Promise.all([
       this.domain?.close(),
-      ...Object.values(this.timesheetDomains).map(d => d.close())
+      ...Object.values(this.timesheetDomains).map(d => d.close()),
+      ...Object.values(this.connectors).map(i => i.close())
     ]);
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "timeld-tiki",
   "version": "0.1.2",
-  "description": "timeld - Tiki Timesheets integration",
+  "description": "timeld - Tiki Timesheets connector",
   "main": "index.mjs",
   "scripts": {
     "ver": "echo $npm_package_version"
@@ -23,6 +23,7 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@zeit/fetch": "^6.0.0",
+    "rx-flowable": "^0.1.2",
     "timeld-common": "^0.1.5"
   }
 }

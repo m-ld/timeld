@@ -27,9 +27,11 @@ if npm run test; then
     # Install gateway extension packages
     npm i timeld-tiki@"$(npm run ver -w packages/tiki -s)" \
       timeld-prejournal@"$(npm run ver -w packages/prejournal -s)" \
+      timeld-caldav@"$(npm run ver -w packages/caldav -s)" \
       -w packages/gateway &&
     # Install common to all dependents
     npm i timeld-common@"$(npm run ver -w packages/common -s)" \
+      -w packages/caldav \
       -w packages/cli \
       -w packages/gateway \
       -w packages/prejournal \

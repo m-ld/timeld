@@ -1,5 +1,6 @@
 import setupFetch from '@zeit/fetch';
 import { domainRelativeIri, lastPathComponent, ResultsReadable } from 'timeld-common';
+import { each } from 'rx-flowable';
 
 /**
  * @typedef {object} TikiConfig
@@ -8,9 +9,9 @@ import { domainRelativeIri, lastPathComponent, ResultsReadable } from 'timeld-co
  */
 
 /**
- * @implements Integration
+ * @implements Connector
  */
-export default class TikiIntegration {
+export default class TikiConnector {
   // noinspection JSUnusedGlobalSymbols
   /** Used by the gateway to provide the configuration constructor parameter */
   static configKey = 'tiki';
@@ -26,6 +27,10 @@ export default class TikiIntegration {
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
   constructor(config, ext, fetch = setupFetch()) {
+    const missingConfig = ['api', 'token'].filter(k => !config[k]);
+    if (missingConfig.length)
+      throw new Error(`Missing Tiki config: ${missingConfig.join(', ')}`);
+
     const apiRoot = new URL(config.api);
     if (apiRoot.pathname.endsWith('/'))
       apiRoot.pathname = apiRoot.pathname.slice(0, -1);
@@ -55,11 +60,14 @@ export default class TikiIntegration {
     };
   }
 
-  /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldUpdate} update
-   * @param {MeldReadState} state
-   */
+  async syncTimesheet(tsId, state) {
+    if (state) {
+      await each(state.read({
+        '@describe': '?entry', '@where': { '@id': '?entry', '@type': 'Entry' }
+      }).consume, src => this.postTrackerItm(tsId, src));
+    }
+  }
+
   entryUpdate(tsId, update, state) {
     // Look for new Entries, and IDs for which we already have a tracker item
     return Promise.all(update['@insert'].map(async src => {
@@ -69,18 +77,18 @@ export default class TikiIntegration {
         src = await state.get(src['@id']);
         await this.post(new TimesheetTrackerItem(tsId, src, this.ext[src['@id']]));
       } else if (src['@type'] === 'Entry') {
-        // Inserting timesheet tracker item
-        const res = await this.post(new TimesheetTrackerItem(tsId, src));
-        // Store the item ID for the entry
-        this.ext[src['@id']] = res['itemId'];
+        await this.postTrackerItm(tsId, src);
       }
     }));
   }
 
-  /**
-   * @param {AccountOwnedId} tsId
-   * @param {MeldReadState} state
-   */
+  async postTrackerItm(tsId, src) {
+    // Inserting timesheet tracker item
+    const res = await this.post(new TimesheetTrackerItem(tsId, src));
+    // Store the item ID for the entry
+    this.ext[src['@id']] = res['itemId'];
+  }
+
   reportTimesheet(tsId, state) {
     return new ResultsReadable(state.read({
       '@describe': '?entry', '@where': { '@id': '?id', '@type': 'Entry' }

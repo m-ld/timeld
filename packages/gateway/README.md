@@ -58,7 +58,7 @@ In preparation for a first deployment ("genesis") you need a local `.env` file (
 - `TIMELD_GATEWAY_SMTP__FROM=≪an-email-account-to-send-activation-codes≫`
 - `TIMELD_GATEWAY_SMTP__AUTH__USER=≪your-smtp-account≫`
 - `TIMELD_GATEWAY_SMTP__AUTH__PASS=≪your-smtp-account-password≫`
-- Any additional secrets for extensions, e.g. see ../prejournal/secrets.mjs
+- Any additional configuration secrets for extensions, e.g. see ../prejournal/index.mjs
 
 The root access key is invented by you; it must be of the form `≪appid≫.≪keyid≫:≪secret≫`, where:
 - `appid` is some application identifier (the app name will do)
@@ -79,4 +79,4 @@ e.g. `timeld.rootkey:123456789abcdefghijk`
 ### random
 
 - `engines.node` is set to 16.x in `package.json` due to a [bug in Restify](https://github.com/restify/node-restify/issues/1888).
-- `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).
+- When using Ably, `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).

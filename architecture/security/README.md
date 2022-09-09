@@ -47,8 +47,8 @@ _Possible future enhancement: Project admins_
 Headlines:
 
 - Using email for account identity verification
-- Devices (clients) are issued Ably keys
-- Ably keys are maintained with the correct authorisations ("capabilities") to control user access to timesheet channels
+- Devices (clients) are issued with keys
+- The Socket.io server ensures all access to Timesheet domains must use a key belonging to a user with the correct access rights
 - Account administration is remote (account details are not synced to the client)
 
 ![process](img/register-cli.seq.svg)

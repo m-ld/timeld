@@ -8,8 +8,7 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
-import IntegrationExtension from './Integration.mjs';
-import { batch } from 'rx-flowable/operators';
+import ConnectorExtension from './Connector.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -221,37 +220,31 @@ export default class Account {
    * @param {GraphSubject} src
    * @returns {Promise<Subject>}
    */
-  beforeInsertIntegration = async (state, src) => {
-    // Create a temporary integration (the real one will be loaded later)
-    const ext = await IntegrationExtension.fromJSON(src).initialise(this.gateway.config);
-    // Flow matched entries to the extension
-    await Promise.all(ext.appliesTo.map(id => this.revupIntegration(state, ext, id)));
-    return ext.toJSON();
+  beforeInsertConnector = async (state, src) => {
+    try { // Create a temporary connector (the real one will be loaded later)
+      const ext = await ConnectorExtension.fromJSON(src).initialise(this.gateway);
+      // Flow matched entries to the extension
+      await Promise.all(ext.appliesTo.map(id => this.revupConnector(state, ext, id)));
+      return ext.toJSON();
+    } catch (e) {
+      // An error here is almost certainly due to misconfiguration
+      throw new BadRequestError('Unable to initialise connector', e);
+    }
   };
 
   /**
    * @param {MeldReadState} state
-   * @param {IntegrationExtension} ext
+   * @param {ConnectorExtension} ext
    * @param {string} timesheetId
    */
-  async revupIntegration(state, ext, timesheetId) {
+  async revupConnector(state, ext, timesheetId) {
     const tsId = this.gateway.ownedRefAsId({ '@id': timesheetId });
     if (await this.gateway.isGenesisTs(state, tsId))
       throw new BadRequestError('Timesheet not found: %s', tsId);
     const tsClone = await this.gateway.initTimesheet(tsId, false);
     // TODO: This holds locks on both gateway and timesheet state!
-    await new Promise((resolve, reject) => {
-      tsClone.read(state =>
-        each(tsClone.read({
-          '@describe': '?entry',
-          '@where': { '@id': '?entry', '@type': 'Entry' }
-        }).consume.pipe(batch(10)), srcBatch => {
-          // noinspection JSCheckFunctionSignatures
-          return ext.entryUpdate(tsId, {
-            '@delete': [], '@insert': srcBatch
-          }, state);
-        }).then(resolve, reject));
-    });
+    // Note this may mutate the extension object
+    await tsClone.write(state => ext.syncTimesheet(tsId, state));
   }
 
   /**

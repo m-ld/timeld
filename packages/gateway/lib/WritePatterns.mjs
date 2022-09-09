@@ -2,7 +2,8 @@ import { array } from '@m-ld/m-ld';
 import { AccountOwnedId, isDomainEntity, isReference } from 'timeld-common';
 import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
-import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
+import { ConflictError, ForbiddenError, NotFoundError } from '../rest/errors.mjs';
+import { Ask } from './statements.mjs';
 
 /**
  * @typedef {object} BeforeWriteTriggers
@@ -13,7 +14,7 @@ import { ForbiddenError, NotFoundError } from '../rest/errors.mjs';
  * @property {(
  * state: MeldReadState,
  * src: GraphSubject
- * ) => Promise<Subject>} beforeInsertIntegration
+ * ) => Promise<Subject>} beforeInsertConnector
  */
 
 export default class WritePatterns {
@@ -93,16 +94,17 @@ export default class WritePatterns {
       properties: { '@id': { type: 'string' }, project: isReference }
     };
 
-    class InsertIntegrationPattern extends QueryPattern {
+    class InsertConnectorPattern extends QueryPattern {
       constructor(whereAccount) {
         super({
           properties: {
             '@insert': {
               properties: {
-                '@type': { enum: ['Integration'] },
+                '@type': { enum: ['Connector'] },
                 module: { type: 'string' },
                 appliesTo: isReference
-              }
+              },
+              optionalProperties: { config: { type: 'string' } }
             },
             // TODO: Support projects
             '@where': whereAccount({ timesheet: isReference })
@@ -119,12 +121,16 @@ export default class WritePatterns {
             this.matchesApplies(query, 'project'));
       }
       async check(state, query) {
-        query['@insert'] = await triggers.beforeInsertIntegration(state, query['@insert']);
+        const matching = { ...query['@insert'] }; // @type, module, appliesTo
+        delete matching.config;
+        if (await new Ask(state).exists(matching))
+          throw new ConflictError('Connector already exists');
+        query['@insert'] = await triggers.beforeInsertConnector(state, query['@insert']);
         return super.check(state, query);
       }
     }
 
-    class DeleteIntegrationPattern extends QueryPattern {
+    class DeleteConnectorPattern extends QueryPattern {
       constructor(whereAccount) {
         super({
           properties: {
@@ -140,7 +146,7 @@ export default class WritePatterns {
         this.wherePattern = new ReadPattern({
           properties: {
             '@id': isVariable,
-            '@type': { enum: ['Integration'] },
+            '@type': { enum: ['Connector'] },
             module: { type: 'string' }
           }
         }, whereAccount({ timesheet: isReference }));
@@ -283,10 +289,10 @@ export default class WritePatterns {
           '@where': thisAccountIsAdmin({ timesheet: isReference })
         }
       }))),
-      new InsertIntegrationPattern(isThisAccount),
-      new InsertIntegrationPattern(thisAccountIsAdmin),
-      new DeleteIntegrationPattern(isThisAccount),
-      new DeleteIntegrationPattern(thisAccountIsAdmin)
+      new InsertConnectorPattern(isThisAccount),
+      new InsertConnectorPattern(thisAccountIsAdmin),
+      new DeleteConnectorPattern(isThisAccount),
+      new DeleteConnectorPattern(thisAccountIsAdmin)
     ];
   }
 
