@@ -273,5 +273,18 @@ describe('Administration session', () => {
       await session.execute('ls connector --timesheet ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockConnector.mjs');
     });
+
+    test('Adds connector with config', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await session.execute('add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.test test', outLines, errLines);
+      expect(MockConnector.created.config).toMatchObject({ test: 'test' });
+    });
+
+    test('Rejects string connector config', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await expect(session.execute('add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config garbage', outLines, errLines)).rejects.toThrow();
+    });
   });
 });

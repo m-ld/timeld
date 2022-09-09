@@ -1,6 +1,7 @@
 import setupFetch from '@zeit/fetch';
 import { domainRelativeIri, lastPathComponent, ResultsReadable } from 'timeld-common';
 import { each } from 'rx-flowable';
+import LOG from 'loglevel';
 
 /**
  * @typedef {object} TikiConfig
@@ -87,6 +88,7 @@ export default class TikiConnector {
     const res = await this.post(new TimesheetTrackerItem(tsId, src));
     // Store the item ID for the entry
     this.ext[src['@id']] = res['itemId'];
+    LOG.debug('Posted tracker item', res['itemId'], 'from Entry', src['@id']);
   }
 
   reportTimesheet(tsId, state) {

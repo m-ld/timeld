@@ -443,6 +443,9 @@ export default class AdminSession extends Repl {
   connectorDetail(argv) {
     if ((argv.project != null) === (argv.timesheet != null))
       throw new RangeError('Must provide timesheet or project');
+    if ('config' in argv)
+      if (typeof argv.config != 'object' || argv.config == null)
+        throw new RangeError('config must have properties');
     return new class extends AccountDetail {
       projectId = this.session.resolveId(argv.project);
       timesheetId = this.session.resolveId(argv.timesheet);
