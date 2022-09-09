@@ -27,8 +27,8 @@ The [Gateway](https://www.npmjs.com/package/timeld-gateway) manages accounts and
 
 - Register accounts
 - Manage projects
-- Submit completed timesheets to other management systems
-- Import timesheets from other management systems
+- Submit completed timesheets to other time-tracking systems
+- Import timesheets from other time-tracking systems
 
 ---
 

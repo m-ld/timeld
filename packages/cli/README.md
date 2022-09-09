@@ -132,7 +132,7 @@ This is done individually for each timesheet; here's how:
 add connector ≪connector-module≫ --timesheet my-timesheet --config.≪key≫ ≪config-value≫
 ```
 where:
-- `≪connector-module≫` is `timeld-prejournal`, `timeld-tiki`, or `timeld-caldav`
+- `≪connector-module≫` is one of `timeld-prejournal`, `timeld-tiki`, or `timeld-caldav`
 - `≪key≫` and `≪config-value≫` are any configuration required for the connector (see connector module links above)
 
 ## help
