@@ -53,13 +53,26 @@ describe('Connector extension', () => {
       return of(insertEntry);
     });
     const tsId = AccountOwnedId.fromString('test/ts1@ex.org');
-    await ext.syncTimesheet(tsId, {});
-    expect(syncTimesheet).toHaveBeenCalledWith(tsId, {});
+    await ext.syncTimesheet(tsId);
+    expect(syncTimesheet).toHaveBeenCalledWith(tsId, undefined);
     await ext.asyncTasks;
     expect(mockTimesheet.write).toHaveBeenCalledWith(insertEntry);
     expect(gateway.domain.write).toHaveBeenCalledWith({
       '@insert': { '@id': 'mockConnector', testing: true }
     });
+  });
+
+  test('does not update after stateful sync', async () => {
+    const insertEntry = { '@insert': exampleEntryJson };
+    syncTimesheet.mockImplementation(async () => {
+      ext.src.testing = true;
+      return of(insertEntry);
+    });
+    const tsId = AccountOwnedId.fromString('test/ts1@ex.org');
+    await ext.syncTimesheet(tsId, {});
+    expect(syncTimesheet).toHaveBeenCalledWith(tsId, {});
+    await ext.asyncTasks;
+    expect(mockTimesheet.write).not.toHaveBeenCalledWith(insertEntry);
   });
 
   test('reports new data to be stored', async () => {
