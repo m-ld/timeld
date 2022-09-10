@@ -14,8 +14,9 @@ import { Env } from 'timeld-common';
 /**
  * Called to synchronise the timesheet with the external system. If the `state`
  * parameter is provided, the connector may read and write it as required, but
- * not after the returned promise is settled. Updates in the returned observable
- * represent external updates and will be applied in order to the timesheet.
+ * not after the returned promise is settled. If the `state` is _not_ provided,
+ * updates in the returned observable represent external updates and will be
+ * applied in order to the timesheet.
  *
  * @function
  * @name Connector#syncTimesheet
@@ -108,7 +109,8 @@ export default class ConnectorExtension {
 
   async syncTimesheet(tsId, state) {
     const updates = await this.connector.syncTimesheet?.(tsId, state);
-    if (updates) {
+    // Do not subscribe to updates if the state has been passed
+    if (updates && state == null) {
       this.subs.add(updates.subscribe(update =>
         this.asyncTasks = this.asyncTasks.then(
           () => this.writeIncomingUpdate(tsId, update))));
