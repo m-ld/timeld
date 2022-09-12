@@ -140,6 +140,7 @@ class WorkedHours {
     return this.movementId != null ? [
       'update-entry',
       this.timestamp,
+      this.worker,
       this.client + ':' + this.project,
       this.amount,
       this.description,
