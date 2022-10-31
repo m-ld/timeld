@@ -21,12 +21,20 @@ import socketIo from './rest/socket-io.mjs';
  * @property {string} TIMELD_GATEWAY_SMTP__FROM
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__PASS
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__PORT] defaults to 8080
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__HOST]
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__PATH]
+ * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
  */
 
 /**
  * @typedef {object} _TimeldGatewayConfig
  * @property {string} gateway domain name or URL of gateway
  * @property {SmtpOptions} smtp SMTP details for activation emails
+ * @property {Object} address server address bind options
+ * @property {number} address.port server bind port
+ * @property {string} address.host server bind host
+ * @property {string} address.path server bind path
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
  */
@@ -36,7 +44,9 @@ const env = new Env({
   data: process.env.TIMELD_GATEWAY_DATA_PATH || '/data'
 }, 'timeld-gateway');
 // Parse command line, environment variables & configuration
-const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
+const config = /**@type {TimeldGatewayConfig}*/(await env.yargs())
+  .option('address.port', { default: '8080', type: 'number' })
+  .parse();
 LOG.setLevel(config.logLevel || 'INFO');
 LOG.debug('Loaded configuration', config);
 
@@ -55,7 +65,7 @@ const io = socketIo({ gateway, server });
 io.on('error', LOG.error);
 io.on('debug', LOG.debug);
 
-server.listen(8080, async () => {
+server.listen(config.address, async () => {
   // noinspection JSUnresolvedVariable
   LOG.info('%s listening at %s', server.name, server.url);
   cloneFactory.address = server.url;

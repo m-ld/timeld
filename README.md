@@ -10,7 +10,7 @@
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![actions](https://github.com/m-ld/timeld/actions/workflows/node.js.yml/badge.svg)](https://github.com/m-ld/timeld/actions)
 [![Gitter](https://img.shields.io/gitter/room/federatedbookkeeping/timesheets)](https://gitter.im/federatedbookkeeping/timesheets)
-[![Project](https://img.shields.io/badge/project-in%20progress-success)](https://github.com/m-ld/timeld/projects/1)
+[![Project](https://img.shields.io/badge/project-in%20progress-blueviolet?logo=github)](https://github.com/m-ld/timeld/projects/1)
 
 # live shared timesheets
 
