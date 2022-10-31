@@ -1,0 +1,57 @@
+version: "3.8"
+
+name: timeld
+
+services:
+  gateway:
+    image:
+      timeld-gateway
+    hostname: gateway
+    user: timeld
+    working_dir: /opt/timeld/
+    command: ["/home/timeld/node_modules/timeld-gateway/server.mjs", "> gateway.log", "2> gateway-err.log"]
+    volumes:
+      - type: volume
+        source: timeld-data
+        target: /opt/timeld/data
+    ports:
+      - "8080:8080"
+    networks:
+        timeld:
+          aliases:
+            - gateway.local
+            - timeld-gateway
+    env_file: ../../packages/gateway/deploy/.env
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 1s
+        max_attempts: 5
+        window: 20s
+
+  client:
+    depends_on:
+      - gateway
+    image:
+      timeld-client
+    hostname: timeld-client
+    user: timeld
+    working_dir: /opt/timeld/
+    command: bash -c "ls -l > /dev/null && tail -f > /dev/null"
+    stdin_open: true
+    tty: true
+    networks:
+        timeld:
+          aliases:
+            - timeld-client
+    deploy:
+      replicas: 1
+
+networks:
+  timeld:
+    name: timeld
+
+volumes:
+  timeld-data:
+    name: timeld-data
