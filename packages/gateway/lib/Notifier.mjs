@@ -7,9 +7,11 @@ import nodemailer from 'nodemailer';
 export default class Notifier {
   /**
    * @param {SmtpOptions & { from: string }} options
+   * @param {string} name gateway domain, used as a default self hostname
+   * @see https://community.nodebb.org/post/81300
    */
-  constructor({ smtp: options }) {
-    this.transporter = nodemailer.createTransport(options);
+  constructor({ smtp: options, '@domain': name }) {
+    this.transporter = nodemailer.createTransport({ name, ...options });
     this.from = options.from;
     let [, domain] = options.from.match(/@(\w+)/) || [];
     this.domain = domain || 'timeld';
