@@ -62,6 +62,14 @@ export default function rest({ gateway, notifier }) {
     LOG.warn(err);
     cb();
   });
+  if (LOG.getLevel() <= LOG.levels.DEBUG) {
+    server.pre(function (req, res, next) {
+      LOG.info(`${req.method} ${req.url} ${JSON.stringify({
+        ...req.headers, authorization: undefined
+      })}`);
+      return next();
+    });
+  }
 
   server.get('/api/jwe/:user',
     async (req, res, next) => {
