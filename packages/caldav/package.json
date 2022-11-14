@@ -1,0 +1,30 @@
+{
+  "name": "timeld-caldav",
+  "version": "0.1.1",
+  "description": "timeld - CalDAV connector",
+  "main": "index.mjs",
+  "scripts": {
+    "ver": "echo $npm_package_version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timeld",
+    "caldav",
+    "time"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "loglevel": "^1.8.0",
+    "rxjs": "^7.5.6",
+    "scrapegoat": "^2.0.0",
+    "timeld-common": "^0.1.6"
+  }
+}

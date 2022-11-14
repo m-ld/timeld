@@ -1,9 +1,12 @@
+// noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import MockGateway from 'timeld-common/test/MockGateway.mjs';
 import Account from 'timeld-gateway/lib/Account.mjs';
 import AdminSession from '../lib/AdminSession.mjs';
 import { consume } from 'rx-flowable/consume';
 import { toBeISODateString } from 'timeld-common/test/fixtures.mjs';
+import MockConnector from 'timeld-common/test/MockConnector.mjs';
+import { AccountOwnedId } from 'timeld-common';
 
 expect.extend({ toBeISODateString });
 
@@ -12,12 +15,17 @@ describe('Administration session', () => {
   let outLines, errLines;
 
   beforeEach(async () => {
-    gateway = new MockGateway({ domainName: 'ex.org' });
+    gateway = new MockGateway({ domainName: 'ex.org', mock: {} });
     // noinspection JSCheckFunctionSignatures using mock gateway
     const userAccount = new Account(gateway, {
       name: 'test', emails: ['test@ex.org']
     });
     await gateway.initialise(userAccount);
+    // noinspection JSCheckFunctionSignatures
+    gateway.initTimesheet.mockResolvedValue({
+      // Required for connector revup
+      write: jest.fn(proc => proc({}))
+    });
     errLines = jest.fn();
     outLines = jest.fn();
   });
@@ -132,6 +140,51 @@ describe('Administration session', () => {
       await session.execute('report org1/ts1', outLines, errLines);
       expect(outLines).toHaveBeenCalledWith('Timesheet org1/ts1');
     });
+
+    test('Lists no connectors for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Adds connector for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
+        outLines, errLines);
+      expect(MockConnector.created.syncTimesheet).toHaveBeenCalledWith(
+        AccountOwnedId.fromString('test/ts1@ex.org'), expect.any(Object));
+      expect(MockConnector.created.ext).toMatchObject({
+        config: JSON.stringify({ uri: 'http://ext.org/' })
+      });
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockConnector.mjs');
+    });
+
+    test('Cannot re-add connector for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.uri http://ext.org/',
+        outLines, errLines);
+      await expect(session.execute(
+        // The duplicate check does not care about config
+        'add connector timeld-common/test/MockConnector.mjs --timesheet ts1',
+        outLines, errLines)).rejects.toThrow();
+    });
+
+    test('Removes connector for timesheet', async () => {
+      await session.execute('add ts ts1', outLines, errLines);
+      await session.execute(
+        'add connector timeld-common/test/MockConnector.mjs --timesheet ts1',
+        outLines, errLines);
+      await session.execute(
+        'rm connector timeld-common/test/MockConnector.mjs --timesheet ts1',
+        outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).not.toHaveBeenCalled();
+    });
   });
 
   describe('with org account', () => {
@@ -212,6 +265,26 @@ describe('Administration session', () => {
       expect(outLines).not.toHaveBeenCalled();
       await session.execute('ls link --ts fred/ts1', outLines, errLines);
       expect(outLines).not.toHaveBeenCalled();
+    });
+
+    test('Adds connector for timesheet', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await session.execute('add connector timeld-common/test/MockConnector.mjs --timesheet ts1', outLines, errLines);
+      await session.execute('ls connector --timesheet ts1', outLines, errLines);
+      expect(outLines).toHaveBeenCalledWith('timeld-common/test/MockConnector.mjs');
+    });
+
+    test('Adds connector with config', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await session.execute('add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config.test test', outLines, errLines);
+      expect(MockConnector.created.config).toMatchObject({ test: 'test' });
+    });
+
+    test('Rejects string connector config', async () => {
+      await session.execute('add timesheet ts1', outLines, errLines);
+      await expect(session.execute('add connector timeld-common/test/MockConnector.mjs ' +
+        '--timesheet ts1 --config garbage', outLines, errLines)).rejects.toThrow();
     });
   });
 });

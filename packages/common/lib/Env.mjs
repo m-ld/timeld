@@ -28,8 +28,49 @@ export default class Env {
       { env: Env.toEnvVar(appName) }, env_paths(appName), envPaths);
   }
 
+  /**
+   * @param {string} name
+   * @returns {string} uppercase snake-case
+   */
   static toEnvVar(name) {
-    return name.toUpperCase().replace(/\W+/g, '_');
+    return name
+      // Non-word characters (including hyphens) with underscores
+      .replace(/\W+/g, '_')
+      // Camel case to snake case
+      .replace(/([A-Z])/g, '_$&')
+      .toUpperCase();
+  }
+
+  get envPrefix() {
+    return this.envPaths.env ? `${this.envPaths.env}_` : '';
+  }
+
+  /**
+   * @returns the config as an object containing environment variables, e.g. {
+   *   TIMELD_GATEWAY_KEY1: 'key1',
+   *   TIMELD_GATEWAY_NESTED__KEY2: 'key2',
+   * }
+   * @param {object} config
+   * @param {string[]} filter if non-empty, the keys to include
+   * @param {object} env existing env to add to
+   * @param {string} prefix prefix for new entries
+   */
+  asEnv(
+    config,
+    filter = [],
+    env = {},
+    prefix = this.envPrefix
+  ) {
+    for (let [key, value] of Object.entries(config)) {
+      if (value != null && (filter.length === 0 || filter.includes(key))) {
+        const envVar = `${prefix}${Env.toEnvVar(key)}`;
+        if (typeof value == 'object')
+          this.asEnv(value, [], env, `${envVar}__`);
+        else
+          env[envVar] = `${value}`;
+      }
+    }
+    return env;
   }
 
   /**

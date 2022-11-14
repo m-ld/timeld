@@ -1,4 +1,4 @@
-import { AccountOwnedId, clone, Env } from 'timeld-common';
+import { AccountOwnedId, Env } from 'timeld-common';
 import { createWriteStream } from 'fs';
 import { once } from 'events';
 import GatewayClient from './GatewayClient.mjs';
@@ -15,22 +15,29 @@ export default class Cli {
    * @param input
    * @param output
    * @param console
+   * @param {CloneFactory} cloneFactory
    */
   constructor(env, {
     args = undefined,
     input = process.stdin,
     output = process.stdout,
     console = global.console
-  } = {}) {
+  }, cloneFactory) {
     this.args = args;
     this.env = env;
     this.input = input;
     this.output = output;
     this.console = console;
+    this.cloneFactory = cloneFactory;
   }
 
   async start() {
     return this.addOptions(await this.env.yargs(this.args))
+      .middleware(argv => {
+        // Legacy support: if only an Ably key is available, use it as the auth key
+        if (argv.ably?.key && !argv.auth)
+          argv.auth = { key: argv.ably.key };
+      }, true)
       .command(
         ['config', 'cfg'],
         'Inspect or set local configuration',
@@ -187,7 +194,7 @@ export default class Cli {
     const logFile = await this.setUpLogging(tsId.toPath());
     const dataDir = await this.env.readyPath('data', ...tsId.toPath());
     // noinspection JSCheckFunctionSignatures
-    return { meld: await clone(config, dataDir, principal), logFile };
+    return { meld: await this.cloneFactory.clone(config, dataDir, principal), logFile };
   }
 
   /**

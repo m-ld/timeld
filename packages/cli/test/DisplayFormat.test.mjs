@@ -8,9 +8,6 @@ describe('Default Entry format', () => {
     const start = new Date('2022-05-06T10:24:22.139Z');
     const entry = Entry.fromJSON(exampleEntryJson(start));
     expect(DefaultFormat.entryLabel(entry)).toMatch(
-      `#1: testing (${start.toLocaleString()}, 1 hour)`);
+      `"testing" (test, ${start.toLocaleString()}, 1 hour)`);
   });
 });
-
-
-

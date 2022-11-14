@@ -21,6 +21,7 @@ describe('Timesheet Id', () => {
   test('invalid', () => {
     expect(AccountOwnedId.fromIri('org./ts').isValid).toBe(false);
     expect(AccountOwnedId.fromIri('org/ts!').isValid).toBe(false);
+    expect(AccountOwnedId.fromIri('Org/ts').isValid).toBe(false);
   });
 
   test('from only timesheet', () => {

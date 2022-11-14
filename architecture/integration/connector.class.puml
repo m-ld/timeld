@@ -1,0 +1,82 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+hide circle
+allowmixing
+
+abstract class Account <<subject>> {
+  timesheet : Timesheet [*]
+  project : Project [*]
+}
+
+class Timesheet <<domain>> <<subject>> {
+  project : Project [*]
+  external : Reference [0..1]
+}
+note right of Timesheet::external
+  The original
+  system of record
+end note
+
+Account *--> "*" Timesheet
+
+class ConnectorExtension <<subject>> {
+  module : string
+  appliesTo : Timesheet | Project [*]
+}
+note top of ConnectorExtension
+  Represents another system
+  whose language we speak,
+  for the limited purpose
+  of pushing //updates// and
+  responding //snapshots//
+end note
+
+note right of ConnectorExtension::module
+  NodeJS ESM import of
+  Connector class
+end note
+
+note right of ConnectorExtension::appliesTo
+  Selection of account-
+  owned data
+end note
+
+ConnectorExtension -- Timesheet
+
+abstract class Connector <<javascript>> {
+  {static} configKey : string
+  {static} contentType : string
+  constructor(config, ext)
+  syncTimesheet(tsId, state): Observable
+  entryUpdate(tsId, update, state)
+  reportTimesheet(tsId, state) : Stream
+  accountUpdate(update)
+}
+note right of Connector::constructor
+  passed configuration (inc. secrets)
+  and extension, can have properties
+  storing additional config & data
+end note
+
+note right of Connector::syncTimesheet
+  Establish sync, e.g. initial
+  import or export; then provide
+  ongoing updates
+end note
+
+note right of Connector::entryUpdate
+  Update of Timesheet Entries.
+  Provided with the Timesheet
+  ID, raw m-ld update, the
+  current Timesheet state
+end note
+
+note right of Connector::accountUpdate
+  Limited account updates e.g.
+  create/delete Timesheet
+end note
+
+ConnectorExtension -- "implementation" Connector
+
+@enduml

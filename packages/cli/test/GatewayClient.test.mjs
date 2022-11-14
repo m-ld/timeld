@@ -10,10 +10,10 @@ describe('Gateway Client', () => {
     const gw = new GatewayClient({
       gateway: 'timeld.org',
       user: 'user',
-      ably: { key: 'app.id:secret' },
+      auth: { key: 'app.id:secret' },
       key: { public: 'publicKey', private: 'privateKey' }
     });
-    expect(gw.ablyKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
+    expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
     expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
     expect(gw.domainName).toBe('timeld.org');
     expect(gw.principalId).toBe('http://timeld.org/user');
@@ -43,12 +43,12 @@ describe('Gateway Client', () => {
     const gw = new GatewayClient({
       gateway: 'timeld.org', user: 'user'
     }, fetch);
-    expect(gw.ablyKey).toBeNull();
+    expect(gw.authKey).toBeNull();
     expect(gw.userKeyConfig).toBeNull();
     await gw.activate(jest.fn()
       .mockReturnValueOnce('user@timeld.org')
       .mockReturnValueOnce('111111'));
-    expect(gw.ablyKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
+    expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
     expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
   });
 
@@ -61,7 +61,7 @@ describe('Gateway Client', () => {
       }
     });
     const gw = new GatewayClient({
-      gateway: 'timeld.org', user: 'user', ably: { key: 'app.id:secret' }
+      gateway: 'timeld.org', user: 'user', auth: { key: 'app.id:secret' }
     }, fetch);
     await expect(gw.config('acc', 'ts1')).resolves.toEqual(resJson);
   });
@@ -78,7 +78,7 @@ describe('Gateway Client', () => {
       }
     });
     const gw = new GatewayClient({
-      gateway: 'timeld.org', user: 'user', ably: { key: 'app.id:secret' }
+      gateway: 'timeld.org', user: 'user', auth: { key: 'app.id:secret' }
     }, fetch);
     // noinspection JSCheckFunctionSignatures
     await expect(drain(gw.read(reqJson))).resolves.toEqual(resJson);

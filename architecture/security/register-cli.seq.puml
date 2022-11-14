@@ -3,12 +3,7 @@
 hide footbox
 
 User -> CLI ++: open account/timesheet
-alt No Ably Key (AbK) or expired
-  note over CLI
-    configured user is account<sub>u</sub> (required).
-    Not always the same as requested timesheet
-    account (which may be an organisation).
-  end note
+alt No ""auth.key"" or expired
   CLI -> User: "pls enter email"
   User --> CLI: email
   CLI -> Gateway ++: jwe(account<sub>u</sub>, email)
@@ -27,26 +22,26 @@ alt No Ably Key (AbK) or expired
   CLI -> CLI: decrypt jwt<sub>a</sub>
   ' TODO: replay attack within JWT validity period
   CLI -> Gateway ++: key(jwt<sub>a</sub>)
-  
+
   Gateway -> Gateway: create Account\nif required
-  Gateway <-> Ably: create/update Ably key\n(AbK) & capabilities
+  Gateway <-> Ably: create/update key\n& capabilities
   Gateway -> Gateway: generate RSA key\npair for signing\n⦉ SK, PK ⦊
   Gateway -> Gateway: encrypt SK with AbK\n{ SK }<sub>AbK</sub>
-  Gateway -> Gateway: ⦉ AbK.id ↦ { SK }<sub>AbK</sub>, PK ⦊\nstored in Account
-  return AbK, SK
+  Gateway -> Gateway: store keyid\nin Account
+  return ""ably.key""
 end
 
 CLI -> Gateway ++: config(account/timesheet, jwt<sub>u</sub>)
 note left
-  jwt<sub>u</sub> (user jwt) has
-  { account<sub>u</sub>, AbK.id }<sub>AbK</sub>
+  jwt<sub>u</sub> (user jwt)
+  is ⦉ account<sub>u</sub>, keyid ⦊
+  signed with ""auth.key""
 end note
 Gateway -> Gateway: check account<sub>u</sub>\ncorresponds to AbK.id
 Gateway -> Gateway: check account<sub>u</sub> has\naccess to timesheet
-Gateway -> Gateway: update key capability
 return config
 
-CLI -> Ably: connect to timesheet channels via m-ld
+CLI -> Gateway: connect to timesheet channels via m-ld
 note over User, CLI: Proceed with session
 
 @enduml

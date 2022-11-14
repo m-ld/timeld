@@ -7,9 +7,10 @@
 </p>
 <pre></pre>
 
-[![stability-wip](https://img.shields.io/badge/stability-work_in_progress-lightgrey.svg)](https://github.com/m-ld/timeld/projects/1)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![actions](https://github.com/m-ld/timeld/actions/workflows/node.js.yml/badge.svg)](https://github.com/m-ld/timeld/actions)
 [![Gitter](https://img.shields.io/gitter/room/federatedbookkeeping/timesheets)](https://gitter.im/federatedbookkeeping/timesheets)
+[![Project](https://img.shields.io/badge/project-in%20progress-blueviolet?logo=github)](https://github.com/m-ld/timeld/projects/1)
 
 # live shared timesheets
 
@@ -25,14 +26,12 @@ The [desktop tool](https://www.npmjs.com/package/timeld-cli) (called **timeld-cl
 The [Gateway](https://www.npmjs.com/package/timeld-gateway) manages accounts and persists timesheets somewhere safe.
 
 - Register accounts
-- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Manage projects
-- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Submit completed timesheets to other management systems
-- ![coming soon](https://img.shields.io/badge/-coming%20soon-red) Import timesheets from other management systems
+- Manage projects
+- Submit completed timesheets to other time-tracking systems
+- Import timesheets from other time-tracking systems
 
 ---
 
 ## development
 
-[![project](https://raw.githubusercontent.com/primer/octicons/main/icons/table-16.svg) kanban board](https://github.com/m-ld/timeld/projects/1)
-
-To publish, use e.g. `$VERSION=patch npm run publish` in the root, to ensure that workspace packages stay in sync.
+To publish, use e.g. `./publish.sh` in the root, to ensure that workspace packages stay in sync.

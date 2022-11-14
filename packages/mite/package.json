@@ -1,7 +1,7 @@
 {
   "name": "timeld-mite",
   "version": "0.2.0-edge.1",
-  "description": "timeld - mite.yo.lk integration",
+  "description": "timeld - mite.yo.lk connector",
   "main": "index.mjs",
   "devDependencies": {},
   "scripts": {},

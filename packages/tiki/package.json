@@ -1,0 +1,30 @@
+{
+  "name": "timeld-tiki",
+  "version": "0.1.3",
+  "description": "timeld - Tiki Timesheets connector",
+  "main": "index.mjs",
+  "scripts": {
+    "ver": "echo $npm_package_version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-ld/timeld.git"
+  },
+  "keywords": [
+    "timeld",
+    "tiki",
+    "time"
+  ],
+  "author": "George Svarovsky",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-ld/timeld/issues"
+  },
+  "homepage": "https://github.com/m-ld/timeld#readme",
+  "dependencies": {
+    "@zeit/fetch": "^6.0.0",
+    "loglevel": "^1.8.0",
+    "rx-flowable": "^0.1.2",
+    "timeld-common": "^0.1.6"
+  }
+}

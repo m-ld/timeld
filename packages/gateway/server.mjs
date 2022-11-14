@@ -1,11 +1,14 @@
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { clone, Env } from 'timeld-common';
-import AblyApi from './lib/AblyApi.mjs';
+import { Env } from 'timeld-common';
 import LOG from 'loglevel';
 import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
+import DomainKeyStore from 'timeld-common/ext/m-ld/DomainKeyStore.mjs';
+import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
+import { shortId } from '@m-ld/m-ld';
+import socketIo from './rest/socket-io.mjs';
 import AuditLogger from './lib/AuditLogger.mjs';
 
 /**
@@ -14,22 +17,27 @@ import AuditLogger from './lib/AuditLogger.mjs';
  * @property {string} [LOG_LEVEL] defaults to "INFO"
  * @property {string} TIMELD_GATEWAY_GATEWAY domain name or URL of gateway
  * @property {string} TIMELD_GATEWAY_GENESIS "true" iff the gateway is new
- * @property {string} TIMELD_GATEWAY_ABLY__KEY gateway Ably app key
- * @property {string} TIMELD_GATEWAY_ABLY__API_KEY gateway Ably api key
- * @property {string} TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN
- * @property {string} TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE
+ * @property {string} TIMELD_GATEWAY_AUTH__KEY gateway authorisation key
+ * @property {string} TIMELD_GATEWAY_SMTP__HOST
+ * @property {string} TIMELD_GATEWAY_SMTP__FROM
+ * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
+ * @property {string} TIMELD_GATEWAY_SMTP__AUTH__PASS
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__PORT] defaults to 8080
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__HOST] defaults to any-network-host
  * @property {string} TIMELD_GATEWAY_LOGZ__KEY
  */
 
 /**
  * @typedef {object} _TimeldGatewayConfig
  * @property {string} gateway domain name or URL of gateway
- * @property {string} ably.apiKey gateway Ably api key
- * @property {string} courier.authorizationToken
- * @property {string} courier.activationTemplate
+ * @property {SmtpOptions} smtp SMTP details for activation emails
+ * @property {Object} address server address bind options
+ * @property {number} address.port server bind port
+ * @property {string} address.host server bind host
  * @property {string} logz.key
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
+ * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
  */
 
 const env = new Env({
@@ -37,7 +45,9 @@ const env = new Env({
   data: process.env.TIMELD_GATEWAY_DATA_PATH || '/data'
 }, 'timeld-gateway');
 // Parse command line, environment variables & configuration
-const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
+const config = /**@type {TimeldGatewayConfig}*/(await env.yargs())
+  .option('address.port', { default: '8080', type: 'number' })
+  .parse();
 LOG.setLevel(config.logLevel || 'INFO');
 LOG.debug('Loaded configuration', config);
 
@@ -47,16 +57,26 @@ if (config['@domain'] == null) {
     config.gateway : new URL(config.gateway).hostname;
 }
 
-// noinspection JSCheckFunctionSignatures WebStorm incorrectly merges ably property
-const ablyApi = new AblyApi(config.ably);
+const keyStore = new DomainKeyStore({ appId: shortId(config['@domain']) });
+const cloneFactory = new IoCloneFactory();
 const auditLogger = new AuditLogger(config.logz);
-const gateway = await new Gateway(env, config, clone, ablyApi, auditLogger).initialise();
-const notifier = new Notifier(config.courier);
+const gateway = new Gateway(env, config, cloneFactory, keyStore, auditLogger);
+const notifier = new Notifier(config);
 const server = rest({ gateway, notifier });
+const io = socketIo({ gateway, server });
+io.on('error', LOG.error);
+io.on('debug', LOG.debug);
 
-server.listen(8080, function () {
+server.listen(config.address, async () => {
   // noinspection JSUnresolvedVariable
-  console.log('%s listening at %s', server.name, server.url);
+  LOG.info('%s listening at %s', server.name, server.url);
+  cloneFactory.address = server.url;
+  try {
+    await gateway.initialise();
+    LOG.info('Gateway initialised');
+  } catch (e) {
+    LOG.error('Gateway failed to initialise', e);
+  }
 });
 
 gracefulShutdown(server, {

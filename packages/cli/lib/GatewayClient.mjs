@@ -1,11 +1,9 @@
 import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
-import isFQDN from 'validator/lib/isFQDN.js';
 import isEmail from 'validator/lib/isEmail.js';
 import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
-import dns from 'dns/promises';
-import { AblyKey, BaseGateway } from 'timeld-common';
+import { AuthKey, BaseGateway, resolveGateway } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
@@ -15,8 +13,7 @@ export default class GatewayClient extends BaseGateway {
   /**
    * @param {string} gateway
    * @param {string} user
-   * @param {object} ably
-   * @param {string} [ably.key] available Ably key, if missing, {@link activate}
+   * @param {string} [key] available authorisation key, if missing, {@link activate}
    * must be called before other methods
    * @param {UserKeyConfig['key']} [key] public/private key pair
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
@@ -24,16 +21,15 @@ export default class GatewayClient extends BaseGateway {
   constructor({
     gateway,
     user,
-    ably,
+    auth: { key } = {},
     key
   }, fetch = setupFetch()) {
-    const { apiRoot, domainName } = GatewayClient.resolveApiRoot(gateway);
+    const { root, domainName } = resolveGateway(gateway);
     super(domainName);
     this.user = user;
-    this.ablyKey = ably?.key != null ? new AblyKey(ably.key) : null;
-    // We don't hydrate the user key here
-    this.userKeyConfig = key ?? null;
-    this.apiRoot = apiRoot;
+    this.authKey = key != null ? AuthKey.fromString(key) : null;
+    this.gatewayRoot = root;
+    // noinspection HttpUrlsUsage
     /**
      * Resolve our username against the gateway to get the canonical user URI.
      * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
@@ -60,7 +56,7 @@ export default class GatewayClient extends BaseGateway {
     if (options.user !== false)
       (options.params ||= {}).user = this.user;
     // noinspection JSCheckFunctionSignatures
-    const url = new URL(path, await this.apiRoot);
+    const url = new URL(`api/${path}`, await this.gatewayRoot);
     // Add the query parameters to the URL
     if (options.params != null)
       Object.entries(options.params).forEach(([name, value]) =>
@@ -75,34 +71,10 @@ export default class GatewayClient extends BaseGateway {
   }
 
   /**
-   * @param {string} address
-   * @returns {{ apiRoot: URL | Promise<URL>, domainName: string }}
-   */
-  static resolveApiRoot(address) {
-    if (isFQDN(address)) {
-      return { apiRoot: new URL(`https://${address}/api/`), domainName: address };
-    } else {
-      const url = new URL('/api/', address);
-      const domainName = url.hostname;
-      if (domainName.endsWith('.local')) {
-        return {
-          apiRoot: dns.lookup(domainName).then(a => {
-            url.hostname = a.address;
-            return url;
-          }),
-          domainName
-        };
-      } else {
-        return { apiRoot: url, domainName };
-      }
-    }
-  }
-
-  /**
    * @param {(question: string) => Promise<string>} ask
    */
   async activate(ask) {
-    if (this.ablyKey == null) {
+    if (this.authKey == null) {
       const email = await ask(
         'Please enter your email address to register this device: ');
       if (!isEmail(email))
@@ -120,7 +92,7 @@ export default class GatewayClient extends BaseGateway {
       const keys = /**@type UserKeyConfig*/ await this
         .fetchApi(`key/${this.user}`, { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.ablyKey = new AblyKey(keys.ably.key);
+      this.authKey = AuthKey.fromString(keys.ably.key);
       this.userKeyConfig = keys.key;
     }
   }
@@ -129,7 +101,7 @@ export default class GatewayClient extends BaseGateway {
    * @returns {UserKeyConfig}
    */
   get accessConfig() {
-    return { ably: { key: this.ablyKey.toString() }, key: this.userKeyConfig };
+    return { auth: { key: this.authKey.toString() }, key: this.userKeyConfig };
   }
 
   /**
@@ -156,7 +128,7 @@ export default class GatewayClient extends BaseGateway {
    * @param {import('@m-ld/m-ld').Write} pattern
    */
   async write(pattern) {
-    checkSuccessRes(await this.fetchApi('write', { json: pattern }));
+    await checkSuccessRes(await this.fetchApi('write', { json: pattern }));
   }
 
   /**
@@ -177,7 +149,7 @@ export default class GatewayClient extends BaseGateway {
    * @returns {Promise<string>} JWT
    */
   async userJwt() {
-    const { secret, keyid } = this.ablyKey;
+    const { secret, keyid } = this.authKey;
     return await signJwt({}, secret, {
       subject: this.user, keyid, expiresIn: '1m'
     });
@@ -188,11 +160,11 @@ export default class GatewayClient extends BaseGateway {
  * @param {import('@zeit/fetch').Response} res
  * @returns {import('@zeit/fetch').Response}
  */
-const checkSuccessRes = res => {
+const checkSuccessRes = async res => {
   if (res.ok)
     return res;
   else
-    throw `Fetch from ${res.url} failed with ${res.status}: ${res.statusText}`;
+    throw (await res.json().catch(() => ({})))?.message || res.statusText;
 };
 
 /**

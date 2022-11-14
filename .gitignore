@@ -106,3 +106,8 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Miscellaneous
+.cmd
+Progress-notes.md
+ps.sh

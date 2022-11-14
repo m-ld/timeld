@@ -6,12 +6,20 @@ The timeld Gateway is a service to manage timeld accounts and persist timesheets
 
 ## Fly.io Deployment Notes
 
-### app
+### prerequisites
 
-Decide your app name.
+```bash
+git clone https://github.com/m-ld/timeld
+cd timeld/packages/gateway
+```
 
-```shell
-flyctl apps create timeld
+You will need:
+1. A [fly.io](https://fly.io) account (requires a credit card); and install `flyctl`.
+3. An SMTP service and account, for sending activation codes.
+4. An app name!
+
+```
+flyctl apps create ≪your-great-name≫
 ```
 
 If developing off the `main` branch, the deploy script (below) will use your current branch name as a suffix; in preparation you should run the above command with the suffixed name e.g. `timeld-edge`.
@@ -33,18 +41,6 @@ flyctl volumes create timeld_data --region lhr -a timeld
 > - [x] set `fly scale ... --max-per-region=1` (limits scaling), or
 > - [ ] create a directory under `/data` per [allocation ID](https://fly.io/docs/reference/runtime-environment/#fly_alloc_id) – (creates a garbage collection problem with rolling redeploy)
 
-### secrets
-
-```shell
-flyctl secrets import < .env -a timeld
-```
-
-Where the .env file contains:
-- `TIMELD_GATEWAY_ABLY__KEY={your root ably key}`
-- `TIMELD_GATEWAY_ABLY__API_KEY={your ably control API key}`
-- `TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN={your courier auth token}`
-- `TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE={courier activation email template ID}`
-
 ### deploy
 
 _NB: If you have made any changes to timeld-common, it needs to be published first._
@@ -53,17 +49,34 @@ A script is provided to generate, and optionally run, the correct deploy command
 
 ```shell
 chmod +x deploy.sh
-./deploy.sh
 ```
+
+In preparation for a first deployment ("genesis") you need a local `.env` file (in this directory or in the repo root), containing:
+
+- `TIMELD_GATEWAY_AUTH__KEY=≪some-root-access-key≫` (see below)
+- `TIMELD_GATEWAY_SMTP__HOST=≪your-smtp-host≫`
+- `TIMELD_GATEWAY_SMTP__FROM=≪an-email-account-to-send-activation-codes≫`
+- `TIMELD_GATEWAY_SMTP__AUTH__USER=≪your-smtp-account≫`
+- `TIMELD_GATEWAY_SMTP__AUTH__PASS=≪your-smtp-account-password≫`
+- Any additional configuration secrets for extensions, e.g. see ../prejournal/index.mjs
+
+The root access key is invented by you; it must be of the form `≪appid≫.≪keyid≫:≪secret≫`, where:
+- `appid` is some application identifier (the app name will do)
+- `keyid` is the key identifier (at least 5 characters), used for logging
+- `secret` is the secret key material (at least 20 characters)
+
+e.g. `timeld.rootkey:123456789abcdefghijk`
 
 `deploy.sh` takes three optional arguments:
 1. app name (root); defaults to `timeld`
 2. app name suffix; defaults to git branch name e.g. `timeld-edge`. If `main`, no suffix is used, i.e. just `timeld`.
-3. `genesis` (if used, the 1st two arguments must also be given)
+3. `genesis` (if used, the 1st two arguments must also be given, and the secrets will be pushed to fly.io)
 
-The first deployment of a new Gateway **must** be started with the `genesis` flag.
+```shell
+./deploy.sh timeld main genesis
+```
 
 ### random
 
 - `engines.node` is set to 16.x in `package.json` due to a [bug in Restify](https://github.com/restify/node-restify/issues/1888).
-- `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).
+- When using Ably, `simple-peer` is a dependency even if we don't use WebRTC (a bug in m-ld-js/ext/ably).

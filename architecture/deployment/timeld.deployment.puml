@@ -1,0 +1,44 @@
+@startuml
+'https://plantuml.com/deployment-diagram
+
+actor User
+
+node "User Device" {
+  component "Timeld CLI" as cli {
+    database "Timesheet\nDomain" as cliTs
+  note right of cliTs
+    m-ld clones
+    are embedded
+  end note
+  }
+  storage "local\nstorage" as local
+  cliTs -> local
+}
+
+User -- cli
+
+cloud "cloud platform" {
+  node "NodeJS" {
+    component Gateway as gw {
+      database "Gateway\nDomain" as gwDomain
+      database "Timesheet\nDomain [*]" as gwTs
+      [Connector] <<abstract>> as con
+      gwTs -- con
+    }
+  }
+  () "REST API" as rest
+  gw - rest
+  storage "storage volume" as volume
+  gwDomain --> volume
+  gwTs --> volume
+}
+
+cliTs .. gwTs: sync\n//Socket.io//
+cli ---> rest: administration,\nregistration,\ndomain config
+
+[connected system] <<abstract>> as connected
+con <--> connected
+[external system] <<abstract>> as external
+external --> rest
+
+@enduml

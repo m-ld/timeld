@@ -22,25 +22,26 @@
   "homepage": "https://github.com/m-ld/timeld/tree/main/packages/cli#readme",
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2-2",
-    "@m-ld/m-ld": "^0.9.0-5",
-    "@m-ld/m-ld-cli": "^0.1.0-2",
+    "@m-ld/m-ld": "^0.9.0",
+    "@m-ld/m-ld-cli": "0.2.0",
     "@zeit/fetch": "^6.0.0",
-    "chrono-node": "^2.3.8",
+    "chrono-node": "^2.3.9",
     "cryptr": "^6.0.3",
     "humanize-duration": "^3.27.2",
     "json-stringify-pretty-compact": "^4.0.0",
     "ndjson": "^2.0.0",
     "parse-duration": "^1.0.2",
-    "rx-flowable": "^0.1.1",
-    "rxjs": "^7.5.5",
+    "rx-flowable": "^0.1.2",
+    "rxjs": "^7.5.6",
     "simple-peer": "^9.11.1",
+    "socket.io-client": "^4.5.1",
     "timeago.js": "^4.0.2",
     "timeld-common": "^0.2.0-edge.1",
     "validator": "^13.7.0"
   },
   "devDependencies": {
     "@types/cryptr": "^4.0.1",
-    "@types/validator": "^13.7.3",
+    "@types/validator": "^13.7.5",
     "memdown": "^6.1.1",
     "tmp": "^0.2.1"
   }

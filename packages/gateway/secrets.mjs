@@ -1,4 +1,4 @@
-import { Env, UserKey } from 'timeld-common';
+import { Env } from 'timeld-common';
 import dotenv from 'dotenv';
 import { join } from 'path';
 
@@ -14,16 +14,7 @@ const env = new Env({}, 'timeld-gateway');
 const config = /**@type {TimeldGatewayConfig}*/(await env.yargs()).parse();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Generate a new key pair for the new Gateway
-Object.assign(config, UserKey.generate(config.ably.key).toConfig());
-
-////////////////////////////////////////////////////////////////////////////////
-// Output required secrets
-console.log(`TIMELD_GATEWAY_KEY__PUBLIC=${config.key.public}`);
-console.log(`TIMELD_GATEWAY_KEY__PRIVATE=${config.key.private}`);
-console.log(`TIMELD_GATEWAY_ABLY__KEY=${config.ably.key}`);
-// noinspection JSUnresolvedVariable WebStorm incorrectly merges ably property
-console.log(`TIMELD_GATEWAY_ABLY__API_KEY=${config.ably.apiKey}`);
-console.log(`TIMELD_GATEWAY_COURIER__AUTHORIZATION_TOKEN=${config.courier.authorizationToken}`);
-console.log(`TIMELD_GATEWAY_COURIER__ACTIVATION_TEMPLATE=${config.courier.activationTemplate}`);
-console.log(`TIMELD_GATEWAY_LOGZ__KEY=${config.logz.key}`);
+// Gateway & extension secrets: auth, SMTP, caldav, prejournal, tiki
+const keys = ['auth', 'smtp', 'caldav', 'prejournal', 'tiki'];
+for (let [envVar, envValue] of Object.entries(env.asEnv(config, keys)))
+  console.log(`${envVar}=${envValue}`);

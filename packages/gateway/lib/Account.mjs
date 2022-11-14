@@ -1,5 +1,5 @@
 import { propertyValue, Reference } from '@m-ld/m-ld';
-import { AccountOwnedId, isDomainEntity, Session } from 'timeld-common';
+import { AccountOwnedId, isDomainEntity, Session, UserKey } from 'timeld-common';
 import { idSet } from 'timeld-common/lib/util.mjs';
 import { accountHasTimesheet, timesheetHasProject, userIsAdmin } from './statements.mjs';
 import ReadPatterns from './ReadPatterns.mjs';
@@ -9,16 +9,16 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
-import UserKey from 'timeld-common/data/UserKey.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
  * Instances are ephemeral, instantiated dynamically on demand.
+ * @implements BeforeWriteTriggers
  */
 export default class Account {
   /**
    * @param {Gateway} gateway
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    */
   static fromJSON(gateway, src) {
     // noinspection JSCheckFunctionSignatures
@@ -38,8 +38,8 @@ export default class Account {
    * @param {Iterable<string>} emails verifiable account identities
    * @param {Iterable<string>} keyids per-device keys
    * @param {Iterable<string>} admins admin (primary accountable) IRIs
-   * @param {import('@m-ld/m-ld').Reference[]} timesheets timesheet ID Refs
-   * @param {import('@m-ld/m-ld').Reference[]} projects project ID Refs
+   * @param {Reference[]} timesheets timesheet ID Refs
+   * @param {Reference[]} projects project ID Refs
    */
   constructor(gateway, {
     name,
@@ -66,21 +66,19 @@ export default class Account {
 
   /**
    * Activation of a gateway account requires an initial timesheet.
-   * This is because Ably cannot create a key without at least one capability.
+   * (This is because Ably cannot create a key without at least one capability.)
    *
    * @param {string} email
    * @returns {UserKeyConfig} keys for the account
    */
   async activate(email) {
-    // Every activation creates a new Ably key (assumes new device)
-    const keyDetails = await this.gateway.ablyApi.createAppKey({
-      name: `${this.name}@${this.gateway.domainName}`,
-      capability: this.keyCapability()
-    });
+    // Every activation creates a new key (assumes new device)
+    const keyDetails = await this.gateway.keyStore
+      .mintKey(`${this.name}@${this.gateway.domainName}`);
     // Generate a key pair for signing
     const userKey = UserKey.generate(keyDetails.key);
     // Store the keyid and the email
-    this.keyids.add(keyDetails.id);
+    this.keyids.add(keyDetails.key.keyid);
     this.emails.add(email);
     // Write the changed details, including the new key
     await this.gateway.domain.write({
@@ -92,7 +90,7 @@ export default class Account {
   /**
    * @param {string} keyid user key ID
    * @param {AccessRequest|undefined} [access] request
-   * @returns {Promise<AblyKeyDetail>}
+   * @returns {Promise<AuthKeyDetail>}
    * @throws {import('restify-errors').DefinedHttpError}
    */
   async authorise(keyid, access) {
@@ -100,17 +98,13 @@ export default class Account {
     return new Promise(async (resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
+          // noinspection JSIncompatibleTypesComparison
           if (access != null)
             await this.checkAccess(state, access);
-          // Update the capability of the key to include the timesheet.
-          // This also serves as a check that the key exists.
-          const authorisedTsIds = [...await this.allOwned(state, 'Timesheet')]
-            .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName));
           try {
-            const keyDetail = await this.gateway.ablyApi.updateAppKey(keyid, {
-              capability: this.keyCapability(...authorisedTsIds)
-            });
-            return keyDetail.status === 0 ? resolve(keyDetail) :
+            const keyDetail = await this.gateway.keyStore.pingKey(
+              keyid, () => this.allOwnedTimesheetIds(state));
+            return !keyDetail.revoked ? resolve(keyDetail) :
               reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
             // TODO: Assuming this is a Not Found
@@ -195,7 +189,16 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Read} query
+   * @param {MeldReadState} state
+   * @returns {Promise<AccountOwnedId[]>}
+   */
+  async allOwnedTimesheetIds(state) {
+    return [...await this.allOwned(state, 'Timesheet')]
+      .map(iri => AccountOwnedId.fromIri(iri, this.gateway.domainName));
+  }
+
+  /**
+   * @param {Read} query
    * @returns {Promise<Results>} results
    */
   async read(query) {
@@ -217,10 +220,10 @@ export default class Account {
 
   /**
    * @param {MeldReadState} state the current domain state
-   * @param {import('@m-ld/m-ld').Reference} tsRef the timesheet ref
+   * @param {Reference} tsRef the timesheet ref
    * @returns {Promise<void>}
    */
-  onInsertTimesheet = async (state, tsRef) => {
+  beforeInsertTimesheet = async (state, tsRef) => {
     if (tsRef != null) {
       const tsId = this.gateway.ownedRefAsId(tsRef);
       if (await state.ask({ '@where': accountHasTimesheet(tsId) }))
@@ -233,11 +236,43 @@ export default class Account {
   };
 
   /**
-   * @param {import('@m-ld/m-ld').Query} query
+   * @param {MeldReadState} state
+   * @param {GraphSubject} src
+   * @returns {Promise<Subject>}
+   */
+  beforeInsertConnector = async (state, src) => {
+    try { // Create a temporary connector (the real one will be loaded later)
+      const ext = await ConnectorExtension.fromJSON(src).initialise(this.gateway);
+      // Flow matched entries to the extension
+      await Promise.all(ext.appliesTo.map(id => this.revupConnector(state, ext, id)));
+      return ext.toJSON();
+    } catch (e) {
+      // An error here is almost certainly due to misconfiguration
+      throw new BadRequestError('Unable to initialise connector', e);
+    }
+  };
+
+  /**
+   * @param {MeldReadState} state
+   * @param {ConnectorExtension} ext
+   * @param {string} timesheetId
+   */
+  async revupConnector(state, ext, timesheetId) {
+    const tsId = this.gateway.ownedRefAsId({ '@id': timesheetId });
+    if (await this.gateway.isGenesisTs(state, tsId))
+      throw new BadRequestError('Timesheet not found: %s', tsId);
+    const tsClone = await this.gateway.initTimesheet(tsId, false);
+    // TODO: This holds locks on both gateway and timesheet state!
+    // Note this may mutate the extension object
+    await tsClone.write(state => ext.syncTimesheet(tsId, state));
+  }
+
+  /**
+   * @param {Query} query
    */
   async write(query) {
     const matchingPattern =
-      new WritePatterns(this.name, this.onInsertTimesheet).matchPattern(query);
+      new WritePatterns(this.name, this).matchPattern(query);
     if (matchingPattern == null)
       throw new ForbiddenError('Unrecognised write pattern: %j', query);
     await this.gateway.domain.write(async state => {
@@ -271,7 +306,7 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @returns {Promise<void>}
    */
   async importOwned(src) {
@@ -291,7 +326,7 @@ export default class Account {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @param {{ [key: string]: Session }} sessions
    * @returns {Promise<void>}
    */
@@ -334,19 +369,6 @@ export default class Account {
         });
       });
     });
-  }
-
-  /**
-   * @param {AccountOwnedId} tsIds
-   * @returns {object}
-   */
-  keyCapability(...tsIds) {
-    return Object.assign({
-      // Ably keys must have a capability. Assign a notification channels as a minimum.
-      [`${this.gateway.domainName}:notify`]: ['subscribe']
-    }, ...tsIds.map(tsId => ({
-      [`${tsId.toDomain()}:*`]: ['publish', 'subscribe', 'presence']
-    })));
   }
 
   toJSON() {

@@ -2,31 +2,28 @@ import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
 import { propertyValue, Reference, uuid } from '@m-ld/m-ld';
-import { AblyKey, BaseGateway, Env, timeldContext, UserKey } from 'timeld-common';
+import { AuthKey, BaseGateway, Env, timeldContext, UserKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import { accountHasTimesheet } from './statements.mjs';
-import { concat } from 'rxjs';
+import { Ask, accountHasTimesheet } from './statements.mjs';
+import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
-
-/**
- * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
- */
+import ConnectorExtension from './Connector.mjs';
 
 export default class Gateway extends BaseGateway {
   /**
    * @param {import('timeld-common').Env} env
    * @param {TimeldGatewayConfig} config
-   * @param {(...args: *[]) => import('timeld-common').clone} clone m-ld clone creation function
-   * @param {import('./AblyApi.mjs').AblyApi} ablyApi Ably control API
+   * @param {CloneFactory} cloneFactory m-ld clone creation function
+   * @param {AuthKeyStore} keyStore authorisation key store
    * @param {import('./AuditLogger.mjs').AuditLogger} auditLogger
    */
   constructor(env,
     config,
-    clone,
-    ablyApi,
+    cloneFactory,
+    keyStore,
     auditLogger
   ) {
     super(config['@domain']);
@@ -38,40 +35,141 @@ export default class Gateway extends BaseGateway {
     };
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
-    this.ablyKey = new AblyKey(config.ably.key);
+    this.authKey = AuthKey.fromString(config.auth.key);
     this.machineKey = UserKey.fromConfig(config);
-    this.clone = clone;
-    this.ablyApi = /**@type {import('./AblyApi.mjs').AblyApi}*/ablyApi;
+    this.cloneFactory = cloneFactory;
+    this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.auditLogger = auditLogger;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
+    this.connectors = /**@type {{ [id: string]: ConnectorExtension }}*/{};
+    this.subs = new Subscription();
   }
 
   async initialise() {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
-    this.domain = await this.clone(this.config, dataDir);
+    this.domain = await this.cloneFactory.clone(this.config, dataDir);
+    // TODO: This is for the DomainKeyStore, should be in the interface
+    this.keyStore.state = this.domain;
     await this.domain.status.becomes({ outdated: false });
-    // Enliven all timesheets already in the domain
-    await this.domain.read(state => {
-      // Timesheets are the range of the 'timesheet' Account property
-      state.read({
-        '@select': '?tsh', '@where': { timesheet: '?tsh' }
-      }).consume.subscribe(({ value, next }) => {
-        this.timesheetAdded(this.ownedRefAsId(value['?tsh'])).finally(next);
-      });
-    }, update => {
-      // And watch for timesheets appearing and disappearing
-      // noinspection JSCheckFunctionSignatures
-      return Promise.all([
-        ...update['@delete'].map(subject => Promise.all(
-          propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
-            this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
-        ...update['@insert'].map(subject => Promise.all(
-          propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
-            this.timesheetAdded(this.ownedRefAsId(tsRef)))))
-      ]);
+    // Enliven all timesheets and connectors already in the domain
+    await new Promise(resolve => {
+      this.subs.add(this.domain.read(state => Promise.all([
+        this.initTimesheets(state),
+        this.initConnectors(state)
+      ]).then(resolve), (update, state) => Promise.all([
+        this.onUpdateTimesheets(update),
+        this.onUpdateConnectors(update, state)
+      ])));
     });
     return this;
+  }
+
+  /**
+   * @param {MeldReadState} state
+   */
+  initTimesheets(state) {
+    // Timesheets are the range of the 'timesheet' Account property
+    return this.readAsync(state.read({
+      '@select': '?tsh', '@where': { timesheet: '?tsh' }
+    }).consume, ({ value, next }) => {
+      this.timesheetAdded(this.ownedRefAsId(value['?tsh'])).finally(next);
+    });
+  }
+
+  /**
+   * @param {MeldUpdate} update
+   * @returns {Promise<*>}
+   */
+  onUpdateTimesheets(update) {
+    // Watch for timesheets appearing and disappearing
+    // noinspection JSCheckFunctionSignatures
+    return Promise.all([
+      ...update['@delete'].map(subject => Promise.all(
+        propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
+          this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
+      ...update['@insert'].map(subject => Promise.all(
+        propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
+          this.timesheetAdded(this.ownedRefAsId(tsRef)))))
+    ]);
+  }
+
+  /**
+   * @param {MeldReadState} state
+   */
+  initConnectors(state) {
+    // FIXME: Connector must be tied to exactly one gateway instance!
+    // noinspection JSCheckFunctionSignatures
+    return this.readAsync(state.read({
+      '@describe': '?ext',
+      '@where': {
+        // Only load the connector if it applies to anything
+        '@id': '?ext', '@type': 'Connector', appliesTo: '?'
+      }
+    }), src => this.loadConnector(src));
+  }
+
+  /**
+   * Hoop-jumping to ensure that an asynchronous read does not throw an
+   * unhandled exception if the gateway is closed too soon.
+   * @param {import('rxjs').Observable} results
+   * @param {Parameters<import('rxjs').Observable['subscribe']>[0]} sub
+   * @returns {Promise<unknown>}
+   */
+  readAsync(results, sub) {
+    return new Promise(resolve => {
+      // noinspection JSCheckFunctionSignatures
+      this.subs.add(results.pipe(finalize(resolve)).subscribe(sub));
+    });
+  }
+
+  /**
+   * @param {GraphSubject} src
+   * @returns {Promise<void>}
+   */
+  async loadConnector(src) {
+    try {
+      const ext = await ConnectorExtension.fromJSON(src).initialise(this);
+      await Promise.all(ext.appliesTo.map(id =>
+        ext.syncTimesheet(this.ownedRefAsId({ '@id': id }))));
+      this.connectors[src['@id']] = ext;
+      LOG.info('Loaded connector', src);
+    } catch (e) {
+      LOG.warn('Could not load connector', src, e);
+    }
+  }
+
+  /**
+   * @param {MeldUpdate} update
+   * @param {MeldReadState} state
+   * @returns {Promise<*>}
+   */
+  onUpdateConnectors(update, state) {
+    for (let src of update['@delete']) {
+      if (src['@id'] in this.connectors) {
+        if ('module' in src) {
+          // If a connector's key property vanishes, remove it
+          this.connectors[src['@id']]?.close()
+            .then(() => LOG.info('Unloaded connector', src))
+            .catch(e => LOG.warn(e));
+          delete this.connectors[src['@id']];
+        } else {
+          this.connectors[src['@id']].onUpdate(src, 'delete');
+        }
+      }
+    }
+    for (let src of update['@insert']) {
+      // If a new connector appears, load it
+      if (src['@type'] === 'Connector') {
+        // Re-load the connector in full, in case only the type changed (migration)
+        // noinspection JSCheckFunctionSignatures
+        state.get(src['@id'])
+          .then(src => this.loadConnector(src))
+          .catch(e => LOG.warn(e));
+      } else if (src['@id'] in this.connectors) {
+        this.connectors[src['@id']].onUpdate(src, 'insert');
+      }
+    }
   }
 
   /**
@@ -85,8 +183,23 @@ export default class Gateway extends BaseGateway {
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
     const principal = { '@id': this.absoluteId('/') };
-    const ts = await this.clone(config, await this.getDataPath(tsId), principal);
-    ts.follow(update => this.auditLogger.log(tsId, update));
+    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId));
+    // Attach change listener
+    // Note we have not waited for up to date, so this picks up rev-ups
+    const tsIri = tsId.toRelativeIri();
+    ts.follow(async (update, state) => {
+      this.auditLogger.log(tsId, update);
+      for (let connector of Object.values(this.connectors)) {
+        if (connector.appliesTo.includes(tsIri)) {
+          try {
+            // TODO: connectors should be guaranteed fast and async any heavy stuff
+            await connector.entryUpdate(tsId, update, state);
+          } catch (e) {
+            LOG.warn(connector.module, 'update failed', tsIri, e);
+          }
+        }
+      }
+    });
     if (genesis) {
       // Add our machine identity and key to the timesheet for signing
       await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.machineKey);
@@ -175,8 +288,9 @@ export default class Gateway extends BaseGateway {
     if (acc != null && !acc.emails.has(email))
       throw new UnauthorizedError(
         'Email %s not registered to account %s', email, account);
-    // Construct a JWT with the email, using our Ably key
-    const { secret, keyid } = this.ablyKey;
+    // Construct a JWT with the email, using our authorisation key
+    const { secret, keyid } = this.authKey;
+    // noinspection JSCheckFunctionSignatures
     const jwt = jsonwebtoken.sign({ email }, secret, {
       keyid, expiresIn: '10m'
     });
@@ -192,7 +306,8 @@ export default class Gateway extends BaseGateway {
    */
   verify(jwt) {
     // Verify the JWT was created by us
-    return jsonwebtoken.verify(jwt, this.ablyKey.secret);
+    // noinspection JSCheckFunctionSignatures
+    return jsonwebtoken.verify(jwt, this.authKey.secret);
   }
 
   /**
@@ -204,7 +319,7 @@ export default class Gateway extends BaseGateway {
    * @param {AccountOwnedId} tsId
    * @param {Account} user
    * @param {string} keyid
-   * @returns {Promise<import('@m-ld/m-ld').MeldConfig>}
+   * @returns {Promise<Partial<MeldConfig>>}
    */
   async timesheetConfig(tsId, { acc: user, keyid }) {
     const tsDomain = tsId.toDomain();
@@ -223,14 +338,9 @@ export default class Gateway extends BaseGateway {
         ts, user.name, 'Account', await user.key(state, keyid));
     });
     // Return the config required for a new clone, using some of our config
-    const { ably, networkTimeout, maxOperationSize, logLevel } = this.config;
-    return Env.mergeConfig({
-      '@domain': tsDomain,
-      genesis: false, // Definitely not genesis
-      ably, networkTimeout, maxOperationSize, logLevel
-    }, {
-      ably: { key: false, apiKey: false } // Remove our Ably secrets
-    });
+    return Object.assign({
+      '@domain': tsDomain, genesis: false // Definitely not genesis
+    }, this.cloneFactory.reusableConfig(this.config));
   }
 
   /**
@@ -313,10 +423,12 @@ export default class Gateway extends BaseGateway {
   };
 
   close() {
+    this.subs.unsubscribe();
     // Close the gateway domain
     return Promise.all([
       this.domain?.close(),
-      ...Object.values(this.timesheetDomains).map(d => d.close())
+      ...Object.values(this.timesheetDomains).map(d => d.close()),
+      ...Object.values(this.connectors).map(i => i.close())
     ]);
   }
 }
