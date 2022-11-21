@@ -27,8 +27,5 @@
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "jest": "^28.1.3"
-  },
-  "dependencies": {
-    "@m-ld/m-ld": "file:../m-ld-js"
   }
 }
