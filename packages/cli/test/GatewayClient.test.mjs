@@ -4,6 +4,7 @@ import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
 import Cryptr from 'cryptr';
 import { Readable } from 'stream';
 import { drain } from 'rx-flowable';
+import { AuthKey, UserKey } from 'timeld-common';
 
 describe('Gateway Client', () => {
   test('init with key', async () => {
@@ -14,7 +15,9 @@ describe('Gateway Client', () => {
       key: { public: 'publicKey', private: 'privateKey' }
     });
     expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
-    expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
+    expect(gw.userKey).toMatchObject({ keyid: 'id' });
+    expect(gw.userKey.publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
+    expect(gw.userKey.privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
     expect(gw.domainName).toBe('timeld.org');
     expect(gw.principalId).toBe('http://timeld.org/user');
   });
@@ -34,7 +37,7 @@ describe('Gateway Client', () => {
         expect(options.headers.Authorization).toBe(`Bearer ${jwt}`);
         return {
           ok: true, json: async () => ({
-            ably: { key: 'app.id:secret' },
+            auth: { key: 'app.id:secret' },
             key: { public: 'publicKey', private: 'privateKey' }
           })
         };
@@ -44,12 +47,14 @@ describe('Gateway Client', () => {
       gateway: 'timeld.org', user: 'user'
     }, fetch);
     expect(gw.authKey).toBeNull();
-    expect(gw.userKeyConfig).toBeNull();
+    expect(gw.userKey).toBeNull();
     await gw.activate(jest.fn()
       .mockReturnValueOnce('user@timeld.org')
       .mockReturnValueOnce('111111'));
     expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
-    expect(gw.userKeyConfig).toEqual({ public: 'publicKey', private: 'privateKey' });
+    expect(gw.userKey).toMatchObject({ keyid: 'id' });
+    expect(gw.userKey.publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
+    expect(gw.userKey.privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
   });
 
   test('config', async () => {
@@ -60,8 +65,11 @@ describe('Gateway Client', () => {
         return { ok: true, json: async () => resJson };
       }
     });
+    const authKey = AuthKey.fromString('app.id:secret');
     const gw = new GatewayClient({
-      gateway: 'timeld.org', user: 'user', auth: { key: 'app.id:secret' }
+      gateway: 'timeld.org',
+      user: 'user',
+      ...UserKey.generate(authKey).toConfig(authKey)
     }, fetch);
     await expect(gw.config('acc', 'ts1')).resolves.toEqual(resJson);
   });
@@ -77,8 +85,11 @@ describe('Gateway Client', () => {
         return { ok: true, body: Readable.from(resJson.map(j => JSON.stringify(j)).join('\n')) };
       }
     });
+    const authKey = AuthKey.fromString('app.id:secret');
     const gw = new GatewayClient({
-      gateway: 'timeld.org', user: 'user', auth: { key: 'app.id:secret' }
+      gateway: 'timeld.org',
+      user: 'user',
+      ...UserKey.generate(authKey).toConfig(authKey)
     }, fetch);
     // noinspection JSCheckFunctionSignatures
     await expect(drain(gw.read(reqJson))).resolves.toEqual(resJson);

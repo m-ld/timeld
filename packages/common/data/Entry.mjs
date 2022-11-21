@@ -38,7 +38,7 @@ export default class Entry extends DomainEntity {
   };
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    */
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures

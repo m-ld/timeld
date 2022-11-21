@@ -12,7 +12,7 @@ export default class AuditLogger {
 
   /**
    * @param {AccountOwnedId} tsId
-   * @param {import('@m-ld/m-ld').MeldUpdate} update
+   * @param {MeldUpdate} update
    */
   log(tsId, update) {
     this.logz.log({ ...tsId.toJSON(), update });

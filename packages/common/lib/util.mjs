@@ -1,9 +1,9 @@
-import { propertyValue } from '@m-ld/m-ld';
 import dns from 'dns/promises';
 import isFQDN from 'validator/lib/isFQDN.js';
+import jsonwebtoken from 'jsonwebtoken';
 
 /**
- * @param {import('@m-ld/m-ld').Reference[]} refs
+ * @param {Reference[]} refs
  * @returns {Set<string>}
  */
 export function idSet(refs) {
@@ -91,3 +91,22 @@ export function durationFromInterval(start, end) {
   // Round to the second then convert to minutes
   return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
 }
+
+/**
+ * Promisified version of jsonwebtoken.verify
+ * @param {string} token
+ * @param {(header: import('jsonwebtoken').JwtHeader) => Promise<string>} getSecret
+ * @param {import('jsonwebtoken').VerifyOptions} [options]
+ * @returns {Promise<import('jsonwebtoken').JwtPayload>}
+ */
+export function verifyJwt(token, getSecret, options) {
+  return new Promise((resolve, reject) =>
+    jsonwebtoken.verify(token, (header, cb) => {
+      getSecret(header).then(secret => cb(null, secret), err => cb(err));
+    }, options, (err, payload) => {
+      if (err) reject(err);
+      else resolve(payload);
+    }));
+}
+
+export { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';

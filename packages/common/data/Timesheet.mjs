@@ -18,7 +18,7 @@ export default class Timesheet extends DomainEntity {
   };
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    */
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
@@ -31,7 +31,7 @@ export default class Timesheet extends DomainEntity {
 
   /**
    * @param {AccountOwnedId} spec.id
-   * @param {import('@m-ld/m-ld').Reference[]} spec.projects
+   * @param {Reference[]} spec.projects
    * @param {string} [spec.externalId]
    */
   constructor(spec) {

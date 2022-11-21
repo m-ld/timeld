@@ -1,5 +1,4 @@
-import { AuthKey, AccountOwnedId } from 'timeld-common';
-import { verify } from './util.mjs';
+import { AccountOwnedId, AuthKey, UserKey } from 'timeld-common';
 import { UnauthorizedError } from '../rest/errors.mjs';
 
 /**
@@ -54,25 +53,22 @@ export default class Authorization {
     const userAcc = await gateway.account(this.user);
     if (userAcc == null)
       throw new UnauthorizedError('Not found: %s', this.user);
-    let /**@type AuthKey*/authKey;
+    let /**@type UserKey*/userKey;
     if (this.jwt) {
       try { // Verify the JWT against its declared keyid
-        const payload = await verify(this.jwt, async header => {
-          const { key } = await userAcc.authorise(header.kid, access);
-          authKey = new AuthKey(key);
-          return authKey.secret;
-        });
+        const payload = await UserKey.verifyJwt(this.jwt,
+          async header => userKey = await userAcc.authorise(header.kid, access));
         if (payload.sub !== this.user)
           return Promise.reject(new UnauthorizedError('JWT does not correspond to user'));
       } catch (e) {
         throw new UnauthorizedError(e);
       }
     } else {
-      authKey = AuthKey.fromString(this.key);
-      const { key: actualKey } = await userAcc.authorise(authKey.keyid, access);
-      if (this.key !== actualKey.toString())
+      const authKey = AuthKey.fromString(this.key);
+      userKey = await userAcc.authorise(authKey.keyid, access);
+      if (!userKey.matches(authKey))
         throw new UnauthorizedError();
     }
-    return { acc: userAcc, keyid: authKey.keyid };
+    return { acc: userAcc, keyid: userKey.keyid };
   }
 }

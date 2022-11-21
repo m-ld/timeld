@@ -2,9 +2,9 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
+import { MemoryLevel } from 'memory-level';
 import Gateway from '../lib/Gateway.mjs';
-import { CloneFactory, dateJsonLd, Env, timeldContext } from 'timeld-common';
+import { AuthKey, CloneFactory, Env, timeldContext, UserKey } from 'timeld-common';
 import { dirSync } from 'tmp';
 import { join } from 'path';
 import Account from '../lib/Account.mjs';
@@ -28,7 +28,7 @@ describe('Gateway', () => {
     env = new Env({ data: join(tmpDir.name, 'data') });
     cloneFactory = new class extends CloneFactory {
       clone = jest.fn((config) => {
-        return meldClone(new MeldMemDown(), DeadRemotes, config);
+        return meldClone(new MemoryLevel(), DeadRemotes, config);
       });
       reusableConfig(config) {
         // Random key for testing of reusable config
@@ -41,10 +41,10 @@ describe('Gateway', () => {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn()
     };
-    const ablyKey = 'app.id:secret';
+    const authKey = AuthKey.fromString('app.id:secret')
     config = {
       '@domain': 'ex.org',
-      ...UserKey.generate(ablyKey).toConfig(ablyKey)
+      ...UserKey.generate(authKey).toConfig(authKey)
     };
     auditLogger = { log: jest.fn() };
   });
@@ -76,9 +76,8 @@ describe('Gateway', () => {
 
     beforeEach(async () => {
       gateway = new Gateway(env, {
-        '@domain': 'ex.org',
+        ...config,
         genesis: true,
-        auth: { key: 'app.id:secret' },
         smtp: { auth: { user: 'smtp_user', pass: 'smtp_secret' } },
         tls: true
       }, cloneFactory, keyStore, auditLogger);

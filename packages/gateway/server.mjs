@@ -1,15 +1,13 @@
 import Gateway from './lib/Gateway.mjs';
 import Notifier from './lib/Notifier.mjs';
-import { Env } from 'timeld-common';
 import LOG from 'loglevel';
-import isFQDN from 'validator/lib/isFQDN.js';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
 import DomainKeyStore from 'timeld-common/ext/m-ld/DomainKeyStore.mjs';
 import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
-import { shortId } from '@m-ld/m-ld';
 import socketIo from './rest/socket-io.mjs';
 import AuditLogger from './lib/AuditLogger.mjs';
+import GatewayEnv from './lib/GatewayEnv.mjs';
 
 /**
  * @typedef {object} process.env required for Gateway node startup
@@ -18,6 +16,9 @@ import AuditLogger from './lib/AuditLogger.mjs';
  * @property {string} TIMELD_GATEWAY_GATEWAY domain name or URL of gateway
  * @property {string} TIMELD_GATEWAY_GENESIS "true" iff the gateway is new
  * @property {string} TIMELD_GATEWAY_AUTH__KEY gateway authorisation key
+ * @property {string} TIMELD_GATEWAY_KEY__PUBLIC gateway public key base64, see UserKey
+ * @property {string} TIMELD_GATEWAY_KEY__PRIVATE gateway private key base64,
+ * encrypted with auth key secret, see UserKey
  * @property {string} TIMELD_GATEWAY_SMTP__HOST
  * @property {string} TIMELD_GATEWAY_SMTP__FROM
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
@@ -40,26 +41,12 @@ import AuditLogger from './lib/AuditLogger.mjs';
  * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
  */
 
-const env = new Env({
-  // Default is a volume mount, see fly.toml
-  data: process.env.TIMELD_GATEWAY_DATA_PATH || '/data'
-}, 'timeld-gateway');
-// Parse command line, environment variables & configuration
-const config = /**@type {TimeldGatewayConfig}*/(await env.yargs())
-  .option('address.port', { default: '8080', type: 'number' })
-  .parse();
-LOG.setLevel(config.logLevel || 'INFO');
-LOG.debug('Loaded configuration', config);
-
-// Set the m-ld domain from the declared gateway
-if (config['@domain'] == null) {
-  config['@domain'] = isFQDN(config.gateway) ?
-    config.gateway : new URL(config.gateway).hostname;
-}
-
-const keyStore = new DomainKeyStore({ appId: shortId(config['@domain']) });
+const env = new GatewayEnv();
+const config = await env.loadConfig();
+const keyStore = new DomainKeyStore(config);
 const cloneFactory = new IoCloneFactory();
 const auditLogger = new AuditLogger(config.logz);
+
 const gateway = new Gateway(env, config, cloneFactory, keyStore, auditLogger);
 const notifier = new Notifier(config);
 const server = rest({ gateway, notifier });

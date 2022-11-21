@@ -1,42 +1,52 @@
 import { normaliseValue, Optional, propertyValue } from '@m-ld/m-ld';
-import { sign, generateKeyPairSync, verify, createPrivateKey, createPublicKey } from 'crypto';
-import AblyKey from '../lib/AblyKey.mjs';
-import { domainRelativeIri } from '../lib/util.mjs';
+import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from 'crypto';
+import AuthKey from '../lib/AuthKey.mjs';
+import { domainRelativeIri, signJwt, verifyJwt } from '../lib/util.mjs';
 
 /**
  * @typedef {object} UserKeyConfig
- * @property {string} ably.key
+ * @property {string} auth.key
  * @property {string} key.public
  * @property {string} key.private
  */
 
+/**
+ * User Key details, appears in:
+ * 1. Gateway domain, with all details
+ * 2. Timesheet domains, without private key (for sig verify)
+ * 3. Client configuration, without revocation (assumed true)
+ */
 export default class UserKey {
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * From m-ld subject representation
+   * @param {GraphSubject} src
    */
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
     return new UserKey({
       keyid: this.keyidFromRef(src),
+      name: propertyValue(src, 'name', Optional, String),
       publicKey: propertyValue(src, 'public', Uint8Array),
-      privateKey: propertyValue(src, 'private', Optional, Uint8Array)
+      privateKey: propertyValue(src, 'private', Optional, Uint8Array),
+      revoked: propertyValue(src, 'revoked', Optional, Boolean)
     });
   }
 
   /**
+   * From client config – no name or revocation
    * @param {UserKeyConfig} config
    * @returns {UserKey}
    */
   static fromConfig(config) {
     return new UserKey({
-      keyid: new AblyKey(config.ably.key).keyid,
+      keyid: AuthKey.fromString(config.auth.key).keyid,
       publicKey: Buffer.from(config.key.public, 'base64'),
       privateKey: Buffer.from(config.key.private, 'base64')
     });
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Reference} ref
+   * @param {Reference} ref
    * @returns {string}
    * @throws {TypeError} if the reference is not to a user key
    */
@@ -52,7 +62,7 @@ export default class UserKey {
   /**
    * @param {string} keyid
    * @param {string} [domain] if passed, returns an absolute reference
-   * @returns {import('@m-ld/m-ld').Reference}
+   * @returns {Reference}
    */
   static refFromKeyid(keyid, domain) {
     const id = `.${keyid}`;
@@ -66,62 +76,84 @@ export default class UserKey {
   static splitSignature(data) {
     const buf = Buffer.from(data);
     const delim = buf.indexOf(':');
-    if (delim < 6)
+    if (delim < 5)
       return [undefined, data];
     return [buf.subarray(0, delim).toString(), buf.subarray(delim + 1)];
   }
 
   /**
-   * @param {AblyKey | string} ablyKey
+   * @param {AuthKey | string} authKey
    */
-  static generate(ablyKey) {
-    if (typeof ablyKey == 'string')
-      ablyKey = new AblyKey(ablyKey);
+  static generate(authKey) {
+    if (typeof authKey == 'string')
+      authKey = AuthKey.fromString(authKey);
     // noinspection JSCheckFunctionSignatures
     return new UserKey({
-      keyid: ablyKey.keyid,
+      keyid: authKey.keyid,
       ...generateKeyPairSync('rsa', {
         modulusLength: 1024,
         publicKeyEncoding: this.encoding.public,
-        privateKeyEncoding: this.encoding.private(ablyKey)
+        privateKeyEncoding: this.encoding.private(authKey)
       })
     });
   }
 
   static encoding = {
     public: { type: 'spki', format: 'der' },
-    /** @param {AblyKey} ablyKey */
-    private: ablyKey => ({
+    /** @param {AuthKey} authKey */
+    private: authKey => ({
       type: 'pkcs8',
       format: 'der',
       cipher: 'aes-256-cbc',
-      passphrase: ablyKey.secret
+      passphrase: authKey.secret
     })
   };
 
   /**
    * @param {string} keyid
+   * @param {string} [name]
    * @param {Uint8Array} publicKey
    * @param {Uint8Array} [privateKey]
+   * @param {boolean} [revoked]
    */
-  constructor({ keyid, publicKey, privateKey }) {
+  constructor({
+    keyid,
+    name,
+    publicKey,
+    privateKey,
+    revoked = false
+  }) {
     this.keyid = keyid;
+    this.name = name;
     this.publicKey = Buffer.from(publicKey);
     this.privateKey = privateKey ? Buffer.from(privateKey) : undefined;
+    this.revoked = revoked;
+  }
+
+  /**
+   * @param {AuthKey} authKey
+   * @returns {boolean} `false` if the auth key does not correspond to this user key
+   */
+  matches(authKey) {
+    if (authKey.keyid !== this.keyid)
+      return false; // Shortcut
+    try {
+      return !!this.getCryptoPrivateKey(authKey);
+    } catch (e) {
+      // ERR_OSSL_EVP_BAD_DECRYPT if the secret is wrong
+      return false;
+    }
   }
 
   /**
    * @param {Uint8Array} data
-   * @param {AblyKey} ablyKey
+   * @param {AuthKey} authKey
    * @return {Buffer}
    */
-  sign(data, ablyKey) {
-    // noinspection JSCheckFunctionSignatures
+  sign(data, authKey) {
     return Buffer.concat([
       Buffer.from(`${this.keyid}:`),
-      sign('RSA-SHA256', data, createPrivateKey({
-        key: this.privateKey, ...UserKey.encoding.private(ablyKey)
-      }))
+      sign('RSA-SHA256', data, this.getCryptoPrivateKey(authKey))
     ]);
   }
 
@@ -133,36 +165,81 @@ export default class UserKey {
     const [keyid, cryptoSig] = UserKey.splitSignature(sig);
     if (keyid !== this.keyid)
       return false;
-    return verify('RSA-SHA256', data, createPublicKey({
-      key: this.publicKey, ...UserKey.encoding.public
-    }), cryptoSig);
+    return verify('RSA-SHA256', data, this.getCryptoPublicKey(), cryptoSig);
+  }
+
+  /**
+   * @param {string | Buffer | object} payload
+   * @param {AuthKey} authKey
+   * @param {import('jsonwebtoken').SignOptions} [options]
+   * @returns {Promise<string>} JWT
+   */
+  signJwt(payload, authKey, options) {
+    // noinspection JSCheckFunctionSignatures
+    return signJwt(payload, this.getCryptoPrivateKey(authKey), {
+      ...options, algorithm: 'RS256', keyid: this.keyid
+    });
+  }
+
+  /**
+   * @param {string} jwt
+   * @param {(header: import('jsonwebtoken').JwtHeader) => Promise<UserKey>} getUserKey
+   */
+  static verifyJwt(jwt, getUserKey) {
+    return verifyJwt(jwt, async header =>
+        (await getUserKey(header)).getCryptoPublicKey(),
+      { algorithms: ['RS256'] });
+  }
+
+  /**
+   * @param {AuthKey} authKey
+   * @private
+   */
+  getCryptoPrivateKey(authKey) {
+    // noinspection JSCheckFunctionSignatures
+    return createPrivateKey({
+      key: this.privateKey,
+      ...UserKey.encoding.private(authKey)
+    });
+  }
+
+  /** @private */
+  getCryptoPublicKey() {
+    return createPublicKey({
+      key: this.publicKey,
+      ...UserKey.encoding.public
+    });
   }
 
   /**
    * @param {boolean} excludePrivate `true` to exclude the private key
-   * @returns {import('@m-ld/m-ld').GraphSubject}
+   * @returns {GraphSubject}
    */
   toJSON(excludePrivate = false) {
     // noinspection JSValidateTypes
     return {
       ...UserKey.refFromKeyid(this.keyid),
       '@type': 'UserKey',
+      name: this.name,
       public: normaliseValue(this.publicKey),
-      private: excludePrivate ? undefined : normaliseValue(this.privateKey)
+      private: excludePrivate ? undefined : normaliseValue(this.privateKey),
+      revoked: this.revoked
     };
   }
 
   /**
-   * Note this is only a partial inverse of {@link fromConfig} if the Ably key
-   * is not passed.
-   * @param {string} [ablyKey]
-   * @returns {UserKeyConfig}
+   * Note this is only a partial inverse of {@link fromConfig}:
+   * - the auth key is only included if provided
+   * - the user and domain are not included
+   * @param {AuthKey | undefined} [authKey]
+   * @returns {Partial<UserKeyConfig>}
    */
-  toConfig(ablyKey) {
-    return Object.assign(ablyKey ? { ably: { key: ablyKey } } : {}, {
+  toConfig(authKey) {
+    return Object.assign(authKey ? { auth: { key: authKey.toString() } } : {}, {
       key: {
         public: this.publicKey.toString('base64'),
         private: this.privateKey?.toString('base64')
+        // revoked assumed false
       }
     });
   }

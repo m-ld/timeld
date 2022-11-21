@@ -15,7 +15,7 @@ export default class BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Reference} tsRef
+   * @param {Reference} tsRef
    * @returns {AccountOwnedId}
    */
   ownedRefAsId(tsRef) {

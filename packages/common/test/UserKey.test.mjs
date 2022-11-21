@@ -1,6 +1,6 @@
 // noinspection NpmUsedModulesInstalled
 import { describe, expect, test } from '@jest/globals';
-import { AblyKey, UserKey } from '..';
+import { AuthKey, UserKey } from '..';
 
 describe('User key', () => {
   test('key from ref', () => {
@@ -33,17 +33,18 @@ describe('User key', () => {
 
   test('Config serialisation', () => {
     const original = UserKey.generate('app.keyid1:secret');
-    const loaded = UserKey.fromConfig(original.toConfig('app.keyid1:secret'));
+    const loaded = UserKey.fromConfig(
+      original.toConfig(AuthKey.fromString('app.keyid1:secret')));
     expect(loaded.keyid).toBe(original.keyid);
     expect(loaded.publicKey.equals(original.publicKey)).toBe(true);
     expect(loaded.privateKey.equals(original.privateKey)).toBe(true);
   });
 
   test('signing', () => {
-    const ablyKey = new AblyKey('app.keyid1:secret');
-    const userKey = UserKey.generate(ablyKey);
+    const authKey = AuthKey.fromString('app.keyid1:secret');
+    const userKey = UserKey.generate(authKey);
     const data = Buffer.from('Hello!');
-    const sig = userKey.sign(data, ablyKey);
+    const sig = userKey.sign(data, authKey);
     const [keyid] = UserKey.splitSignature(sig);
     expect(keyid).toBe('keyid1');
     expect(userKey.verify(sig, data)).toBe(true);
@@ -57,19 +58,19 @@ describe('User key', () => {
   });
 
   test('missing keyid', () => {
-    const ablyKey = new AblyKey('app.keyid1:secret');
-    const userKey = UserKey.generate(ablyKey);
+    const authKey = AuthKey.fromString('app.keyid1:secret');
+    const userKey = UserKey.generate(authKey);
     const data = Buffer.from('Hello!');
-    const sig = userKey.sign(data, ablyKey);
+    const sig = userKey.sign(data, authKey);
     const [, cryptoSig] = UserKey.splitSignature(sig);
     expect(userKey.verify(cryptoSig, data)).toBe(false);
   });
 
   test('wrong keyid', () => {
-    const ablyKey = new AblyKey('app.keyid1:secret');
-    const userKey = UserKey.generate(ablyKey);
+    const authKey = AuthKey.fromString('app.keyid1:secret');
+    const userKey = UserKey.generate(authKey);
     const data = Buffer.from('Hello!');
-    const sig = userKey.sign(data, ablyKey);
+    const sig = userKey.sign(data, authKey);
     const [, cryptoSig] = UserKey.splitSignature(sig);
     let badSig = Buffer.concat([Buffer.from('keyid2:'), cryptoSig]);
     expect(userKey.verify(badSig, data)).toBe(false);

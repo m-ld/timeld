@@ -1,21 +1,21 @@
-import { AblyKey, UserKey } from '../index.mjs';
+import { AuthKey, UserKey } from '../index.mjs';
 import { timeldVocab } from '../data/index.mjs';
 import { propertyValue } from '@m-ld/m-ld';
 
 /**
- * @param {UserKeyConfig & { '@domain':string }} config
- * @param {import('@m-ld/m-ld').AppPrincipal} principal
- * @returns {import('@m-ld/m-ld').InitialApp}
+ * @param {UserKeyConfig} config
+ * @param {AppPrincipal} principal
+ * @returns {InitialApp}
  */
 export default function TimeldApp(config, principal) {
-  const ablyKey = new AblyKey(config.ably.key);
+  const authKey = AuthKey.fromString(config.auth.key);
   const userKey = UserKey.fromConfig(config);
   return {
     principal,
     transportSecurity: {
       wire: data => data, // We don't apply wire encryption, yet
       sign: data => ({
-        sig: userKey.sign(data, ablyKey),
+        sig: userKey.sign(data, authKey),
         pid: principal['@id']
       }),
       verify: verify(config['@domain'])

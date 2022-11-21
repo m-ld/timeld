@@ -1,5 +1,6 @@
-import leveldown from 'leveldown';
+import { ClassicLevel } from 'classic-level';
 import { clone as meldClone } from '@m-ld/m-ld';
+import TimeldApp from './TimeldApp.mjs';
 
 
 /**
@@ -15,10 +16,11 @@ export default class CloneFactory {
   async clone(config, dataDir, principal) {
     // noinspection JSCheckFunctionSignatures
     return meldClone(
-      leveldown(dataDir),
+      new ClassicLevel(dataDir),
       await this.remotes(config),
       config,
-      { principal });
+      { principal },
+      new TimeldApp(config, principal));
   }
 
   /**

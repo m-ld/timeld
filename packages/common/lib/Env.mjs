@@ -41,6 +41,17 @@ export default class Env {
       .toUpperCase();
   }
 
+  /**
+   * Loads environment variables from any .env file up to three directories up
+   */
+  static initScript() {
+    for (let i = 0; i < 3; i++) {
+      if (!dotenv.config({
+        path: join(process.cwd(), ...new Array(i).fill('..'), '.env')
+      }).error) break;
+    }
+  }
+
   get envPrefix() {
     return this.envPaths.env ? `${this.envPaths.env}_` : '';
   }

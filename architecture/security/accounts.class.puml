@@ -11,21 +11,14 @@ class Gateway <<domain>> <<service>> {
 Gateway *-- "*" Account
 
 class Account <<abstract>> <<subject>> {
-  vf:primaryAccountable : UserAccount [1..*]
   timesheet : Timesheet [*]
   project : Project [*]
 }
-note left of Account::vf:primaryAccountable
-  The account "admin".
-  For user accounts, a
-    redundant self-reference
-    (user admins their own account).
-end note
-note left of Account::timesheet
+note right of Account::timesheet
   inverse injection: a Timesheet
   can only appear in one Account
 end note
-note left of Account::project
+note right of Account::project
   inverse injection: a Project
   can only appear in one Account
 end note
@@ -34,22 +27,22 @@ Account "provider" *--> "*" Timesheet
 
 Account "client" *--> "*" Project
 
-class UserAccount {
+class UserAccount <<subject>> {
   email : string [1..*]
   key : UserKey [*]
 }
-note left of UserAccount::email
+note right of UserAccount::email
   Registered email, used
   for account activation
 end note
-note left of UserAccount::keyid
-  Matches ""auth.key""
-  Can be revoked
-end note
 UserAccount --|> Account
 
-class OrganisationAccount {
+class OrganisationAccount <<subject>> {
+  vf:primaryAccountable : UserAccount [1..*]
 }
+note right of OrganisationAccount::vf:primaryAccountable
+  The account "admins"
+end note
 OrganisationAccount --|> Account
 OrganisationAccount o-- "1..*" UserAccount
 
@@ -95,22 +88,20 @@ end note
 
 Project "*" -- "*" Timesheet
 
-component CLI [
-  CLI
-
-  ---
-  auth.key <<secret>>
-  account<sub>u</sub> (aka user)
+class CLI {
+  <<secret>> key : AuthKey
+  userKey : UserKey
+  account<sub>u</sub>
   timesheets : domain [*]
-]
-note top of CLI
+}
+note left of CLI
   Installed on a device
   under an OS account.
   Registered to user account
-  via auth.key.
+  via keyid.
 end note
 
-UserAccount .. "*" CLI
+UserKey .. CLI
 
 CLI ..> "*" Timesheet
 note bottom on link
@@ -123,30 +114,37 @@ note bottom on link
     account<sub>p</sub>.vf:primaryAccountable
 end note
 
-class UserKey {
-  public : base64Binary
-  private : base64Binary
+class UserKey <<subject>> {
+  @id = """.${keyid}" ""
+  name? : string
+  publicKey : base64Binary
+  privateKey : base64Binary
+  revoked? : boolean
 }
-note top of UserKey
-  Matches ""ably.key""
-  Can be revoked
-  ""@id = ".${keyid}"""
+note right of UserKey::name
+  account<sub>u</sub>@≪gateway≫
+  Not present in config
 end note
-note left of UserKey::private
-  encrypted with
-  AblyKey.secret
+note right of UserKey::privateKey
+  Encrypted with AuthKey
+end note
+note right of UserKey::revoked
+  possibly redundant
+  with external keystore
+  Assumed ""true"" in config
 end note
 
-class Key <<subject>> {
+UserAccount "1" *-- "*" UserKey
+
+class AuthKey {
   keyid : string
-  name : string
+  appid : string
   secret : string
 }
-note left of Key::name
-  account<sub>u</sub>
+note right of AuthKey
+  String-serialised "API key"
+  Usable with Basic HTTP auth
 end note
-
-UserAccount "1" -- "*" Key
-UserAccount "1" -- "*" UserKey
+CLI - AuthKey
 
 @enduml

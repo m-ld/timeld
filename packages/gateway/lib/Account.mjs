@@ -9,6 +9,7 @@ import { validate } from 'jtd';
 import {
   BadRequestError, ConflictError, ForbiddenError, toHttpError, UnauthorizedError
 } from '../rest/errors.mjs';
+import ConnectorExtension from './Connector.mjs';
 
 /**
  * Javascript representation of an Account subject in the Gateway domain.
@@ -90,21 +91,24 @@ export default class Account {
   /**
    * @param {string} keyid user key ID
    * @param {AccessRequest|undefined} [access] request
-   * @returns {Promise<AuthKeyDetail>}
+   * @returns {Promise<UserKey>}
    * @throws {import('restify-errors').DefinedHttpError}
    */
   async authorise(keyid, access) {
-    this.checkKeyid(keyid);
     return new Promise(async (resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
+          const userKey = await this.key(state, keyid);
+          if (userKey.revoked)
+            return reject(new UnauthorizedError('Key revoked'));
           // noinspection JSIncompatibleTypesComparison
           if (access != null)
             await this.checkAccess(state, access);
           try {
-            const keyDetail = await this.gateway.keyStore.pingKey(
+            const revoked = await this.gateway.keyStore.pingKey(
               keyid, () => this.allOwnedTimesheetIds(state));
-            return !keyDetail.revoked ? resolve(keyDetail) :
+            return !revoked ? resolve(userKey) :
+              // TODO: If keystore says revoked, update the userKey
               reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
             // TODO: Assuming this is a Not Found

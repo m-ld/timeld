@@ -3,7 +3,6 @@ import { AccountOwnedId, isDomainEntity, isReference } from 'timeld-common';
 import { isVariable, QueryPattern, ReadPattern } from './QueryPattern.mjs';
 import { EmptyError, firstValueFrom } from 'rxjs';
 import { ConflictError, ForbiddenError, NotFoundError } from '../rest/errors.mjs';
-import { Ask } from './statements.mjs';
 
 /**
  * @typedef {object} BeforeWriteTriggers
@@ -123,7 +122,7 @@ export default class WritePatterns {
       async check(state, query) {
         const matching = { ...query['@insert'] }; // @type, module, appliesTo
         delete matching.config;
-        if (await new Ask(state).exists(matching))
+        if (await state.ask({ '@where': matching }))
           throw new ConflictError('Connector already exists');
         query['@insert'] = await triggers.beforeInsertConnector(state, query['@insert']);
         return super.check(state, query);
@@ -197,8 +196,7 @@ export default class WritePatterns {
       new class extends QueryPattern {
         async check(state, query) {
           // Organisation must not already exist
-          // TODO: Use ask in m-ld-js@edge
-          if ((await state.get(query['@id'])) != null)
+          if (await state.ask({ '@where': { '@id': query['@id'] } }))
             throw new ForbiddenError('Organisation already exists');
           return query;
         }
@@ -268,9 +266,7 @@ export default class WritePatterns {
         async check(state, query) {
           const insert = query['@insert'];
           if (insert != null && insert.project != null) {
-            // TODO Use ask in m-ld-js@edge
-            const ts = await state.get(insert['@id'], '@type');
-            if (ts == null)
+            if (!(await state.ask({ '@where': { '@id': insert['@id'] } })))
               throw new NotFoundError('Timesheet does not exist');
             const project = await state.get(insert.project['@id'], '@type');
             if (project == null)

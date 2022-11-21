@@ -2,7 +2,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { DeadRemotes, toBeISODateString } from 'timeld-common/test/fixtures.mjs';
 import { clone, uuid } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
+import { MemoryLevel } from 'memory-level';
 import TimesheetSession from '../lib/TimesheetSession.mjs';
 import { fileSync } from 'tmp';
 import { writeFileSync } from 'fs';
@@ -16,15 +16,16 @@ function tmpFile() {
 
 describe('CLI Session', () => {
   let /**@type string*/id;
-  let /**@type import('@m-ld/m-ld').MeldClone*/meld;
+  let /**@type MeldClone*/meld;
   let /**@type import('tmp').FileSyncObject*/logFile;
   let /**@type TimesheetSession*/session;
 
   beforeEach(async () => {
     id = uuid();
     // noinspection JSCheckFunctionSignatures
-    meld = await clone(new MeldMemDown(), DeadRemotes, {
-      '@id': id, '@domain': 'test.testing.timeld.org', genesis: true
+    meld = await clone(new MemoryLevel(), DeadRemotes, {
+      '@id': id, '@domain': 'test.testing.timeld.org', genesis: true,
+      logLevel: 'debug'
     });
     logFile = tmpFile();
     session = new TimesheetSession({

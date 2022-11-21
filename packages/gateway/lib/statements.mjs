@@ -1,10 +1,6 @@
 /**
- * @typedef {import('@m-ld/m-ld').Query['@where']} Where
- */
-
-/**
  * @param {import('timeld-common').AccountOwnedId} tsId
- * @returns {Where}
+ * @returns {Subject}
  */
 export const accountHasTimesheet = tsId => ({
   '@id': tsId.account, timesheet: { '@id': tsId.toIri(), '@type': 'Timesheet' }
@@ -13,7 +9,7 @@ export const accountHasTimesheet = tsId => ({
 /**
  * @param {string} user
  * @param {string} account
- * @returns {Where}
+ * @returns {Subject}
  */
 export const userIsAdmin = (user, account) => ({
   '@id': account, 'vf:primaryAccountable': { '@id': user }
@@ -23,7 +19,7 @@ export const userIsAdmin = (user, account) => ({
  *
  * @param {string} ts
  * @param {string} project
- * @returns {Where}
+ * @returns {Subject}
  */
 export const timesheetHasProject = (ts, project) => ({
   '@id': ts, '@type': 'Timesheet', project: { '@id': project }

@@ -6,7 +6,7 @@ import { AuthKey, BaseGateway, Env, timeldContext, UserKey } from 'timeld-common
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import { Ask, accountHasTimesheet } from './statements.mjs';
+import { accountHasTimesheet } from './statements.mjs';
 import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
@@ -49,8 +49,6 @@ export default class Gateway extends BaseGateway {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
     this.domain = await this.cloneFactory.clone(this.config, dataDir);
-    // TODO: This is for the DomainKeyStore, should be in the interface
-    this.keyStore.state = this.domain;
     await this.domain.status.becomes({ outdated: false });
     // Enliven all timesheets and connectors already in the domain
     await new Promise(resolve => {
@@ -183,7 +181,7 @@ export default class Gateway extends BaseGateway {
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
     const principal = { '@id': this.absoluteId('/') };
-    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId));
+    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId), principal);
     // Attach change listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
@@ -215,9 +213,16 @@ export default class Gateway extends BaseGateway {
    * @param {UserKey} key
    * @returns {Promise<void>}
    */
-  async writePrincipalToTimesheet(ts, iri, type, key) {
+  async writePrincipalToTimesheet(
+    ts,
+    iri,
+    type,
+    key
+  ) {
     await ts.write({
-      '@id': this.absoluteId(iri), '@type': type, key: key.toJSON(true)
+      '@id': this.absoluteId(iri),
+      '@type': type,
+      key: key.toJSON(true)
     });
   }
 
@@ -344,7 +349,7 @@ export default class Gateway extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {MeldReadState} state
    * @param {AccountOwnedId} tsId
    * @returns {Promise<boolean>}
    */
@@ -407,7 +412,7 @@ export default class Gateway extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} ts
+   * @param {GraphSubject} ts
    * @returns {Promise<Results>}
    */
   reportTimesheet = async ts => {

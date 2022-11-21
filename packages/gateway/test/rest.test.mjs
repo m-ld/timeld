@@ -2,10 +2,10 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { AuthKey, CloneFactory, dateJsonLd, Env } from 'timeld-common';
+import { AuthKey, CloneFactory, Env, UserKey } from 'timeld-common';
 import { join } from 'path';
 import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/ext/memdown';
+import { MemoryLevel } from 'memory-level';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
 import Gateway from '../lib/Gateway.mjs';
 import rest from '../rest/index.mjs';
@@ -21,23 +21,19 @@ describe('Gateway REST API', () => {
     const env = new Env({ data: join(tmpDir.name, 'data') });
     const cloneFactory = new class extends CloneFactory {
       async clone(config) {
-        return meldClone(new MeldMemDown(), DeadRemotes, config);
+        return meldClone(new MemoryLevel(), DeadRemotes, config);
       }
     }();
     const keyStore = {
       mintKey: jest.fn(),
-      pingKey: jest.fn().mockImplementation(
-        keyid => Promise.resolve({
-          key: AuthKey.fromString(`app.${keyid}:secret`),
-          name: 'test@ex.org',
-          revoked: false
-        }))
+      pingKey: jest.fn().mockResolvedValue(false)
     };
-    const gwAblyKey = 'app.id:secret';
+    const authKey = AuthKey.fromString('app.id:secret')
+    const machineKey = UserKey.generate(authKey);
     gateway = new Gateway(env, {
       '@domain': 'ex.org',
       genesis: true,
-      auth: { key: 'app.id:secret' }
+      ...machineKey.toConfig(authKey)
     }, cloneFactory, keyStore, { log: jest.fn() });
     await gateway.initialise();
     // noinspection JSValidateTypes
@@ -61,9 +57,12 @@ describe('Gateway REST API', () => {
   });
 
   describe('with user account', () => {
+    let /**@type {UserKey}*/userKey;
+
     beforeEach(async () => {
+      userKey = UserKey.generate('app.keyid:secret');
       await gateway.domain.write({
-        '@id': 'test', '@type': 'Account', key: { '@id': '.keyid' } // User Key
+        '@id': 'test', '@type': 'Account', key: userKey.toJSON()
       });
     });
 

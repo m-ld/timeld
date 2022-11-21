@@ -3,7 +3,7 @@ import { ResultsProc } from './ResultsProc.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { ENTRY_FORMAT_OPTIONS, getSubjectFormat, TableFormat } from './DisplayFormat.mjs';
 import isEmail from 'validator/lib/isEmail.js';
-import { AccountOwnedId, dateJsonLd, durationFromInterval } from 'timeld-common';
+import { AccountOwnedId, durationFromInterval } from 'timeld-common';
 import { EMPTY } from 'rxjs';
 import { any, normaliseValue } from '@m-ld/m-ld';
 import { parseDate, parseDuration } from './util.mjs';
