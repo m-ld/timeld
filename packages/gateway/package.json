@@ -30,7 +30,6 @@
     "http-graceful-shutdown": "^3.1.11",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.1",
-    "logzio-nodejs": "^2.1.5",
     "ndjson": "^2.0.0",
     "nodemailer": "^6.8.0",
     "restify": "^8.6.1",

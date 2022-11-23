@@ -25,17 +25,18 @@ import GatewayEnv from './lib/GatewayEnv.mjs';
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__PASS
  * @property {string} [TIMELD_GATEWAY_ADDRESS__PORT] defaults to 8080
  * @property {string} [TIMELD_GATEWAY_ADDRESS__HOST] defaults to any-network-host
- * @property {string} TIMELD_GATEWAY_LOGZ__KEY
+ * @property {string} [TIMELD_GATEWAY_AUDIT__URL] audit logging URL
+ * @property {string} [TIMELD_GATEWAY_AUDIT__HEADERS] audit logging headers JSON
  */
 
 /**
  * @typedef {object} _TimeldGatewayConfig
  * @property {string} gateway domain name or URL of gateway
  * @property {SmtpOptions} smtp SMTP details for activation emails
- * @property {Object} address server address bind options
+ * @property {object} address server address bind options
  * @property {number} address.port server bind port
  * @property {string} address.host server bind host
- * @property {string} logz.key
+ * @property {AuditConfig} audit audit logging options
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
  * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
@@ -45,7 +46,7 @@ const env = new GatewayEnv();
 const config = await env.loadConfig();
 const keyStore = new DomainKeyStore(config);
 const cloneFactory = new IoCloneFactory();
-const auditLogger = new AuditLogger(config.logz);
+const auditLogger = new AuditLogger(config);
 
 const gateway = new Gateway(env, config, cloneFactory, keyStore, auditLogger);
 const notifier = new Notifier(config);
