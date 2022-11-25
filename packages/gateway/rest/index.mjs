@@ -11,7 +11,7 @@ import ndjson from 'ndjson';
 import { BadRequestError, toHttpError } from './errors.mjs';
 
 /**
- * @param {Format} format
+ * @param {ResultsFormat} format
  * @returns {import('restify').Formatter}
  */
 const formatter = format => {
@@ -21,12 +21,14 @@ const formatter = format => {
     return data;
   };
 };
-/** @type {Format} */
+/** @type {ResultsFormat} */
 const ND_JSON_FORMAT = { stringify: JSON.stringify, separator: '\n' };
+/** @type {ResultsFormat} */
 const JSON_LD_FORMAT = {
   stringify: s => JSON.stringify(s, null, ' '),
   separator: ',\n'
 };
+/** @type {ResultsFormat} */
 const HTML_FORMAT = {
   stringify: s => JSON.stringify(s, null, ' '),
   opening: '<pre>', closing: '</pre>', separator: '\n'
@@ -187,6 +189,15 @@ export default function rest({ gateway, notifier }) {
     async (req, res, next) => {
       res.contentType = req.accepts('html') ? 'html' : 'json';
       res.send(isDomainEntity);
+      next();
+    });
+
+  server.get('/publicKey',
+    async (req, res, next) => {
+      res.contentType = 'text';
+      res.send(gateway.me.userKey.getCryptoPublicKey().export({
+        format: 'pem', type: 'spki'
+      }));
       next();
     });
 

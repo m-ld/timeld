@@ -27,7 +27,7 @@ export default class TikiConnector {
    * @param {GraphSubject} ext
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
-  constructor(config, ext, fetch = setupFetch()) {
+  constructor(config, ext, { fetch = setupFetch() }) {
     const missingConfig = ['api', 'token'].filter(k => !config[k]);
     if (missingConfig.length)
       throw new Error(`Missing Tiki config: ${missingConfig.join(', ')}`);

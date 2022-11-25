@@ -21,7 +21,7 @@ export default function socketIo({ gateway, server }) {
         await new Authorization({ user, key }).verifyUser(gateway, {
           id: AccountOwnedId.fromDomain(domainName), forWrite: 'Timesheet'
         });
-      } else if (key !== gateway.authKey.toString()) {
+      } else if (key !== gateway.me.authKey.toString()) {
         // The gateway is connecting to a domain: its own, or a Timesheet
         return next(new ForbiddenError('Unrecognised machine key'));
       }

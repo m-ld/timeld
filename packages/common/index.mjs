@@ -1,5 +1,5 @@
 import Env from './lib/Env.mjs';
-import CloneFactory from './lib/CloneFactory.mjs';
+import { CloneFactory, TimeldPrincipal } from './lib/CloneFactory.mjs';
 import AccountOwnedId from './lib/AccountOwnedId.mjs';
 import AuthKey from './lib/AuthKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
@@ -32,6 +32,7 @@ import BaseGateway from './lib/BaseGateway.mjs';
 
 export {
   CloneFactory,
+  TimeldPrincipal,
   Env,
   AccountOwnedId,
   AuthKey,

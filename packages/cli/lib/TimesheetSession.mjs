@@ -175,7 +175,7 @@ export default class TimesheetSession extends Repl {
   /**
    * Local variant of getting a subject format supporting the local working set
    * @param {EntryFormatName} format
-   * @returns {Format}
+   * @returns {ResultsFormat}
    */
   getSubjectFormat(format) {
     return getSubjectFormat(format, id => this.workingSet.indexOf(id) + 1);

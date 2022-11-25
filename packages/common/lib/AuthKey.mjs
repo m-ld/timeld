@@ -2,6 +2,10 @@
  * An authorisation key with app, keyid and secret components
  */
 export default class AuthKey {
+  /**
+   * @param {string} keyStr
+   * @returns {AuthKey}
+   */
   static fromString(keyStr) {
     const [keyName, secret] = keyStr.split(':');
     const [appId, keyid] = keyName.split('.');
@@ -11,6 +15,11 @@ export default class AuthKey {
     return authKey;
   }
 
+  /**
+   * @param {string} appId
+   * @param {string} keyid
+   * @param {string} secret
+   */
   constructor({ appId, keyid, secret }) {
     /** Application ID: for multi-app gateways, not used in timeld */
     this.appId = appId;

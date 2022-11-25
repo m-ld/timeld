@@ -27,15 +27,20 @@ export default class PrejournalConnector {
    * Construct with configuration parameters
    * @param {PrejournalConfig} config
    * @param {GraphSubject} ext
+   * @param {SignHttp} [signHttp]
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
-  constructor(config, ext, fetch = setupFetch()) {
+  constructor(config, ext, {
+    signHttp,
+    fetch = setupFetch()
+  }) {
     const missingConfig = ['user', 'key', 'api', 'client'].filter(k => !config[k]);
     if (missingConfig.length)
       throw new Error(`Missing prejournal config: ${missingConfig.join(', ')}`);
 
     this.client = config.client;
-    const auth = `Basic ${Buffer.from([config.user, config.key].join(':')).toString('base64')}`;
+    const basicAuthData = Buffer.from([config.user, config.key].join(':'));
+    const auth = `Basic ${basicAuthData.toString('base64')}`;
     const apiRoot = new URL(config.api);
     if (!apiRoot.pathname.endsWith('/'))
       apiRoot.pathname += '/';
@@ -48,14 +53,18 @@ export default class PrejournalConnector {
      */
     this.post = async workedHours => {
       const command = workedHours.toJSON();
-      const res = await fetch(new URL(command[0], apiRoot).toString(), {
+      let req = {
+        url: new URL(command[0], apiRoot).toString(),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': auth
         },
         method: 'POST',
         body: JSON.stringify(command.slice(1))
-      });
+      };
+      if (signHttp)
+        req = await signHttp(req);
+      const res = await fetch(req.url, req);
       if (!res.ok)
         throw new Error(`Fetch failed with ${res.statusText}, command:
           ${JSON.stringify(command)}`);

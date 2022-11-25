@@ -4,7 +4,7 @@ import { ResultsReadable } from 'timeld-common';
 export class ResultsProc extends SyncProc {
   /**
    * @param {Results} results
-   * @param {Format} format
+   * @param {ResultsFormat} format
    */
   constructor(results, format) {
     super(new ResultsReadable(results, format));
