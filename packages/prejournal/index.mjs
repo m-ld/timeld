@@ -49,13 +49,15 @@ export default class PrejournalConnector {
     this.ext = ext;
     /**
      * @param {WorkedHours} workedHours
+     * @param {string} stateId
      * @returns {Promise<*>}
      */
-    this.post = async workedHours => {
+    this.post = async (workedHours, stateId) => {
       const command = workedHours.toJSON();
       let req = {
         url: new URL(command[0], apiRoot).toString(),
         headers: {
+          'X-State-ID': stateId,
           'Content-Type': 'application/json',
           'Authorization': auth
         },
@@ -74,11 +76,11 @@ export default class PrejournalConnector {
     };
   }
 
-  async syncTimesheet(tsId, state) {
+  async syncTimesheet(tsId, state, tick) {
     if (state) {
       await each(state.read({
         '@describe': '?entry', '@where': { '@id': '?entry', '@type': 'Entry' }
-      }).consume, src => this.postWorkedHours(tsId, src));
+      }).consume, src => this.postWorkedHours(tsId, src, tick));
     }
   }
 
@@ -88,22 +90,23 @@ export default class PrejournalConnector {
       if (src['@id'] in this.ext) {
         // Load the whole state for the entry
         // noinspection JSCheckFunctionSignatures
-        await this.updateWorkedHours(tsId, await state.get(src['@id']));
+        await this.updateWorkedHours(tsId, await state.get(src['@id']), update['@ticks']);
       } else if (src['@type'] === 'Entry') {
-        await this.postWorkedHours(tsId, src);
+        await this.postWorkedHours(tsId, src, update['@ticks']);
       }
     }));
   }
 
-  async updateWorkedHours(tsId, src) {
+  async updateWorkedHours(tsId, src, tick) {
     const movementId = this.ext[src['@id']];
     LOG.debug('Updated Movement', movementId, 'from Entry', src['@id']);
-    await this.post(new WorkedHours(tsId, src, this.client, movementId));
+    await this.post(
+      new WorkedHours(tsId, src, this.client, movementId), tsId.toStateId(tick));
   }
 
-  async postWorkedHours(tsId, src) {
+  async postWorkedHours(tsId, src, tick) {
     // Inserting worked-hours
-    const res = await this.post(new WorkedHours(tsId, src, this.client));
+    const res = await this.post(new WorkedHours(tsId, src, this.client), tsId.toStateId(tick));
     // Store the movement ID for the entry
     // (If available: https://github.com/pondersource/prejournal/issues/127)
     const movementId = res[0]['movementId'];

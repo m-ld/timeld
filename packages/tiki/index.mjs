@@ -61,7 +61,7 @@ export default class TikiConnector {
     };
   }
 
-  async syncTimesheet(tsId, state) {
+  async syncTimesheet(tsId, state, _tick) {
     if (state) {
       await each(state.read({
         '@describe': '?entry', '@where': { '@id': '?entry', '@type': 'Entry' }

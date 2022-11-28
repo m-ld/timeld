@@ -140,6 +140,10 @@ export default class AccountOwnedId {
     return { '@id': this.toIri() };
   }
 
+  toStateId(tick) {
+    return `${this.toIri()}?tick=${tick}`;
+  }
+
   toString() {
     let rtn = this.account ? `${this.account}/` : '';
     rtn += this.name;

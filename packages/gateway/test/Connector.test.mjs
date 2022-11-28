@@ -78,12 +78,13 @@ describe('Connector extension', () => {
     await expect(ext.signHttp(gateway, {
       url: 'http://ext.org/target',
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'X-State-ID': 'test', 'Content-Type': 'application/json' },
       body: JSON.stringify({ great: 'yes' })
     }, { created: 1669379993 })).resolves.toEqual({
       url: 'http://ext.org/target',
       body: '{"great":"yes"}',
       headers: {
+        'X-State-ID': 'test',
         'Content-Digest': 'mh=uEiBMnzoN9uIHOIljFyEmTbzmZdvvAtzbey6OZ5UvAaTLJQ',
         'Content-Type': 'application/json',
         'Signature': 'sig1=:ZjK0JWCkoZFhmcvjeVj/X7QpkeKLolWvuLOgIUZHHfcv5QTur3MzSm/5In574N8gS6xj' +
@@ -104,7 +105,7 @@ describe('Connector extension', () => {
     });
     const tsId = AccountOwnedId.fromString('test/ts1@ex.org');
     await ext.syncTimesheet(tsId);
-    expect(syncTimesheet).toHaveBeenCalledWith(tsId, undefined);
+    expect(syncTimesheet).toHaveBeenCalledWith(tsId, undefined, undefined);
     await ext.asyncTasks;
     expect(mockTimesheet.write).toHaveBeenCalledWith(insertEntry);
     expect(gateway.domain.write).toHaveBeenCalledWith({
@@ -119,8 +120,8 @@ describe('Connector extension', () => {
       return of(insertEntry);
     });
     const tsId = AccountOwnedId.fromString('test/ts1@ex.org');
-    await ext.syncTimesheet(tsId, {});
-    expect(syncTimesheet).toHaveBeenCalledWith(tsId, {});
+    await ext.syncTimesheet(tsId, {}, 0);
+    expect(syncTimesheet).toHaveBeenCalledWith(tsId, {}, 0);
     await ext.asyncTasks;
     expect(mockTimesheet.write).not.toHaveBeenCalledWith(insertEntry);
   });

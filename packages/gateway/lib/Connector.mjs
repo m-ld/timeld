@@ -37,6 +37,7 @@ import * as httpDigest from '@digitalbazaar/http-digest-header';
  * @name Connector#syncTimesheet
  * @param {AccountOwnedId} tsId
  * @param {MeldState} [state] the local timesheet state
+ * @param {number} [tick] the local timesheet tick (for correlation)
  * @returns {Promise<import('rxjs').Observable<Update> | null>}
  */
 
@@ -129,6 +130,8 @@ export default class ConnectorExtension {
    * @returns {Promise<RequestLike>}
    */
   async signHttp(gateway, req, { created } = {}) {
+    if (req.headers?.['X-State-ID'] == null)
+      throw new RangeError('Signed request must specify a state ID');
     // Note: cannot use @authority
     // https://github.com/dhensby/node-http-message-signatures/issues/54
     const components = ['@method', '@request-target', 'content-type'];
@@ -153,8 +156,8 @@ export default class ConnectorExtension {
     return this.connector.constructor.name;
   }
 
-  async syncTimesheet(tsId, state) {
-    const updates = await this.connector.syncTimesheet?.(tsId, state);
+  async syncTimesheet(tsId, state, tick) {
+    const updates = await this.connector.syncTimesheet?.(tsId, state, tick);
     // Do not subscribe to updates if the state has been passed
     if (updates && state == null) {
       this.subs.add(updates.subscribe(update =>

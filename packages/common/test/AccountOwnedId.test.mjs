@@ -16,6 +16,7 @@ describe('Timesheet Id', () => {
     expect(tsId.toRelativeIri()).toEqual('org/ts');
     expect(tsId.toReference()).toEqual({ '@id': 'http://gw.net/org/ts' });
     expect(tsId.toJSON()).toEqual({ gateway: 'gw.net', account: 'org', name: 'ts' });
+    expect(tsId.toStateId(1)).toEqual('http://gw.net/org/ts?tick=1');
   });
 
   test('invalid', () => {
