@@ -22,9 +22,7 @@ import socketIo from './rest/socket-io.mjs';
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__USER
  * @property {string} TIMELD_GATEWAY_SMTP__AUTH__PASS
  * @property {string} [TIMELD_GATEWAY_ADDRESS__PORT] defaults to 8080
- * @property {string} [TIMELD_GATEWAY_ADDRESS__HOST]
- * @property {string} [TIMELD_GATEWAY_ADDRESS__PATH]
- * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
+ * @property {string} [TIMELD_GATEWAY_ADDRESS__HOST] defaults to any-network-host
  */
 
 /**
@@ -34,9 +32,9 @@ import socketIo from './rest/socket-io.mjs';
  * @property {Object} address server address bind options
  * @property {number} address.port server bind port
  * @property {string} address.host server bind host
- * @property {string} address.path server bind path
  * @typedef {TimeldConfig & _TimeldGatewayConfig} TimeldGatewayConfig
  * @see process.env
+ * @see https://nodejs.org/docs/latest-v16.x/api/net.html#serverlistenoptions-callback
  */
 
 const env = new Env({
