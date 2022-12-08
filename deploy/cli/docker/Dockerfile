@@ -1,7 +1,8 @@
 FROM node:16-bullseye-slim
 LABEL description="Docker image for timeld client" version="0.1"
 WORKDIR /opt/timeld/
-COPY *.sh .
+COPY *.tgz .
+COPY ./deploy/docker/client-build.sh .
 RUN /opt/timeld/client-build.sh
 
 # Next 4 lines create script to view running processes, since slim source image lacks such tools

@@ -8,7 +8,10 @@ apt-get install mlocate -y >> /var/log/build.log
 
 echo Creating user for timeld...
 useradd --create-home --comment "User for timeld CLI" timeld >> /var/log/build.log
+echo
+echo Current directory is $(pwd)
+ls -l
+echo
 echo Installing timeld-cli...
-npm install --global timeld-cli >> /var/log/build.log
-echo Configuring client for target Gateway...
-chmod +x cli-config.sh >> /var/log/build.log
+# npm install --global timeld-cli >> /var/log/build.log
+npm install --global *.tgz >> /var/log/build.log
