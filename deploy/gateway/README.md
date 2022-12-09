@@ -10,7 +10,7 @@ Runtime configuration for the container is accomplished through editing the depl
 ### Settings for .env file:
 <details>
 <summary>Settings</summary>
-<p>
+
 |Setting|Default Value|Description|
 |-------|-------------|-----------|
 |TIMELD_GATEWAY_GATEWAY|N/A|The Fully Qualified Domain Name (FQDN) for the Gateway, used by the timeld CLI|
@@ -30,13 +30,14 @@ TIMELD_GATEWAY_AUTH__KEY must take the form `≪appid≫.≪keyid≫:≪secret�
 - `keyid` is the key identifier (at least 5 characters), used for logging (e.g. `rootkey`)
 - `secret` is the secret key material (minimum 20 characters, e.g. `123456789abcdefghijk`)
 
-</p>
+**NB** there is a "`.`" between the `appid` and the `keyid`, but a "`:`" (*colon*) between the `keyid` and the `secret`.
+
 </details>
 
 ### Linux shell:
 <details>
 <summary>Linux command</summary>
-<p>
+
 ```bash
 docker run --detach \
 --publish 8080:8080 \
@@ -49,10 +50,12 @@ docker run --detach \
 --env-file ./deploy/gateway/.env \
 mldio/timeld-gateway
 ```
-</p>
+
 </details>
 
 ### PowerShell on Windows:
+<details>
+<summary>PowerShell command</summary>
 
 ```bash
 docker run --detach `
@@ -66,6 +69,7 @@ docker run --detach `
 --env-file ./deploy/gateway/.env `
 mldio/timeld-gateway
 ```
+</details>
 
 To confirm that it's running as expected, enter the following command:
 
@@ -78,7 +82,7 @@ If the error `Gateway failed to initialise` appears instead, check the preceding
 A related step is to replace the `CMD` step in the Dockerfile with one that launches a process that does not terminate, such as `bash -c "ls -l > ~/files-container.txt && tail -f > /dev/null"`.  This will keep the container running, and making it possible to create an interactive session with `docker exec -it timeld-gateway bash`, to investigate what is happening within the container itself.
 
 # Creating your own Docker container image
-This is an optional step; if you prefer to use the existing container image in Docker Hub, refer to the section above **Running a timeld Gateway container**.
+This is an optional step to create your own image for the Gateway; if you prefer to use the existing container image in Docker Hub, refer to the section above **Running a timeld Gateway container**.
 
 ## Prerequisites
 
@@ -88,9 +92,9 @@ In addition to the **Common prerequisites** listed in the [main timeld Gateway R
 
 In a Linux shell / MacOs terminal / Windows PowerShell session, enter:
 
-```docker build --tag timeld-gateway --file ./deploy/docker/gateway/Dockerfile```
+```docker build --tag timeld-gateway --file ./deploy/gateway/docker/Dockerfile ./deploy/gateway/```
 
-This will take anything between 30 seconds and 10 minutes, depending on how many of the underlying Docker image layers already exist in your local environment.  Once the image build is complete, you can run a container from it as directed above.
+This will take anything between 30 seconds and 10 minutes, depending on how many of the underlying Docker image layers are already cached in your local environment.  Once the image build is complete, you can run a container from it as directed above.
 
 ## Notes on Gateway container image build and container instance launch
 ### Gateway process security

@@ -1,17 +1,19 @@
 #!/bin/bash
 # Build script for CLI image executed from Dockerfile
-echo Getting latest container image updates...
-apt-get update && apt-get upgrade -y > /var/log/build.log
 
-# The following two steps will be removed from the final build script:
-apt-get install mlocate -y >> /var/log/build.log
+# Create user timeld with restricted permissions
+echo | tee --append /var/log/build.log
+echo Creating user for timeld with restricted permissions... | tee --append /var/log/build.log
+useradd --create-home --shell /bin/bash \
+    --comment "User for timeld CLI" timeld \
+    | tee --append /var/log/build.log
 
-echo Creating user for timeld...
-useradd --create-home --comment "User for timeld CLI" timeld >> /var/log/build.log
-echo
-echo Current directory is $(pwd)
-ls -l
-echo
-echo Installing timeld-cli...
+# Script emulates ps command absent from lightweight base image
+mv ./ps.sh /usr/bin/ps
+echo | tee --append /var/log/build.log
+echo Installing timeld-cli... | tee --append /var/log/build.log
+# Short-term approach until repo updated...install from node-generated tarball:
+npm install --global *.tgz | tee --append /var/log/build.log
+# Medium-term approach...install from cloned repo
 # npm install --global timeld-cli >> /var/log/build.log
-npm install --global *.tgz >> /var/log/build.log
+# Longer-term approach will be to install direct from the GitHub repo

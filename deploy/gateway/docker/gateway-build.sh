@@ -3,6 +3,7 @@
 
 # Create user timeld with restricted permissions
 echo | tee --append /var/log/build.log
+echo Creating user for timeld with restricted permissions... | tee --append /var/log/build.log
 useradd --create-home --system --shell /bin/bash \
     --comment "User account for timeld Gateway" timeld \
     | tee --append /var/log/build.log
@@ -13,7 +14,8 @@ mv /tmp/docker/ps.sh /usr/bin/ps
 mv /tmp/docker/gateway-launch.sh /home/timeld/
 echo | tee --append /var/log/build.log
 echo Installing timeld-gateway... | tee --append /var/log/build.log
-# Install gateway from tarball (interim approach until repo updated):
+# Short-term approach until repo updated...install from node-generated tarball:
 su --login timeld --command "npm install /tmp/*.tgz" >> /var/log/build.log
-# Longer-term approach - install from cloned source:
+# Medium-term approach...install from cloned source:
 # su --login timeld --command "npm install timeld-gateway" | tee --append /var/log/build.log
+# Longer-term approach will be to install direct from the GitHub repo

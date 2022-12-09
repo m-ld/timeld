@@ -1,15 +1,14 @@
 FROM node:16-bullseye-slim
-LABEL description="Docker image for timeld client" version="0.1"
+LABEL description="Docker image for timeld client" version="0.2"
+RUN \
+    --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get upgrade -y && \
+    apt-get install mlocate -y
 WORKDIR /opt/timeld/
 COPY *.tgz .
-COPY ./deploy/docker/client-build.sh .
-RUN /opt/timeld/client-build.sh
+COPY ./docker/*.sh .
 
-# Next 4 lines create script to view running processes, since slim source image lacks such tools
-RUN echo 'for proc in /proc/[0-9]*/cmdline; do' > /usr/bin/ps
-RUN echo '  echo $(cat $proc | tr "\\0" " ");' >> /usr/bin/ps
-RUN echo 'done' >> /usr/bin/ps
-RUN chmod +x /usr/bin/ps
+RUN /opt/timeld/client-build.sh
 
 USER timeld
 CMD ["bash", "-c", "echo Executing identity is $(whoami) > ~/identity.txt && tail -f /dev/null"]
