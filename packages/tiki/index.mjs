@@ -65,7 +65,7 @@ export default class TikiConnector {
     if (state) {
       await each(state.read({
         '@describe': '?entry', '@where': { '@id': '?entry', '@type': 'Entry' }
-      }).consume, src => this.postTrackerItm(tsId, src));
+      }).consume, src => this.newTrackerItem(tsId, src));
     }
   }
 
@@ -78,12 +78,12 @@ export default class TikiConnector {
         src = await state.get(src['@id']);
         await this.post(new TimesheetTrackerItem(tsId, src, this.ext[src['@id']]));
       } else if (src['@type'] === 'Entry') {
-        await this.postTrackerItm(tsId, src);
+        await this.newTrackerItem(tsId, src);
       }
     }));
   }
 
-  async postTrackerItm(tsId, src) {
+  async newTrackerItem(tsId, src) {
     // Inserting timesheet tracker item
     const res = await this.post(new TimesheetTrackerItem(tsId, src));
     // Store the item ID for the entry
