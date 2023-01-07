@@ -19,7 +19,6 @@ export class CloneFactory {
       new ClassicLevel(dataDir),
       await this.remotes(config),
       config,
-      { principal },
       new TimeldApp(config['@domain'], principal));
   }
 
