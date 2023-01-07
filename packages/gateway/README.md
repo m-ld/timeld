@@ -2,21 +2,31 @@
 
 # timeld Gateway
 
-The timeld Gateway is a service to manage timeld accounts and persist timesheets safely. It can be deployed and scaled easily on a cloud platform.
+The timeld Gateway is a service to manage timeld accounts and persist timesheets safely. It can be deployed conventionally or in a Docker container - to a local machine, an on-premises server, or cloud platform - and scaled easily.
 
-## Fly.io Deployment Notes
+## Common prerequisites
+Regardless of the target deployment environment, you need the following:
 
-### prerequisites
+1. Account credentials for an SMTP service (for sending activation codes to timeld clients); and
+2. A local clone of the [timeld repo](https://github.com/m-ld/timeld).
 
+To obtain 2., enter the following in a terminal / shell / PowerShell session:
 ```bash
 git clone https://github.com/m-ld/timeld
 cd timeld/packages/gateway
 ```
+## Deployment to a Docker container
+You can either use the container image published to Docker Hub for the timeld Gateway, or build your own.  For further instructions, see the [README for timeld Gateway Docker deployment](../../deploy/docker).
 
-You will need:
-1. A [fly.io](https://fly.io) account (requires a credit card); and install `flyctl`.
-3. An SMTP service and account, for sending activation codes.
-4. An app name!
+
+## Deployment to Fly.io
+
+### prerequisites
+
+In addition to the **Common prerequisites** above, you will need:
+1. A [fly.io](https://fly.io) account (requires a credit card);
+2. To install the [`flyctl`](https://fly.io/docs/flyctl/installing/) command-line utility for working with fly.io.
+3. An app name!
 
 ```
 flyctl apps create ≪your-great-name≫
