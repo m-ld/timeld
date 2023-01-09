@@ -1,6 +1,6 @@
 {
   "name": "timeld-caldav",
-  "version": "0.2.0-0",
+  "version": "0.2.0-edge.0",
   "description": "timeld - CalDAV connector",
   "main": "index.mjs",
   "scripts": {
@@ -25,6 +25,6 @@
     "loglevel": "^1.8.1",
     "rxjs": "^7.8.0",
     "scrapegoat": "^2.0.0",
-    "timeld-common": "^0.2.0-edge.1"
+    "timeld-common": "^0.2.0-edge.2"
   }
 }
