@@ -1,6 +1,6 @@
 {
   "name": "timeld",
-  "version": "0.2.0-edge.1",
+  "version": "0.2.0-edge.2",
   "private": true,
   "description": "Live shared timesheets",
   "scripts": {
