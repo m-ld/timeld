@@ -1,6 +1,6 @@
 {
   "name": "timeld-prejournal",
-  "version": "0.1.4",
+  "version": "0.2.0-0",
   "description": "timeld - prejournal connector",
   "main": "index.mjs",
   "scripts": {

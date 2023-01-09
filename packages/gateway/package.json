@@ -4,7 +4,8 @@
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "ver": "echo $npm_package_version"
   },
   "engines": {
     "node": "16.x"
@@ -25,9 +26,9 @@
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
     "@m-ld/io-web-runtime": "^0.2.2",
-    "@m-ld/m-ld": "^0.9.1-edge.0",
-    "cryptr": "^6.0.3",
-    "http-graceful-shutdown": "^3.1.11",
+    "@m-ld/m-ld": "^0.9.1",
+    "cryptr": "^6.1.0",
+    "http-graceful-shutdown": "^3.1.12",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.1",
     "ndjson": "^2.0.0",
@@ -35,10 +36,10 @@
     "restify": "^8.6.1",
     "restify-errors": "^8.0.2",
     "rx-flowable": "^0.1.2",
-    "rxjs": "^7.5.7",
+    "rxjs": "^7.8.0",
     "simple-peer": "^9.11.1",
-    "socket.io": "^4.5.3",
-    "socket.io-client": "^4.5.3",
+    "socket.io": "^4.5.4",
+    "socket.io-client": "^4.5.4",
     "timeld-caldav": "^0.1.1",
     "timeld-common": "^0.2.0-edge.1",
     "timeld-prejournal": "^0.1.4",
@@ -48,13 +49,13 @@
   "devDependencies": {
     "@types/cryptr": "^4.0.1",
     "@types/jsonwebtoken": "^8.5.9",
-    "@types/nodemailer": "^6.4.6",
+    "@types/nodemailer": "^6.4.7",
     "@types/restify": "^8.5.5",
     "@types/restify-errors": "^4.3.4",
     "@types/supertest": "^2.0.12",
     "@types/validator": "^13.7.10",
     "memory-level": "^1.0.0",
-    "supertest": "^6.3.1",
+    "supertest": "^6.3.3",
     "tmp": "^0.2.1"
   }
 }
