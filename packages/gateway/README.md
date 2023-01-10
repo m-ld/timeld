@@ -63,19 +63,17 @@ chmod +x deploy.sh
 
 In preparation for a first deployment ("genesis") you need a local `.env` file (in this directory or in the repo root), containing:
 
-- `TIMELD_GATEWAY_AUTH__KEY=≪some-root-access-key≫` (see below)
 - `TIMELD_GATEWAY_SMTP__HOST=≪your-smtp-host≫`
 - `TIMELD_GATEWAY_SMTP__FROM=≪an-email-account-to-send-activation-codes≫`
 - `TIMELD_GATEWAY_SMTP__AUTH__USER=≪your-smtp-account≫`
 - `TIMELD_GATEWAY_SMTP__AUTH__PASS=≪your-smtp-account-password≫`
 - Any additional configuration secrets for extensions, e.g. see ../prejournal/index.mjs
 
-The root access key is invented by you; it must be of the form `≪appid≫.≪keyid≫:≪secret≫`, where:
-- `appid` is some application identifier (the app name will do)
-- `keyid` is the key identifier (at least 5 characters), used for logging
-- `secret` is the secret key material (at least 20 characters)
+In addition to the above, a set of [root access keys](./keyformat.md) must be provided, comprising a secret (auth) key and a public/private key pair. These should be different for every gateway deployment.
 
-e.g. `timeld.rootkey:123456789abcdefghijk`
+To assist creating keys in the correct format, a utility script is provided in this repository.
+1. Ensure that npm dependencies have been installed, with `npm install` in the project root.
+2. In the gateway directory, run `node ./genkey.mjs >> .env` to append generated keys to the env file.
 
 `deploy.sh` takes three optional arguments:
 1. app name (root); defaults to `timeld`
