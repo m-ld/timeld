@@ -186,8 +186,8 @@ export default class Cli {
 
   /**
    * @param {TimeldCliConfig} config
-   * @param {import('@m-ld/m-ld').AppPrincipal} principal
-   * @returns {Promise<{meld: import('@m-ld/m-ld').MeldClone, logFile: string}>}
+   * @param {AppPrincipal} principal
+   * @returns {Promise<{meld: MeldClone, logFile: string}>}
    */
   async createMeldClone(config, principal) {
     const tsId = AccountOwnedId.fromDomain(config['@domain']);
@@ -199,8 +199,8 @@ export default class Cli {
 
   /**
    * @param {TimeldCliConfig} config
-   * @param {import('@m-ld/m-ld').AppPrincipal} principal
-   * @param {import('@m-ld/m-ld').MeldClone} meld
+   * @param {AppPrincipal} principal
+   * @param {MeldClone} meld
    * @param {string} logFile
    * @returns {TimesheetSession}
    */

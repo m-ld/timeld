@@ -1,7 +1,7 @@
 // noinspection NpmUsedModulesInstalled
 import { jest } from '@jest/globals';
 import { clone, uuid } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { MemoryLevel } from 'memory-level';
 import { DeadRemotes } from './fixtures.mjs';
 import { BaseGateway } from '../index.mjs';
 import { consume } from 'rx-flowable/consume';
@@ -37,7 +37,7 @@ export default class MockGateway extends BaseGateway {
   async initialise(account) {
     this.account = account;
     // noinspection JSCheckFunctionSignatures
-    this.domain = await clone(new MeldMemDown(), DeadRemotes, {
+    this.domain = await clone(new MemoryLevel(), DeadRemotes, {
       '@id': uuid(), '@domain': this.domainName, genesis: true, logLevel: 'debug'
     });
     await this.domain.write(this.account.toJSON());
@@ -49,7 +49,7 @@ export default class MockGateway extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Read} pattern
+   * @param {Read} pattern
    * @returns {Results} results
    */
   read(pattern) {
@@ -58,7 +58,7 @@ export default class MockGateway extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Query} pattern
+   * @param {Query} pattern
    */
   async write(pattern) {
     return this.account.write(json(pattern));

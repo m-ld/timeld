@@ -1,6 +1,7 @@
-import ablyModule from '@m-ld/m-ld/dist/ably';
+import ablyModule from '@m-ld/m-ld/ext/ably';
 import { CloneFactory, Env } from '../../index.mjs';
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * @extends CloneFactory
  */

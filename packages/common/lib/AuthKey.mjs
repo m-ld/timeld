@@ -12,8 +12,11 @@ export default class AuthKey {
   }
 
   constructor({ appId, keyid, secret }) {
+    /** Application ID: for multi-app gateways, not used in timeld */
     this.appId = appId;
+    /** Key ID: scoped to app */
     this.keyid = keyid;
+    /** Secret material */
     this.secret = secret;
   }
 
@@ -51,5 +54,5 @@ export default class AuthKey {
  * @param {() => Promise<AccountOwnedId[]>} getAuthorisedTsIds callback to get
  * authorised Timesheet IDs for the requested key, if this key store supports
  * fine-grained privileges
- * @returns {Promise<AuthKeyDetail>}
+ * @returns {Promise<boolean>}
  */

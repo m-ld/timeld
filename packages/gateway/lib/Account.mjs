@@ -1,6 +1,7 @@
-import { propertyValue } from '@m-ld/m-ld';
-import { AccountOwnedId, idSet, isDomainEntity, safeRefsIn, Session } from 'timeld-common';
-import { Ask, accountHasTimesheet, timesheetHasProject, userIsAdmin } from './statements.mjs';
+import { propertyValue, Reference } from '@m-ld/m-ld';
+import { AccountOwnedId, isDomainEntity, Session, UserKey } from 'timeld-common';
+import { idSet } from 'timeld-common/lib/util.mjs';
+import { accountHasTimesheet, timesheetHasProject, userIsAdmin } from './statements.mjs';
 import ReadPatterns from './ReadPatterns.mjs';
 import WritePatterns from './WritePatterns.mjs';
 import { each } from 'rx-flowable';
@@ -25,10 +26,10 @@ export default class Account {
     return new Account(gateway, {
       name: src['@id'],
       emails: propertyValue(src, 'email', Set, String),
-      keyids: propertyValue(src, 'keyid', Set, String),
-      admins: idSet(safeRefsIn(src, 'vf:primaryAccountable')),
-      timesheets: safeRefsIn(src, 'timesheet'),
-      projects: safeRefsIn(src, 'project')
+      keyids: propertyValue(src, 'key', Array, Reference).map(UserKey.keyidFromRef),
+      admins: idSet(propertyValue(src, 'vf:primaryAccountable', Array, Reference)),
+      timesheets: propertyValue(src, 'timesheet', Array, Reference),
+      projects: propertyValue(src, 'project', Array, Reference)
     });
   }
 
@@ -69,40 +70,45 @@ export default class Account {
    * (This is because Ably cannot create a key without at least one capability.)
    *
    * @param {string} email
-   * @returns {Promise<string>} Authorisation key for the account
+   * @returns {UserKeyConfig} keys for the account
    */
   async activate(email) {
     // Every activation creates a new key (assumes new device)
     const keyDetails = await this.gateway.keyStore
       .mintKey(`${this.name}@${this.gateway.domainName}`);
+    // Generate a key pair for signing
+    const userKey = UserKey.generate(keyDetails.key);
     // Store the keyid and the email
     this.keyids.add(keyDetails.key.keyid);
     this.emails.add(email);
-    await this.gateway.domain.write(this.toJSON());
-    return keyDetails.key.toString();
+    // Write the changed details, including the new key
+    await this.gateway.domain.write({
+      '@id': this.name, email, key: userKey.toJSON()
+    });
+    return userKey.toConfig(keyDetails.key);
   }
 
   /**
    * @param {string} keyid user key ID
    * @param {AccessRequest|undefined} [access] request
-   * @returns {Promise<AuthKeyDetail>}
+   * @returns {Promise<UserKey>}
    * @throws {import('restify-errors').DefinedHttpError}
    */
   async authorise(keyid, access) {
-    if (!this.keyids.has(keyid))
-      throw new UnauthorizedError(
-        `Key ${keyid} does not belong to account ${this.name}`);
-
     return new Promise(async (resolve, reject) => {
       this.gateway.domain.read(async state => {
         try {
+          const userKey = await this.key(state, keyid);
+          if (userKey.revoked)
+            return reject(new UnauthorizedError('Key revoked'));
           // noinspection JSIncompatibleTypesComparison
           if (access != null)
             await this.checkAccess(state, access);
           try {
-            const keyDetail = await this.gateway.keyStore.pingKey(
+            const revoked = await this.gateway.keyStore.pingKey(
               keyid, () => this.allOwnedTimesheetIds(state));
-            return !keyDetail.revoked ? resolve(keyDetail) :
+            return !revoked ? resolve(userKey) :
+              // TODO: If keystore says revoked, update the userKey
               reject(new UnauthorizedError('Key revoked'));
           } catch (e) {
             // TODO: Assuming this is a Not Found
@@ -116,21 +122,30 @@ export default class Account {
   }
 
   /**
+   * @param {string} keyid
+   * @throws {UnauthorizedError} if the keyid does not belong to this account
+   */
+  checkKeyid(keyid) {
+    if (!this.keyids.has(keyid))
+      throw new UnauthorizedError(
+        `Key ${keyid} does not belong to account ${this.name}`);
+  }
+
+  /**
    * @param {MeldReadState} state
    * @param {AccessRequest} access request
    * @returns {Promise<void>}
    */
   async checkAccess(state, access) {
-    const ask = new Ask(state);
     const iri = access.id.toRelativeIri();
     const writable = {
       'Timesheet': await this.allOwned(state, 'Timesheet'),
       'Project': await this.allOwned(state, 'Project')
     };
-    if (access.forWrite && !(await ask.exists({ '@id': iri }))) {
+    if (access.forWrite && !(await state.ask({ '@where': { '@id': iri } }))) {
       // Creating; check write access to account
       if (access.id.account !== this.name &&
-        !(await ask.exists(userIsAdmin(this.name, access.id.account))))
+        !(await state.ask({ '@where': userIsAdmin(this.name, access.id.account) })))
         throw new ForbiddenError();
       // Otherwise OK to create
       writable[access.forWrite].add(iri);
@@ -140,7 +155,7 @@ export default class Account {
       } else {
         // Finally check for a readable timesheet through one of the projects
         if (!(await Promise.all([...writable['Project']].map(project =>
-          ask.exists(timesheetHasProject(iri, project))))).includes(true))
+          state.ask({ '@where': timesheetHasProject(iri, project) })))).includes(true))
           throw new ForbiddenError();
       }
     }
@@ -165,6 +180,16 @@ export default class Account {
       }).forEach(result => this.owned[type].add(result['?owned']['@id']));
     }
     return this.owned[type];
+  }
+
+  /**
+   * @param {MeldReadState} state gateway state
+   * @param {string} keyid
+   * @returns {Promise<UserKey>}
+   */
+  async key(state, keyid) {
+    this.checkKeyid(keyid);
+    return UserKey.fromJSON(await state.get(UserKey.refFromKeyid(keyid)['@id']));
   }
 
   /**
@@ -205,11 +230,10 @@ export default class Account {
   beforeInsertTimesheet = async (state, tsRef) => {
     if (tsRef != null) {
       const tsId = this.gateway.ownedRefAsId(tsRef);
-      const ask = new Ask(state);
-      if (await ask.exists(accountHasTimesheet(tsId)))
+      if (await state.ask({ '@where': accountHasTimesheet(tsId) }))
         throw new ConflictError('Timesheet already exists');
       if (this.name !== tsId.account &&
-        !(await ask.exists(userIsAdmin(this.name, tsId.account))))
+        !(await state.ask({ '@where': userIsAdmin(this.name, tsId.account) })))
         throw new UnauthorizedError('No access to timesheet');
       await this.gateway.initTimesheet(tsId, true);
     }
@@ -356,7 +380,7 @@ export default class Account {
       '@id': this.name, // scoped to gateway domain
       '@type': 'Account',
       'email': [...this.emails],
-      'keyid': [...this.keyids],
+      'key': [...this.keyids].map(UserKey.refFromKeyid),
       'vf:primaryAccountable': [...this.admins].map(iri => ({ '@id': iri })),
       'timesheet': this.timesheets,
       'project': this.projects

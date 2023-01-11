@@ -1,5 +1,4 @@
-import { dateJsonLd } from '../lib/util.mjs';
-import { uuid } from '@m-ld/m-ld';
+import { normaliseValue, uuid } from '@m-ld/m-ld';
 
 export default class Session {
   /**
@@ -25,7 +24,7 @@ export default class Session {
     return {
       '@id': this.id,
       '@type': 'Session',
-      start: dateJsonLd(this.startTime)
+      start: normaliseValue(this.startTime)
     };
   }
 }

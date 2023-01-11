@@ -1,6 +1,6 @@
-import { dateJsonLd, isDate, mustBe, optionalPropertyValue, withDoc } from '../lib/util.mjs';
+import { isDate, mustBe, withDoc } from '../lib/util.mjs';
 import { AccountOwnedId } from '../index.mjs';
-import { propertyValue } from '@m-ld/m-ld';
+import { normaliseValue, Optional, propertyValue } from '@m-ld/m-ld';
 import DomainEntity from './DomainEntity.mjs';
 
 export default class Project extends DomainEntity {
@@ -22,14 +22,14 @@ export default class Project extends DomainEntity {
   };
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    */
   static fromJSON(src) {
     // noinspection JSCheckFunctionSignatures
     return new Project({
       id: AccountOwnedId.fromReference(src),
-      start: optionalPropertyValue(src, 'start', Date),
-      duration: optionalPropertyValue(src, 'duration', Number),
+      start: propertyValue(src, 'start', Optional, Date),
+      duration: propertyValue(src, 'duration', Optional, Number),
       milestones: propertyValue(src, 'milestone', Array, String),
       ...DomainEntity.specFromJson(src)
     });
@@ -54,7 +54,7 @@ export default class Project extends DomainEntity {
     return {
       '@id': this.id.toIri(),
       '@type': 'Project',
-      'start': dateJsonLd(this.start),
+      'start': normaliseValue(this.start),
       'duration': this.duration,
       'milestone': this.milestones,
       ...super.toJSON()

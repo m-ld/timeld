@@ -65,13 +65,13 @@ export default class DomainConfigurator {
       return {
         config: this.noGatewayConfig(
           `timeld.${AuthKey.fromString(ablyKey).appId.toLowerCase()}`),
-        principal: { '@id': this.argv.user /*, TODO: sign*/ }
+        principal: { '@id': this.argv.user }
       };
     } else {
       const config = await this.fetchGatewayConfig();
       return {
         config: Env.mergeConfig(config, this.gateway.accessConfig),
-        principal: { '@id': this.gateway.principalId /*, TODO: sign*/ }
+        principal: { '@id': this.gateway.principalId }
       };
     }
   }

@@ -1,6 +1,6 @@
 {
   "name": "timeld",
-  "version": "0.1.7",
+  "version": "0.2.0-edge.2",
   "private": true,
   "description": "Live shared timesheets",
   "scripts": {
@@ -26,7 +26,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/jest": "^28.1.7",
+    "@types/jest": "^28.1.8",
     "jest": "^28.1.3"
   }
 }

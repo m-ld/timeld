@@ -125,7 +125,7 @@ export default class AccountOwnedId {
 
   toIri() {
     const path = this.toRelativeIri();
-    return this.isRelative ? path : `http://${this.gateway}/${path}`;
+    return this.isRelative ? path : domainRelativeIri(path, this.gateway);
   }
 
   toRelativeIri() {
@@ -145,5 +145,10 @@ export default class AccountOwnedId {
     rtn += this.name;
     rtn += this.gateway ? `@${this.gateway}` : '';
     return rtn;
+  }
+
+  toJSON() {
+    const { gateway, account, name } = this;
+    return { gateway, account, name };
   }
 }

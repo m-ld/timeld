@@ -3,9 +3,9 @@ import { ResultsProc } from './ResultsProc.mjs';
 import { PromiseProc } from './PromiseProc.mjs';
 import { ENTRY_FORMAT_OPTIONS, getSubjectFormat, TableFormat } from './DisplayFormat.mjs';
 import isEmail from 'validator/lib/isEmail.js';
-import { AccountOwnedId, dateJsonLd, durationFromInterval } from 'timeld-common';
+import { AccountOwnedId, durationFromInterval } from 'timeld-common';
 import { EMPTY } from 'rxjs';
-import { any } from '@m-ld/m-ld';
+import { any, normaliseValue } from '@m-ld/m-ld';
 import { parseDate, parseDuration } from './util.mjs';
 import { SyncProc } from '@m-ld/m-ld-cli/lib/Proc.js';
 import { Readable } from 'stream';
@@ -330,7 +330,7 @@ export default class AdminSession extends Repl {
           if (type === 'Project') {
             // Fill out project properties
             if (start != null) {
-              subject.start = dateJsonLd(start);
+              subject.start = normaliseValue(start);
               if (end != null && duration == null)
                 duration = durationFromInterval(start, end);
               if (duration != null)

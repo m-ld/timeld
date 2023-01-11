@@ -1,4 +1,5 @@
-import { isReference, optionalPropertyValue, withDoc } from '../lib/util.mjs';
+import { isReference, withDoc } from '../lib/util.mjs';
+import { Optional, Reference, propertyValue } from '@m-ld/m-ld';
 
 export default class DomainEntity {
   /** @type {import('jtd').SchemaFormProperties} */
@@ -15,7 +16,7 @@ export default class DomainEntity {
 
   static specFromJson(src) {
     return {
-      externalId: optionalPropertyValue(src, 'external', Object)?.['@id']
+      externalId: propertyValue(src, 'external', Optional, Reference)?.['@id']
     }
   }
 

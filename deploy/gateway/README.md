@@ -5,38 +5,36 @@ The first part of these instructions explains how to run an instance of timeld G
 
 ## Running a timeld Gateway container
 
-Runtime configuration for the container is accomplished through editing the deployment [.env file](../.env).  The following table describes each of the settings:
+Runtime configuration for the container is accomplished through editing the file `/deploy/.env`.  The following table describes each of the settings:
 
-### Settings for .env file:
-<details>
-<summary>Settings</summary>
+| Setting                         | Default Value   |Description|
+|---------------------------------|-----------------|-----------|
+| TIMELD_GATEWAY_GATEWAY          | N/A             |The Fully Qualified Domain Name (FQDN) for the Gateway, used by the timeld CLI|
+| TIMELD_GATEWAY_GENESIS          | true            |Indicates whether the Gateway is the first in a multi-node cluster|
+ | TIMELD_GATEWAY_DATA_PATH        | /opt/timeld/data |File system location for timeld data on the Gateway|
+ | TIMELD_GATEWAY_SMTP__HOST       | N/A             |Email provider's SMTP server|
+ | TIMELD_GATEWAY_SMTP__FROM       | N/A             |From email address for verification emails sent for new client registration|
+ | TIMELD_GATEWAY_SMTP__AUTH__USER | N/A             |User name for account with email provider|
+ | TIMELD_GATEWAY_SMTP__AUTH__PASS | N/A             |Password for account with email provider|
+ | TIMELD_GATEWAY_ADDRESS__PORT    | 8080            |TCP port used for inbound Gateway API requests|
+ | TIMELD_GATEWAY_ADDRESS__HOST    | 0.0.0.0         |IP addresses the Gateway listens on (IPv6 not supported on Docker in Windows)|
+ | LOG_LEVEL                       |info|Logging level for troubleshooting purposes|
 
-|Setting|Default Value|Description|
-|-------|-------------|-----------|
-|TIMELD_GATEWAY_GATEWAY|N/A|The Fully Qualified Domain Name (FQDN) for the Gateway, used by the timeld CLI|
-TIMELD_GATEWAY_GENESIS|true|Indicates whether the Gateway is the first in a multi-node cluster|
-TIMELD_GATEWAY_DATA_PATH|/opt/timeld/data|File system location for timeld data on the Gateway|
-TIMELD_GATEWAY_AUTH__KEY|N/A|Gateway's authorisation key `≪appid≫.≪keyid≫:≪secret≫`; see below|
-TIMELD_GATEWAY_SMTP__HOST|N/A|Email provider's SMTP server|
-TIMELD_GATEWAY_SMTP__FROM|N/A|From email address for verification emails sent for new client registration|
-TIMELD_GATEWAY_SMTP__AUTH__USER|N/A|User name for account with email provider|
-TIMELD_GATEWAY_SMTP__AUTH__PASS|N/A|Password for account with email provider|
-TIMELD_GATEWAY_ADDRESS__PORT|8080|TCP port used for inbound Gateway API requests|
-TIMELD_GATEWAY_ADDRESS__HOST|0.0.0.0|IP addresses the Gateway listens on (IPv6 not supported on Docker in Windows)|
-LOG_LEVEL|info|Logging level for troubleshooting purposes|
+In addition to the above, a set of [root access keys](../../packages/gateway/keyformat.md) must be provided, comprising a secret (auth) key and a public/private key pair. These should be different for every gateway deployment.
 
-TIMELD_GATEWAY_AUTH__KEY must take the form `≪appid≫.≪keyid≫:≪secret≫`, where:
-- `appid` is some application identifier (e.g. `timeld`)
-- `keyid` is the key identifier (at least 5 characters), used for logging (e.g. `rootkey`)
-- `secret` is the secret key material (minimum 20 characters, e.g. `123456789abcdefghijk`)
+To assist creating keys in the correct format, a utility script is provided in this repository.
+1. Ensure that npm dependencies have been installed, with `npm install`
+2. In the project root, run `node ./packages/gateway/genkey.mjs >> ./deploy/.env` to append generated keys to the env file.
 
-**NB** there is a "`.`" between the `appid` and the `keyid`, but a "`:`" (*colon*) between the `keyid` and the `secret`.
+### Creating the network
 
-</details>
+A [custom network](https://docs.docker.com/engine/reference/commandline/network_create/) should be created for the container, e.g.:
 
-### Linux shell:
-<details>
-<summary>Linux command</summary>
+```bash
+docker network create -a timeld
+```
+
+### Linux shell run command
 
 ```bash
 docker run --detach \
@@ -44,16 +42,14 @@ docker run --detach \
 --name timeld-gateway \
 --hostname timeld-gateway \
 --network timeld \
---network alias `≪Gateway FQDN≫` \
+--network alias ≪Gateway FQDN≫ \
 --volume timeld:/opt/timeld \
 --workdir /opt/timeld \
 --env-file ./deploy/gateway/.env \
 mldio/timeld-gateway
 ```
 
-</details>
-
-### PowerShell on Windows:
+### PowerShell on Windows run command
 <details>
 <summary>PowerShell command</summary>
 
@@ -88,11 +84,22 @@ This is an optional step to create your own image for the Gateway; if you prefer
 
 In addition to the **Common prerequisites** listed in the [main timeld Gateway README](../../README.md), you will also need to install the [Docker engine](https://docs.docker.com/engine/install/) appropriate to your environment.
 
-### Building the container image
+## Building the container image
+
+A new container image can be created from a version of the Gateway published on npm. See the root README for publishing steps.
 
 In a Linux shell / MacOs terminal / Windows PowerShell session, enter:
 
-```docker build --tag timeld-gateway --file ./deploy/gateway/docker/Dockerfile ./deploy/gateway/```
+```bash
+docker build \
+  --tag timeld-gateway \
+  --file ./deploy/gateway/docker/Dockerfile \
+  --build-arg GATEWAY_VERSION=≪version≫ \
+  ./deploy/gateway/
+```
+
+Where ≪version≫ is a Gateway [version or npm tag](https://www.npmjs.com/package/timeld-gateway?activeTab=versions), such as `0.3.0-edge.2
+` or `edge`. To always use the current version from this repository, use `$(npm run ver -w packages/gateway --silent)`.
 
 This will take anything between 30 seconds and 10 minutes, depending on how many of the underlying Docker image layers are already cached in your local environment.  Once the image build is complete, you can run a container from it as directed above.
 

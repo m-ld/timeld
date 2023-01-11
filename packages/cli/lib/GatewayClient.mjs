@@ -1,9 +1,8 @@
-import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
 import isEmail from 'validator/lib/isEmail.js';
 import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
-import { AuthKey, BaseGateway, resolveGateway } from 'timeld-common';
+import { AuthKey, BaseGateway, resolveGateway, UserKey } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
@@ -11,29 +10,22 @@ import ndjson from 'ndjson';
 
 export default class GatewayClient extends BaseGateway {
   /**
-   * @param {string} gateway
-   * @param {string} user
-   * @param {string} [key] available authorisation key, if missing, {@link activate}
-   * must be called before other methods
+   * @param {TimeldCliConfig} config
    * @param {import('@zeit/fetch').Fetch} fetch injected fetch
    */
-  constructor({
-    gateway,
-    user,
-    auth: { key } = {}
-  }, fetch = setupFetch()) {
-    const { root, domainName } = resolveGateway(gateway);
+  constructor(config, fetch = setupFetch()) {
+    const { root, domainName } = resolveGateway(config.gateway);
     super(domainName);
-    this.user = user;
-    this.authKey = key != null ? AuthKey.fromString(key) : null;
+    this.user = config.user;
+    this.authKey = config.auth?.key ? AuthKey.fromString(config.auth.key) : null;
+    this.userKey = config.key ? UserKey.fromConfig(config) : null;
     this.gatewayRoot = root;
     // noinspection HttpUrlsUsage
     /**
-     * Resolve our user name against the gateway to get the canonical user URI.
+     * Resolve our username against the gateway to get the canonical user URI.
      * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
      */
-    // This leaves an absolute URI alone
-    this.principalId = new URL(this.user, `http://${this.domainName}`).toString();
+    this.principalId = this.absoluteId(this.user);
     this.fetch = fetch;
   }
 
@@ -88,24 +80,26 @@ export default class GatewayClient extends BaseGateway {
       const jwt = new Cryptr(code).decrypt(jwe);
       if (!isJWT(jwt))
         throw 'Sorry, that code was incorrect, please start again.';
-      const { key } = await this.fetchApi(`key/${this.user}`,
-        { jwt, user: false })
+      const keyConfig = /**@type UserKeyConfig*/ await this
+        .fetchApi(`key/${this.user}`, { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.authKey = AuthKey.fromString(key);
+      this.authKey = AuthKey.fromString(keyConfig.auth.key);
+      this.userKey = UserKey.fromConfig(keyConfig);
     }
   }
 
   /**
-   * @returns {{auth: {key: string}}}
+   * @returns {UserKeyConfig | undefined}
    */
   get accessConfig() {
-    return { auth: { key: this.authKey.toString() } };
+    if (this.userKey != null)
+      return this.userKey.toConfig(this.authKey);
   }
 
   /**
    * @param {string} account to which the timesheet belongs
    * @param {string} timesheet the timesheet name
-   * @returns {Promise<import('@m-ld/m-ld').MeldConfig>} configuration for
+   * @returns {Promise<MeldConfig>} configuration for
    * timesheet domain
    */
   async config(account, timesheet) {
@@ -114,7 +108,7 @@ export default class GatewayClient extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Read} pattern
+   * @param {Read} pattern
    * @returns {Results} results
    */
   read(pattern) {
@@ -123,7 +117,7 @@ export default class GatewayClient extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Write} pattern
+   * @param {Write} pattern
    */
   async write(pattern) {
     await checkSuccessRes(await this.fetchApi('write', { json: pattern }));
@@ -146,10 +140,9 @@ export default class GatewayClient extends BaseGateway {
    * User JWT suitable for authenticating to the gateway
    * @returns {Promise<string>} JWT
    */
-  async userJwt() {
-    const { secret, keyid } = this.authKey;
-    return await signJwt({}, secret, {
-      subject: this.user, keyid, expiresIn: '1m'
+  userJwt() {
+    return this.userKey.signJwt({}, this.authKey, {
+      subject: this.user, expiresIn: '1m'
     });
   }
 }

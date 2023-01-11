@@ -2,10 +2,10 @@
 
 import { describe, expect, jest, test } from '@jest/globals';
 import { dirSync } from 'tmp';
-import { AuthKey, CloneFactory, dateJsonLd, Env } from 'timeld-common';
+import { AuthKey, CloneFactory, Env, UserKey } from 'timeld-common';
 import { join } from 'path';
-import { clone as meldClone } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { clone as meldClone, normaliseValue } from '@m-ld/m-ld';
+import { MemoryLevel } from 'memory-level';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
 import Gateway from '../lib/Gateway.mjs';
 import rest from '../rest/index.mjs';
@@ -21,23 +21,20 @@ describe('Gateway REST API', () => {
     const env = new Env({ data: join(tmpDir.name, 'data') });
     const cloneFactory = new class extends CloneFactory {
       async clone(config) {
-        return meldClone(new MeldMemDown(), DeadRemotes, config);
+        return meldClone(new MemoryLevel(), DeadRemotes, config);
       }
     }();
     const keyStore = {
       mintKey: jest.fn(),
-      pingKey: jest.fn().mockImplementation(
-        keyid => Promise.resolve({
-          key: AuthKey.fromString(`app.${keyid}:secret`),
-          name: 'test@ex.org',
-          revoked: false
-        }))
+      pingKey: jest.fn().mockResolvedValue(false)
     };
+    const authKey = AuthKey.fromString('app.id:secret')
+    const machineKey = UserKey.generate(authKey);
     gateway = new Gateway(env, {
       '@domain': 'ex.org',
       genesis: true,
-      auth: { key: 'app.id:secret' }
-    }, cloneFactory, keyStore);
+      ...machineKey.toConfig(authKey)
+    }, cloneFactory, keyStore, { log: jest.fn() });
     await gateway.initialise();
     // noinspection JSValidateTypes
     notifier = { sendActivationCode: jest.fn() };
@@ -60,9 +57,12 @@ describe('Gateway REST API', () => {
   });
 
   describe('with user account', () => {
+    let /**@type {UserKey}*/userKey;
+
     beforeEach(async () => {
+      userKey = UserKey.generate('app.keyid:secret');
       await gateway.domain.write({
-        '@id': 'test', '@type': 'Account', keyid: 'uk' // User Key
+        '@id': 'test', '@type': 'Account', key: userKey.toJSON()
       });
     });
 
@@ -72,7 +72,7 @@ describe('Gateway REST API', () => {
       });
       const res = await request(rest({ gateway, notifier }))
         .get('/api/rpt/test/own/pr1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect('Content-Type', 'application/x-ndjson');
       expect(res.text.split('\n').map(JSON.parse)).toMatchObject([{
         '@id': 'test/pr1',
@@ -95,14 +95,14 @@ describe('Gateway REST API', () => {
       });
       await request(rest({ gateway, notifier }))
         .get('/api/rpt/test/own/pr1')
-        .auth('test', 'app.uk:garbage')
+        .auth('test', 'app.keyid:garbage')
         .expect(401);
     });
 
     test('rejects forbidden report', async () => {
       await request(rest({ gateway, notifier }))
         .get('/api/rpt/org1/own/pr1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect(403);
     });
 
@@ -110,7 +110,7 @@ describe('Gateway REST API', () => {
       const app = rest({ gateway, notifier });
       await request(app)
         .post('/api/import')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .send([{
           '@id': 'test/ts1', '@type': 'Timesheet'
         }, {
@@ -118,12 +118,12 @@ describe('Gateway REST API', () => {
           session: { '@id': 'test/ts1' },
           activity: 'testing',
           'vf:provider': { '@id': 'test' },
-          start: dateJsonLd(new Date)
+          start: normaliseValue(new Date)
         }].map(JSON.stringify).join('\n'))
         .expect(200);
       const res = await request(app)
         .get('/api/rpt/test/own/ts1')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .expect('Content-Type', 'application/x-ndjson');
       expect(res.text.split('\n').map(JSON.parse)).toMatchObject([{
         '@id': 'test/ts1', '@type': 'Timesheet'
@@ -138,13 +138,13 @@ describe('Gateway REST API', () => {
       const app = rest({ gateway, notifier });
       await request(app)
         .post('/api/import')
-        .auth('test', 'app.uk:secret')
+        .auth('test', 'app.keyid:secret')
         .send([{
           '@type': 'Entry',
           session: { '@id': 'test/ts1' },
           activity: 'testing',
           'vf:provider': { '@id': 'test' },
-          start: dateJsonLd(new Date)
+          start: normaliseValue(new Date)
         }].map(JSON.stringify).join('\n'))
         .expect(400);
     });

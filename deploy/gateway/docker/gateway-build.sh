@@ -15,7 +15,7 @@ mv /tmp/docker/gateway-launch.sh /home/timeld/
 echo | tee --append /var/log/build.log
 echo Installing timeld-gateway... | tee --append /var/log/build.log
 # Short-term approach until repo updated...install from node-generated tarball:
-su --login timeld --command "npm install /tmp/*.tgz" >> /var/log/build.log
-# Medium-term approach...install from cloned source:
-# su --login timeld --command "npm install timeld-gateway" | tee --append /var/log/build.log
+#su --login timeld --command "npm install /tmp/*.tgz" >> /var/log/build.log
+# Medium-term approach...install from npmjs.com:
+su --login timeld --command "npm install timeld-gateway@$GATEWAY_VERSION" | tee --append /var/log/build.log
 # Longer-term approach will be to install direct from the GitHub repo

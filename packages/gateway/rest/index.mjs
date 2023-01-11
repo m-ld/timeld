@@ -96,8 +96,7 @@ export default function rest({ gateway, notifier }) {
         if (!email || !isEmail(email))
           return next(new BadRequestError('Bad email %s', email));
         const acc = await gateway.account(auth.user, { orCreate: true });
-        const key = await acc.activate(email);
-        res.json({ key });
+        res.json(await acc.activate(email));
         next();
       } catch (e) {
         next(toHttpError(e));
@@ -111,9 +110,9 @@ export default function rest({ gateway, notifier }) {
       try {
         const id = gateway.ownedId(account, timesheet).validate();
         try {
-          await Authorization.fromRequest(req).verifyUser(
+          const who = await Authorization.fromRequest(req).verifyUser(
             gateway, { id, forWrite: 'Timesheet' });
-          res.json(await gateway.timesheetConfig(id));
+          res.json(await gateway.timesheetConfig(id, who));
         } catch (e) {
           next(toHttpError(e));
         }
@@ -128,7 +127,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/read', restify.plugins.bodyParser(),
     async (req, res, next) => {
       try {
-        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
+        const { acc } = await Authorization.fromRequest(req).verifyUser(gateway);
         await sendStream(res, await acc.read(req.body));
         next();
       } catch (e) {
@@ -139,7 +138,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/write', restify.plugins.bodyParser(),
     async (req, res, next) => {
       try {
-        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
+        const { acc } = await Authorization.fromRequest(req).verifyUser(gateway);
         await acc.write(req.body);
         res.send(200);
         next();
@@ -164,7 +163,7 @@ export default function rest({ gateway, notifier }) {
   server.post('/api/import',
     async (req, res, next) => {
       try {
-        const acc = await Authorization.fromRequest(req).verifyUser(gateway);
+        const { acc } = await Authorization.fromRequest(req).verifyUser(gateway);
         await acc.import(consume(req.pipe(ndjson.parse())));
         res.send(200);
         next();
@@ -176,6 +175,7 @@ export default function rest({ gateway, notifier }) {
   server.get('/context',
     async (req, res, next) => {
       res.contentType = req.accepts('html') ? 'html' : 'application/ld+json';
+      // noinspection HttpUrlsUsage
       res.send({
         '@base': domainRelativeIri('/', gateway.domainName),
         ...timeldContext

@@ -1,45 +1,13 @@
-import { propertyValue } from '@m-ld/m-ld';
 import dns from 'dns/promises';
 import isFQDN from 'validator/lib/isFQDN.js';
+import jsonwebtoken from 'jsonwebtoken';
 
 /**
- * @param {import('@m-ld/m-ld').Subject} subject may contain the property
- * @param {string} property property in the subject
- * @returns {import('@m-ld/m-ld').Reference[]}
- */
-export function safeRefsIn(subject, property) {
-  try {
-    // TODO: Use Array of Reference in m-ld-js v0.9
-    return propertyValue(subject, property, Array, Object)
-      .filter(ref => ref['@id'] != null);
-  } catch (e) {
-    return [];
-  }
-}
-
-/**
- * @param {import('@m-ld/m-ld').Reference[]} refs
+ * @param {Reference[]} refs
  * @returns {Set<string>}
  */
 export function idSet(refs) {
   return new Set(refs.map(ref => ref['@id']));
-}
-
-export function optionalPropertyValue(src, property, type) {
-  // TODO: Array is the only way to do Optional fields until m-ld-js v0.9
-  return propertyValue(src, property, Array, type)[0];
-}
-
-/**
- * @param {Date} date
- * @returns {{'@value': string, '@type': string}}
- * @todo replace with normaliseValue in m-ld-js v0.9
- */
-export function dateJsonLd(date) {
-  return {
-    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
-    '@value': date.toISOString()
-  };
 }
 
 /**
@@ -123,3 +91,22 @@ export function durationFromInterval(start, end) {
   // Round to the second then convert to minutes
   return Math.round((end.getTime() - start.getTime()) / 1000) / 60;
 }
+
+/**
+ * Promisified version of jsonwebtoken.verify
+ * @param {string} token
+ * @param {(header: import('jsonwebtoken').JwtHeader) => Promise<string>} getSecret
+ * @param {import('jsonwebtoken').VerifyOptions} [options]
+ * @returns {Promise<import('jsonwebtoken').JwtPayload>}
+ */
+export function verifyJwt(token, getSecret, options) {
+  return new Promise((resolve, reject) =>
+    jsonwebtoken.verify(token, (header, cb) => {
+      getSecret(header).then(secret => cb(null, secret), err => cb(err));
+    }, options, (err, payload) => {
+      if (err) reject(err);
+      else resolve(payload);
+    }));
+}
+
+export { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';

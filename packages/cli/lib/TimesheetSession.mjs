@@ -21,7 +21,7 @@ export default class TimesheetSession extends Repl {
    * @param {string} spec.id
    * @param {string} spec.timesheet
    * @param {string} spec.providerId
-   * @param {import('@m-ld/m-ld').MeldClone} spec.meld
+   * @param {MeldClone} spec.meld
    * @param {string} spec.logFile
    * @param {string|number} spec.logLevel
    */
@@ -183,9 +183,9 @@ export default class TimesheetSession extends Repl {
 
   /**
    * Sets the current indexed working set of Entries
-   * @param {import('@m-ld/m-ld').GraphSubject[]} all
+   * @param {GraphSubject[]} all
    * @param {Proc} [proc] used to warn the user if the working set has changed
-   * @returns {import('@m-ld/m-ld').GraphSubject[]}
+   * @returns {GraphSubject[]}
    */
   setWorkingSet(all, proc) {
     all.sort((s1, s2) =>
@@ -253,7 +253,7 @@ export default class TimesheetSession extends Repl {
 
   /**
    * @param {string | number} selector Entry to modify, using a number or an activity name
-   * @returns {import('@m-ld/m-ld').Describe} or `undefined` if not interpretable
+   * @returns {Describe} or `undefined` if not interpretable
    */
   describeSelected(selector) {
     if (typeof selector == 'number') {

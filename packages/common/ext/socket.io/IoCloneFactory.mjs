@@ -1,5 +1,5 @@
 import { CloneFactory, Env, resolveGateway } from '../../index.mjs';
-import { IoRemotes } from '@m-ld/m-ld/dist/socket.io';
+import { IoRemotes } from '@m-ld/m-ld/ext/socket.io';
 import LOG from 'loglevel';
 
 export default class IoCloneFactory extends CloneFactory {

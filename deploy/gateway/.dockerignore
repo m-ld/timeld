@@ -1,4 +1,4 @@
-./docker/deploy.cmd
-./docker/Dockerfile
-./docker/gateway-os-update.sh
+docker/deploy.cmd
+docker/Dockerfile
+docker/gateway-os-update.sh
 README.md

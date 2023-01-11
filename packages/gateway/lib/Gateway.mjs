@@ -1,12 +1,12 @@
 import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
-import { uuid } from '@m-ld/m-ld';
-import { AuthKey, BaseGateway, Env, safeRefsIn, timeldContext } from 'timeld-common';
+import { propertyValue, Reference, uuid } from '@m-ld/m-ld';
+import { AuthKey, BaseGateway, Env, timeldContext, UserKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
-import { Ask, accountHasTimesheet } from './statements.mjs';
+import { accountHasTimesheet } from './statements.mjs';
 import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
@@ -18,11 +18,13 @@ export default class Gateway extends BaseGateway {
    * @param {TimeldGatewayConfig} config
    * @param {CloneFactory} cloneFactory m-ld clone creation function
    * @param {AuthKeyStore} keyStore authorisation key store
+   * @param {import('./AuditLogger.mjs').AuditLogger} auditLogger
    */
   constructor(env,
     config,
     cloneFactory,
-    keyStore
+    keyStore,
+    auditLogger
   ) {
     super(config['@domain']);
     this.env = env;
@@ -34,8 +36,10 @@ export default class Gateway extends BaseGateway {
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
     this.authKey = AuthKey.fromString(config.auth.key);
+    this.machineKey = UserKey.fromConfig(config);
     this.cloneFactory = cloneFactory;
     this.keyStore = /**@type {AuthKeyStore}*/keyStore;
+    this.auditLogger = auditLogger;
     this.timesheetDomains = /**@type {{ [name: string]: MeldClone }}*/{};
     this.connectors = /**@type {{ [id: string]: ConnectorExtension }}*/{};
     this.subs = new Subscription();
@@ -45,8 +49,6 @@ export default class Gateway extends BaseGateway {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
     this.domain = await this.cloneFactory.clone(this.config, dataDir);
-    // TODO: This is for the DomainKeyStore, should be in the interface
-    this.keyStore.state = this.domain;
     await this.domain.status.becomes({ outdated: false });
     // Enliven all timesheets and connectors already in the domain
     await new Promise(resolve => {
@@ -82,10 +84,10 @@ export default class Gateway extends BaseGateway {
     // noinspection JSCheckFunctionSignatures
     return Promise.all([
       ...update['@delete'].map(subject => Promise.all(
-        safeRefsIn(subject, 'timesheet').map(tsRef =>
+        propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
           this.timesheetRemoved(this.ownedRefAsId(tsRef))))),
       ...update['@insert'].map(subject => Promise.all(
-        safeRefsIn(subject, 'timesheet').map(tsRef =>
+        propertyValue(subject, 'timesheet', Array, Reference).map(tsRef =>
           this.timesheetAdded(this.ownedRefAsId(tsRef)))))
     ]);
   }
@@ -178,11 +180,13 @@ export default class Gateway extends BaseGateway {
       '@id': uuid(), '@domain': tsId.toDomain()
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
-    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId));
-    // Attach connector listener
+    const principal = { '@id': this.absoluteId('/') };
+    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId), principal);
+    // Attach change listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
     ts.follow(async (update, state) => {
+      this.auditLogger.log(tsId, update);
       for (let connector of Object.values(this.connectors)) {
         if (connector.appliesTo.includes(tsIri)) {
           try {
@@ -194,7 +198,32 @@ export default class Gateway extends BaseGateway {
         }
       }
     });
+    if (genesis) {
+      // Add our machine identity and key to the timesheet for signing
+      await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.machineKey);
+    }
     return this.timesheetDomains[tsId.toDomain()] = ts;
+  }
+
+  /**
+   *
+   * @param {MeldClone} ts
+   * @param {string} iri gateway-relative or absolute IRI
+   * @param {'Account'|'Gateway'} type note vocabulary is common between gw and ts
+   * @param {UserKey} key
+   * @returns {Promise<void>}
+   */
+  async writePrincipalToTimesheet(
+    ts,
+    iri,
+    type,
+    key
+  ) {
+    await ts.write({
+      '@id': this.absoluteId(iri),
+      '@type': type,
+      key: key.toJSON(true)
+    });
   }
 
   getDataPath(tsId) {
@@ -293,32 +322,39 @@ export default class Gateway extends BaseGateway {
    * The caller must have already checked user access to the timesheet.
    *
    * @param {AccountOwnedId} tsId
+   * @param {Account} user
+   * @param {string} keyid
    * @returns {Promise<Partial<MeldConfig>>}
    */
-  async timesheetConfig(tsId) {
-    // Do we already have a clone of this timesheet?
-    if (!(tsId.toDomain() in this.timesheetDomains)) {
-      // Use m-ld write locking to guard against API race conditions
-      await this.domain.write(async state => {
+  async timesheetConfig(tsId, { acc: user, keyid }) {
+    const tsDomain = tsId.toDomain();
+    // Use m-ld write locking to guard against API race conditions
+    await this.domain.write(async state => {
+      // Do we already have a clone of this timesheet?
+      let ts = this.timesheetDomains[tsDomain];
+      if (ts == null) {
         // Genesis if the timesheet is not already in the account
-        await this.initTimesheet(tsId, await this.isGenesisTs(state, tsId));
+        ts = await this.initTimesheet(tsId, await this.isGenesisTs(state, tsId));
         // Ensure the timesheet is in the domain
-        await state.write(accountHasTimesheet(tsId));
-      });
-    }
+        state = await state.write(accountHasTimesheet(tsId));
+      }
+      // Ensure that the account is in the timesheet for signing
+      await this.writePrincipalToTimesheet(
+        ts, user.name, 'Account', await user.key(state, keyid));
+    });
     // Return the config required for a new clone, using some of our config
     return Object.assign({
-      '@domain': tsId.toDomain(), genesis: false // Definitely not genesis
+      '@domain': tsDomain, genesis: false // Definitely not genesis
     }, this.cloneFactory.reusableConfig(this.config));
   }
 
   /**
-   * @param {import('@m-ld/m-ld').MeldReadState} state
+   * @param {MeldReadState} state
    * @param {AccountOwnedId} tsId
    * @returns {Promise<boolean>}
    */
   async isGenesisTs(state, tsId) {
-    return !(await new Ask(state).exists(accountHasTimesheet(tsId)));
+    return !(await state.ask({ '@where': accountHasTimesheet(tsId) }));
   }
 
   /**
@@ -376,7 +412,7 @@ export default class Gateway extends BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} ts
+   * @param {GraphSubject} ts
    * @returns {Promise<Results>}
    */
   reportTimesheet = async ts => {

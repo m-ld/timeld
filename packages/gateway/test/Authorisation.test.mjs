@@ -1,7 +1,7 @@
 // noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import Authorization from '../lib/Authorization.mjs';
-import { AccountOwnedId } from 'timeld-common';
+import { AccountOwnedId, UserKey } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import * as errors from '../rest/errors.mjs';
 import AuthKey from 'timeld-common/lib/AuthKey.mjs';
@@ -19,8 +19,10 @@ describe('Authorization helper', () => {
   });
 
   test('initialises from bearer', async () => {
-    const jwt = jsonwebtoken.sign({}, 'secret', {
-      expiresIn: '1m', keyid: 'keyid', subject: 'test'
+    const authKey = AuthKey.fromString('appid.keyid:secret');
+    const userKey = UserKey.generate(authKey);
+    const jwt = await userKey.signJwt({}, authKey, {
+      expiresIn: '1m', subject: 'test'
     });
     // noinspection JSCheckFunctionSignatures
     const auth = Authorization.fromRequest({
@@ -30,9 +32,11 @@ describe('Authorization helper', () => {
     expect(auth.user).toBe('test');
     expect(auth.jwt).toBe(jwt);
 
-    account.authorise.mockImplementation(() => ({ key: AuthKey.fromString('appid.keyid:secret') }));
+    account.authorise.mockImplementation(() => userKey);
     const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
-    await auth.verifyUser(gateway, access);
+    const { acc, keyid } = await auth.verifyUser(gateway, access);
+    expect(acc).toBe(account);
+    expect(keyid).toBe('keyid');
     expect(account.authorise).toBeCalledWith('keyid', access);
   });
 
@@ -76,7 +80,8 @@ describe('Authorization helper', () => {
     expect(auth.user).toBe('test');
     expect(auth.key).toBe('appid.keyid:secret');
 
-    account.authorise.mockImplementation(() => ({ key: 'appid.keyid:secret' }));
+    const userKey = UserKey.generate('appid.keyid:secret');
+    account.authorise.mockImplementation(() => userKey);
     const access = { id: AccountOwnedId.fromString('acc/test@ex.org'), forWrite: 'Timesheet' };
     await auth.verifyUser(gateway, access);
     expect(account.authorise).toBeCalledWith('keyid', access);

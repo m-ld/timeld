@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { IoRemotesService } from '@m-ld/m-ld/dist/socket.io-server';
+import { IoRemotesService } from '@m-ld/m-ld/ext/socket.io-server';
 import Authorization from '../lib/Authorization.mjs';
 import { AccountOwnedId } from 'timeld-common';
 import { ForbiddenError } from './errors.mjs';

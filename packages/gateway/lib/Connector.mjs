@@ -1,5 +1,5 @@
-import { array, propertyValue } from '@m-ld/m-ld';
-import { idSet, safeRefsIn } from 'timeld-common/lib/util.mjs';
+import { array, propertyValue, Reference } from '@m-ld/m-ld';
+import { idSet } from 'timeld-common/lib/util.mjs';
 import { Readable } from 'stream';
 import { Subscription } from 'rxjs';
 import LOG from 'loglevel';
@@ -55,7 +55,7 @@ export default class ConnectorExtension {
     // noinspection JSCheckFunctionSignatures
     return new ConnectorExtension({
       module: propertyValue(src, 'module', String),
-      appliesTo: idSet(safeRefsIn(src, 'appliesTo')),
+      appliesTo: idSet(propertyValue(src, 'appliesTo', Array, Reference)),
       config: propertyValue(src, 'config', Array, String).map(JSON.parse)[0]
     }, src);
   }

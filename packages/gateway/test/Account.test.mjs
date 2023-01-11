@@ -1,9 +1,9 @@
 // noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
 import { clone as meldClone, uuid } from '@m-ld/m-ld';
-import { MeldMemDown } from '@m-ld/m-ld/dist/memdown';
+import { MemoryLevel } from 'memory-level';
 import { DeadRemotes } from 'timeld-common/test/fixtures.mjs';
-import { AccountOwnedId, AuthKey, BaseGateway, timeldContext } from 'timeld-common';
+import { AccountOwnedId, AuthKey, BaseGateway, timeldContext, UserKey } from 'timeld-common';
 import Account from '../lib/Account.mjs';
 
 /**
@@ -12,6 +12,11 @@ import Account from '../lib/Account.mjs';
  */
 describe('Gateway account', () => {
   let gateway;
+  let /**@type UserKey*/userKey;
+
+  beforeAll(() => {
+    userKey = UserKey.generate('appid.keyid:secret');
+  });
 
   beforeEach(async () => {
     const config = {
@@ -21,7 +26,7 @@ describe('Gateway account', () => {
       genesis: true
     };
     // noinspection JSCheckFunctionSignatures
-    const domain = await meldClone(new MeldMemDown(), DeadRemotes, config);
+    const domain = await meldClone(new MemoryLevel(), DeadRemotes, config);
     gateway = new class extends BaseGateway {
       config = config;
       domain = domain;
@@ -50,7 +55,7 @@ describe('Gateway account', () => {
       '@type': 'Account',
       email: ['test@ex.org'],
       'vf:primaryAccountable': [{ '@id': 'user1' }],
-      keyid: ['keyid'],
+      key: [{ '@id': '.keyid' }],
       timesheet: [{ '@id': 'test/ts1' }],
       project: []
     });
@@ -58,32 +63,44 @@ describe('Gateway account', () => {
 
   test('activate', async () => {
     const acc = new Account(gateway, { name: 'test' });
+    await gateway.domain.write(acc.toJSON());
     gateway.keyStore.mintKey.mockImplementation(name => Promise.resolve({
       key: AuthKey.fromString('appid.keyid:secret'), name, revoked: false
     }));
-    const key = await acc.activate('test@ex.org');
+    const keyConfig = await acc.activate('test@ex.org');
     expect(gateway.keyStore.mintKey).toBeCalledWith('test@ex.org');
     expect(acc.emails).toEqual(new Set(['test@ex.org']));
     expect(acc.keyids).toEqual(new Set(['keyid']));
-    expect(key).toBe('appid.keyid:secret');
+    expect(keyConfig.auth.key).toBe('appid.keyid:secret');
     await expect(gateway.domain.get('test')).resolves.toEqual({
       '@id': 'test',
       '@type': 'Account',
       email: 'test@ex.org',
-      keyid: 'keyid'
+      key: { '@id': '.keyid' }
+    });
+    await expect(gateway.domain.get('.keyid')).resolves.toEqual({
+      '@id': '.keyid',
+      '@type': 'UserKey',
+      public: {
+        '@type': 'http://www.w3.org/2001/XMLSchema#base64Binary',
+        '@value': keyConfig.key.public
+      },
+      private: {
+        '@type': 'http://www.w3.org/2001/XMLSchema#base64Binary',
+        '@value': keyConfig.key.private
+      },
+      revoked: false
     });
   });
 
   test('authorise user for no particular owned object', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(async (keyid, getAuthorisedTsIds) => {
       await expect(getAuthorisedTsIds()).resolves.toEqual([]);
-      return {
-        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
-      };
+      return false;
     });
     await expect(acc.authorise('keyid')).resolves.toMatchObject({});
     expect(gateway.keyStore.pingKey).toBeCalledWith('keyid', expect.any(Function));
@@ -91,15 +108,13 @@ describe('Gateway account', () => {
 
   test('authorise new timesheet in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
     gateway.keyStore.pingKey.mockImplementation(async (keyid, getAuthorisedTsIds) => {
       await expect(getAuthorisedTsIds()).resolves.toEqual(
         [AccountOwnedId.fromString('test/ts1@ex.org')]);
-      return {
-        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
-      };
+      return false;
     });
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -109,7 +124,7 @@ describe('Gateway account', () => {
 
   test('authorise existing timesheet in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON(),
       timesheet: [
         { '@id': 'test/ts1', '@type': 'Timesheet' },
         { '@id': 'test/ts2', '@type': 'Timesheet' }
@@ -121,9 +136,7 @@ describe('Gateway account', () => {
         AccountOwnedId.fromString('test/ts1@ex.org'),
         AccountOwnedId.fromString('test/ts2@ex.org')
       ]);
-      return {
-        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
-      };
+      return false;
     });
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
@@ -133,7 +146,7 @@ describe('Gateway account', () => {
 
   test('authorise new timesheet in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
     }]);
@@ -142,9 +155,7 @@ describe('Gateway account', () => {
       await expect(getAuthorisedTsIds()).resolves.toEqual([
         AccountOwnedId.fromString('org1/ts1@ex.org')
       ]);
-      return {
-        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
-      };
+      return false;
     });
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -154,7 +165,7 @@ describe('Gateway account', () => {
 
   test('authorise existing timesheet in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON(),
       timesheet: { '@id': 'test/ts1', '@type': 'Timesheet' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
@@ -166,9 +177,7 @@ describe('Gateway account', () => {
         AccountOwnedId.fromString('test/ts1@ex.org'),
         AccountOwnedId.fromString('org1/ts1@ex.org')
       ]);
-      return {
-        key: AuthKey.fromString('appid.keyid:secret'), name: 'test@ex.org', revoked: false
-      };
+      return false;
     });
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
@@ -178,16 +187,14 @@ describe('Gateway account', () => {
 
   test('authorise to read organisation timesheet in user project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON(),
       project: { '@id': 'test/pr1', '@type': 'Project' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
       timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org')
     })).resolves.toMatchObject({});
@@ -195,7 +202,7 @@ describe('Gateway account', () => {
 
   test('authorise to read organisation timesheet in organisation project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
       project: { '@id': 'org1/pr1', '@type': 'Project' }
@@ -204,9 +211,7 @@ describe('Gateway account', () => {
       timesheet: { '@id': 'org2/ts1', '@type': 'Timesheet', project: { '@id': 'org1/pr1' } }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org2/ts1@ex.org')
     })).resolves.toMatchObject({});
@@ -214,16 +219,14 @@ describe('Gateway account', () => {
 
   test('unauthorised to write timesheet in organisation project', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON(),
       project: { '@id': 'test/pr1', '@type': 'Project' }
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'someone-else' },
       timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet', project: { '@id': 'test/pr1' } }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
@@ -231,15 +234,13 @@ describe('Gateway account', () => {
 
   test('unauthorised if not an organisation admin', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' },
       timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet' }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
@@ -247,14 +248,12 @@ describe('Gateway account', () => {
 
   test('unauthorised for create if not an organisation admin', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'fred' }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
@@ -264,9 +263,7 @@ describe('Gateway account', () => {
     const acc = new Account(gateway, {
       name: 'test', keyids: [], timesheets: [{ '@id': 'test/ts1' }]
     });
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
@@ -286,9 +283,7 @@ describe('Gateway account', () => {
     const acc = new Account(gateway, {
       name: 'test', keyids: ['keyid'], timesheets: [{ '@id': 'test/ts1' }]
     });
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: true
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(true));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/ts1@ex.org'), forWrite: 'Timesheet'
     })).rejects.toThrowError();
@@ -296,13 +291,11 @@ describe('Gateway account', () => {
 
   test('authorise project for read in user account', async () => {
     await gateway.domain.write({
-      '@id': 'test', '@type': 'Account', keyid: 'keyid',
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON(),
       project: { '@id': 'test/pr1', '@type': 'Project' }
     });
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('test/pr1@ex.org')
     })).resolves.toMatchObject({});
@@ -310,15 +303,13 @@ describe('Gateway account', () => {
 
   test('authorise project for read in organisation account', async () => {
     await gateway.domain.write([{
-      '@id': 'test', '@type': 'Account', keyid: 'keyid'
+      '@id': 'test', '@type': 'Account', key: userKey.toJSON()
     }, {
       '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' },
       project: { '@id': 'org1/pr1', '@type': 'Project' }
     }]);
     const acc = Account.fromJSON(gateway, await gateway.domain.get('test'));
-    gateway.keyStore.pingKey.mockImplementation(keyid => Promise.resolve({
-      key: AuthKey.fromString(`appid.${keyid}:secret`), name: 'test@ex.org', revoked: false
-    }));
+    gateway.keyStore.pingKey.mockImplementation(() => Promise.resolve(false));
     await expect(acc.authorise('keyid', {
       id: AccountOwnedId.fromString('org1/pr1@ex.org')
     })).resolves.toMatchObject({});

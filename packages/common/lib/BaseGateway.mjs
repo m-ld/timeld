@@ -1,4 +1,5 @@
 import { AccountOwnedId } from '../index.mjs';
+import { domainRelativeIri } from './util.mjs';
 
 /**
  * Utility base class for things that represent a Gateway
@@ -14,7 +15,7 @@ export default class BaseGateway {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').Reference} tsRef
+   * @param {Reference} tsRef
    * @returns {AccountOwnedId}
    */
   ownedRefAsId(tsRef) {
@@ -26,5 +27,9 @@ export default class BaseGateway {
     return new AccountOwnedId({
       gateway: this.domainName, account, name
     });
+  }
+
+  absoluteId(iri) {
+    return domainRelativeIri(iri, this.domainName);
   }
 }

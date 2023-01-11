@@ -10,6 +10,7 @@ import BaseGateway from './lib/BaseGateway.mjs';
  * @typedef {import('@m-ld/m-ld').MeldClone} MeldClone
  * @typedef {import('@m-ld/m-ld').ConstructRemotes} ConstructRemotes
  * @typedef {import('@m-ld/m-ld').MeldConfig} MeldConfig
+ * @typedef {import('@m-ld/m-ld').InitialApp} InitialApp
  * @typedef {import('@m-ld/m-ld').AppPrincipal} AppPrincipal
  * @typedef {import('@m-ld/m-ld').GraphSubject} GraphSubject
  * @typedef {import('@m-ld/m-ld').Subject} Subject
@@ -20,13 +21,13 @@ import BaseGateway from './lib/BaseGateway.mjs';
  * @typedef {import('@m-ld/m-ld').MeldUpdate} MeldUpdate
  * @typedef {import('@m-ld/m-ld').Query} Query
  * @typedef {import('@m-ld/m-ld').Read} Read
+ * @typedef {import('@m-ld/m-ld').Write} Write
+ * @typedef {import('@m-ld/m-ld').Describe} Describe
  */
 
 /**
  * The basic config used by both CLI and gateway
- * @typedef {object} _TimeldConfig
- * @property {string} auth.key Authorisation key
- * @typedef {_TimeldConfig & MeldConfig} TimeldConfig
+ * @typedef {UserKeyConfig & MeldConfig} TimeldConfig
  */
 
 export {
@@ -44,14 +45,15 @@ export {
   Entry,
   Project,
   Timesheet,
-  Session
+  Session,
+  UserKey
 } from './data/index.mjs';
 
 export {
   idSet,
   mustBe,
-  dateJsonLd,
-  safeRefsIn,
+  signJwt,
+  verifyJwt,
   isReference,
   resolveGateway,
   domainRelativeIri,

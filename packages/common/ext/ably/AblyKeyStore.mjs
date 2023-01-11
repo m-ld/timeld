@@ -39,7 +39,7 @@ export default class AblyKeyStore {
   async pingKey(keyid, getAuthorisedTsIds) {
     return this.ablyToAuthDetail(await this.fetchJson(`keys/${keyid}`, {}, {
       method: 'PATCH', body: { capability: this.keyCapability(...await getAuthorisedTsIds()) }
-    }));
+    })).revoked;
   }
 
   /**

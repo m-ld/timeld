@@ -41,7 +41,7 @@ class DisplayFormat {
 
   // noinspection JSCheckFunctionSignatures
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @returns {string | Promise<string>}
    */
   async stringify(src) {
@@ -59,7 +59,7 @@ export class DefaultFormat extends DisplayFormat {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @returns {Promise<string>}
    */
   async stringify(src) {
@@ -104,7 +104,7 @@ export class TableFormat extends DisplayFormat {
   }
 
   /**
-   * @param {import('@m-ld/m-ld').GraphSubject} src
+   * @param {GraphSubject} src
    * @returns {string}
    */
   stringify(src) {
