@@ -1,6 +1,6 @@
 {
   "name": "timeld-caldav",
-  "version": "0.2.0-edge.0",
+  "version": "0.2.0-connector-http-signing.0",
   "description": "timeld - CalDAV connector",
   "main": "index.mjs",
   "scripts": {

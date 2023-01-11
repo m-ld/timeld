@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.3.0-edge.2",
+  "version": "0.3.0-connector-http-signing.0",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
@@ -44,8 +44,8 @@
     "socket.io-client": "^4.5.4",
     "timeld-caldav": "^0.2.0-edge.0",
     "timeld-common": "^0.2.0-edge.2",
-    "timeld-prejournal": "^0.2.0-edge.0",
-    "timeld-tiki": "^0.2.0-edge.0",
+    "timeld-prejournal": "^0.2.0-connector-http-signing.0",
+    "timeld-tiki": "^0.2.0-connector-http-signing.0",
     "validator": "^13.7.0"
   },
   "devDependencies": {

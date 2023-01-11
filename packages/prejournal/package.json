@@ -1,6 +1,6 @@
 {
   "name": "timeld-prejournal",
-  "version": "0.2.0-edge.0",
+  "version": "0.2.0-connector-http-signing.0",
   "description": "timeld - prejournal connector",
   "main": "index.mjs",
   "scripts": {
