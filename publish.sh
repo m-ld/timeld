@@ -41,6 +41,7 @@ if npm run test; then
     echo Versioning the top-level project and publishing packages as "$TAG"
     npm version "$VERSION" --preid "$PRE_ID" --force &&
       npm publish -ws --tag "$TAG" &&
+      git push origin "v$(npm run ver -s)" &&
       git push
   fi
 fi

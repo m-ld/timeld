@@ -108,6 +108,5 @@ dist
 .tern-port
 
 # Miscellaneous
-.cmd
+*.cmd
 Progress-notes.md
-ps.sh
