@@ -1,6 +1,6 @@
 {
   "name": "timeld-mite",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "timeld - mite.yo.lk connector",
   "main": "index.mjs",
   "devDependencies": {},
