@@ -1,6 +1,6 @@
 {
   "name": "timeld-common",
-  "version": "0.2.0-connector-http-signing.0",
+  "version": "0.2.1-connector-http-signing.0",
   "description": "timeld library",
   "type": "module",
   "main": "index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "timeld-prejournal",
-  "version": "0.2.0-connector-http-signing.0",
+  "version": "0.2.1-connector-http-signing.0",
   "description": "timeld - prejournal connector",
   "main": "index.mjs",
   "scripts": {
@@ -25,6 +25,6 @@
     "@zeit/fetch": "^6.0.0",
     "loglevel": "^1.8.1",
     "rx-flowable": "^0.1.2",
-    "timeld-common": "^0.2.0-edge.2"
+    "timeld-common": "^0.2.1-connector-http-signing.0"
   }
 }
