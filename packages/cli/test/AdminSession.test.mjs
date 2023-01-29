@@ -24,7 +24,8 @@ describe('Administration session', () => {
     // noinspection JSCheckFunctionSignatures
     gateway.initTimesheet.mockResolvedValue({
       // Required for connector revup
-      write: jest.fn(proc => proc({}))
+      write: jest.fn(proc => proc({})),
+      status: { value: { ticks: 1 } }
     });
     errLines = jest.fn();
     outLines = jest.fn();
@@ -154,7 +155,7 @@ describe('Administration session', () => {
         '--timesheet ts1 --config.uri http://ext.org/',
         outLines, errLines);
       expect(MockConnector.created.syncTimesheet).toHaveBeenCalledWith(
-        AccountOwnedId.fromString('test/ts1@ex.org'), expect.any(Object));
+        AccountOwnedId.fromString('test/ts1@ex.org'), expect.any(Object), 1);
       expect(MockConnector.created.ext).toMatchObject({
         config: JSON.stringify({ uri: 'http://ext.org/' })
       });

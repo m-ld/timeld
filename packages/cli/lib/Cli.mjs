@@ -186,7 +186,7 @@ export default class Cli {
 
   /**
    * @param {TimeldCliConfig} config
-   * @param {AppPrincipal} principal
+   * @param {TimeldPrincipal} principal
    * @returns {Promise<{meld: MeldClone, logFile: string}>}
    */
   async createMeldClone(config, principal) {

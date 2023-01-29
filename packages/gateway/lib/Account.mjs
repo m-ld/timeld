@@ -268,7 +268,8 @@ export default class Account {
     const tsClone = await this.gateway.initTimesheet(tsId, false);
     // TODO: This holds locks on both gateway and timesheet state!
     // Note this may mutate the extension object
-    await tsClone.write(state => ext.syncTimesheet(tsId, state));
+    await tsClone.write(state =>
+      ext.syncTimesheet(tsId, state, tsClone.status.value.ticks));
   }
 
   /**

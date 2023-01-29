@@ -48,7 +48,7 @@ abstract class Connector <<javascript>> {
   {static} configKey : string
   {static} contentType : string
   constructor(config, ext)
-  syncTimesheet(tsId, state): Observable
+  syncTimesheet(tsId, state, tick): Observable
   entryUpdate(tsId, update, state)
   reportTimesheet(tsId, state) : Stream
   accountUpdate(update)

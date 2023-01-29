@@ -1,6 +1,6 @@
 {
   "name": "timeld-gateway",
-  "version": "0.3.0-edge.2",
+  "version": "0.3.1-connector-http-signing.0",
   "description": "Timeld Gateway server",
   "main": "server.mjs",
   "scripts": {
@@ -25,10 +25,12 @@
   },
   "homepage": "https://github.com/m-ld/timeld#readme",
   "dependencies": {
+    "@digitalbazaar/http-digest-header": "^2.0.0",
     "@m-ld/io-web-runtime": "^0.2.2",
     "@m-ld/m-ld": "^0.9.1",
     "cryptr": "^6.1.0",
     "http-graceful-shutdown": "^3.1.12",
+    "http-message-signatures": "^0.1.2",
     "jtd": "^0.1.1",
     "loglevel": "^1.8.1",
     "ndjson": "^2.0.0",
@@ -40,10 +42,10 @@
     "simple-peer": "^9.11.1",
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.5.4",
-    "timeld-caldav": "^0.2.0-edge.0",
-    "timeld-common": "^0.2.0-edge.2",
-    "timeld-prejournal": "^0.2.0-edge.0",
-    "timeld-tiki": "^0.2.0-edge.0",
+    "timeld-caldav": "^0.2.1-connector-http-signing.0",
+    "timeld-common": "^0.2.1-connector-http-signing.0",
+    "timeld-prejournal": "^0.2.1-connector-http-signing.0",
+    "timeld-tiki": "^0.2.1-connector-http-signing.0",
     "validator": "^13.7.0"
   },
   "devDependencies": {

@@ -12,7 +12,7 @@ export const ENTRY_FORMAT_OPTIONS = {
   default: 'default'
 };
 
-/** @type {Format} */
+/** @type {ResultsFormat} */
 export const JSON_LD_GRAPH = {
   opening: '{ "@graph": [', closing: '] }',
   separator: ',\n',
@@ -22,7 +22,7 @@ export const JSON_LD_GRAPH = {
 /**
  * @param {EntryFormatName} format
  * @param {(id: string) => *} [getIndex]
- * @returns {Format}
+ * @returns {ResultsFormat}
  */
 export function getSubjectFormat(format, getIndex) {
   return {
@@ -34,7 +34,7 @@ export function getSubjectFormat(format, getIndex) {
 
 /**
  * @abstract
- * @implements Format
+ * @implements ResultsFormat
  */
 class DisplayFormat {
   separator = '\n';

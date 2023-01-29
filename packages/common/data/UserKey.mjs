@@ -126,6 +126,7 @@ export default class UserKey {
     this.keyid = keyid;
     this.name = name;
     this.publicKey = Buffer.from(publicKey);
+    /**@private*/
     this.privateKey = privateKey ? Buffer.from(privateKey) : undefined;
     this.revoked = revoked;
   }
@@ -193,6 +194,15 @@ export default class UserKey {
 
   /**
    * @param {AuthKey} authKey
+   * @returns {[string, KeyObject]} Arguments for HTTP signing
+   * @see https://httpwg.org/http-extensions/draft-ietf-httpbis-message-signatures.html
+   */
+  getSignHttpArgs(authKey) {
+    return ['rsa-v1_5-sha256', this.getCryptoPrivateKey(authKey)];
+  }
+
+  /**
+   * @param {AuthKey} authKey
    * @private
    */
   getCryptoPrivateKey(authKey) {
@@ -203,7 +213,7 @@ export default class UserKey {
     });
   }
 
-  /** @private */
+  /** @public */
   getCryptoPublicKey() {
     return createPublicKey({
       key: this.publicKey,

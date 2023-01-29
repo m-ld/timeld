@@ -4,8 +4,10 @@ import { once } from 'events';
 let movementId = 0;
 
 const server = createServer(async (req, res) => {
-  console.log(req.url);
-  console.log(req.headers);
+  console.log(req.method, req.url);
+  for (let i = 0; i < req.rawHeaders.length; i++)
+    console.log(`${req.rawHeaders[i]}:`, req.rawHeaders[++i]);
+  console.log('');
   req.pipe(process.stdout, { end: false });
   await once(req, 'end');
   console.log('\n###');

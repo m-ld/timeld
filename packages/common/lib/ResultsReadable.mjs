@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 
 /**
- * @typedef {object} Format
+ * @typedef {object} ResultsFormat
  * @property {string} [opening]
  * @property {string} [closing]
  * @property {string} separator
@@ -15,7 +15,7 @@ import { Readable } from 'stream';
 export default class ResultsReadable extends Readable {
   /**
    * @param {Results} results
-   * @param {Format} format
+   * @param {ResultsFormat} format
    * @param {import('stream').ReadableOptions} [opts]
    */
   constructor(results, format, opts) {

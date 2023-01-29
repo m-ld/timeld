@@ -2,7 +2,7 @@ import isEmail from 'validator/lib/isEmail.js';
 import isInt from 'validator/lib/isInt.js';
 import isJWT from 'validator/lib/isJWT.js';
 import Cryptr from 'cryptr';
-import { AuthKey, BaseGateway, resolveGateway, UserKey } from 'timeld-common';
+import { BaseGateway, resolveGateway, TimeldPrincipal } from 'timeld-common';
 import { consume } from 'rx-flowable/consume';
 import { flatMap } from 'rx-flowable/operators';
 import setupFetch from '@zeit/fetch';
@@ -17,15 +17,15 @@ export default class GatewayClient extends BaseGateway {
     const { root, domainName } = resolveGateway(config.gateway);
     super(domainName);
     this.user = config.user;
-    this.authKey = config.auth?.key ? AuthKey.fromString(config.auth.key) : null;
-    this.userKey = config.key ? UserKey.fromConfig(config) : null;
+    if (config.auth?.key) {
+      /**
+       * Resolve our username against the gateway to get the canonical user URI.
+       * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
+       */
+      this.principal = new TimeldPrincipal(this.absoluteId(this.user), config);
+    }
     this.gatewayRoot = root;
     // noinspection HttpUrlsUsage
-    /**
-     * Resolve our username against the gateway to get the canonical user URI.
-     * Gateway-based URIs use HTTP by default (see also {@link AccountOwnedId}).
-     */
-    this.principalId = this.absoluteId(this.user);
     this.fetch = fetch;
   }
 
@@ -65,7 +65,7 @@ export default class GatewayClient extends BaseGateway {
    * @param {(question: string) => Promise<string>} ask
    */
   async activate(ask) {
-    if (this.authKey == null) {
+    if (this.principal == null) {
       const email = await ask(
         'Please enter your email address to register this device: ');
       if (!isEmail(email))
@@ -83,8 +83,7 @@ export default class GatewayClient extends BaseGateway {
       const keyConfig = /**@type UserKeyConfig*/ await this
         .fetchApi(`key/${this.user}`, { jwt, user: false })
         .then(checkSuccessRes).then(resJson);
-      this.authKey = AuthKey.fromString(keyConfig.auth.key);
-      this.userKey = UserKey.fromConfig(keyConfig);
+      this.principal = new TimeldPrincipal(this.absoluteId(this.user), keyConfig);
     }
   }
 
@@ -92,8 +91,8 @@ export default class GatewayClient extends BaseGateway {
    * @returns {UserKeyConfig | undefined}
    */
   get accessConfig() {
-    if (this.userKey != null)
-      return this.userKey.toConfig(this.authKey);
+    if (this.principal != null)
+      return this.principal.toConfig();
   }
 
   /**
@@ -141,7 +140,7 @@ export default class GatewayClient extends BaseGateway {
    * @returns {Promise<string>} JWT
    */
   userJwt() {
-    return this.userKey.signJwt({}, this.authKey, {
+    return this.principal.signJwt({}, {
       subject: this.user, expiresIn: '1m'
     });
   }

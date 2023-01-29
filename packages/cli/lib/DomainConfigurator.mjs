@@ -1,5 +1,5 @@
 import { uuid } from '@m-ld/m-ld';
-import { AuthKey, Env, timeldContext } from 'timeld-common';
+import { AuthKey, Env, timeldContext, TimeldPrincipal } from 'timeld-common';
 import isURL from 'validator/lib/isURL.js';
 import isFQDN from 'validator/lib/isFQDN.js';
 
@@ -18,7 +18,7 @@ export default class DomainConfigurator {
   }
 
   /**
-   * @returns {Promise<{ config: TimeldCliConfig, principal: AppPrincipal }>}
+   * @returns {Promise<{ config: TimeldCliConfig, principal: TimeldPrincipal }>}
    */
   async load() {
     const { config: remoteConfig, principal } = await this.fetchConfig();
@@ -48,7 +48,7 @@ export default class DomainConfigurator {
    * - --no-gateway requires long-lived ably key and uses Ably App ID as base
    * domain
    *
-   * @returns {Promise<{ config: Partial<MeldConfig>, principal: AppPrincipal }>}
+   * @returns {Promise<{ config: Partial<MeldConfig>, principal: TimeldPrincipal }>}
    * @private
    */
   async fetchConfig() {
@@ -56,6 +56,7 @@ export default class DomainConfigurator {
       if (!isURL(this.argv.user))
         throw 'Gateway-less use requires the user to be identified by a URL.';
       // see https://faqs.ably.com/how-do-i-find-my-app-id
+      // noinspection JSUnresolvedVariable
       const ablyKey = this.argv['ably']?.key;
       if (ablyKey == null)
         throw 'Gateway-less use requires an Ably API key.\n' +
@@ -65,13 +66,13 @@ export default class DomainConfigurator {
       return {
         config: this.noGatewayConfig(
           `timeld.${AuthKey.fromString(ablyKey).appId.toLowerCase()}`),
-        principal: { '@id': this.argv.user }
+        principal: new TimeldPrincipal(this.argv.user, this.argv)
       };
     } else {
       const config = await this.fetchGatewayConfig();
       return {
         config: Env.mergeConfig(config, this.gateway.accessConfig),
-        principal: { '@id': this.gateway.principalId }
+        principal: this.gateway.principal
       };
     }
   }

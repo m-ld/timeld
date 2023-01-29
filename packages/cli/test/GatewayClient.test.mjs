@@ -1,3 +1,5 @@
+// noinspection NpmUsedModulesInstalled,JSCheckFunctionSignatures
+
 import { describe, expect, jest, test } from '@jest/globals';
 import GatewayClient from '../lib/GatewayClient.mjs';
 import { signJwt } from '@m-ld/io-web-runtime/dist/server/auth';
@@ -14,12 +16,13 @@ describe('Gateway Client', () => {
       auth: { key: 'app.id:secret' },
       key: { public: 'publicKey', private: 'privateKey' }
     });
-    expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
-    expect(gw.userKey).toMatchObject({ keyid: 'id' });
-    expect(gw.userKey.publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
-    expect(gw.userKey.privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
+    expect(gw.principal.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
+    expect(gw.principal.userKey).toMatchObject({ keyid: 'id' });
+    expect(gw.principal.userKey.publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
+    // noinspection JSAccessibilityCheck
+    expect(gw.principal.userKey.privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
     expect(gw.domainName).toBe('timeld.org');
-    expect(gw.principalId).toBe('http://timeld.org/user');
+    expect(gw.principal['@id']).toBe('http://timeld.org/user');
   });
 
   test('activate', async () => {
@@ -46,15 +49,17 @@ describe('Gateway Client', () => {
     const gw = new GatewayClient({
       gateway: 'timeld.org', user: 'user'
     }, fetch);
-    expect(gw.authKey).toBeNull();
-    expect(gw.userKey).toBeNull();
+    expect(gw.principal).toBeUndefined();
     await gw.activate(jest.fn()
       .mockReturnValueOnce('user@timeld.org')
       .mockReturnValueOnce('111111'));
-    expect(gw.authKey).toMatchObject({ appId: 'app', keyid: 'id', secret: 'secret' });
-    expect(gw.userKey).toMatchObject({ keyid: 'id' });
-    expect(gw.userKey.publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
-    expect(gw.userKey.privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
+    expect(gw.principal).toMatchObject({
+      authKey: { appId: 'app', keyid: 'id', secret: 'secret' },
+      userKey: { keyid: 'id' }
+    });
+    const { publicKey, privateKey } = gw.principal.userKey;
+    expect(publicKey.equals(Buffer.from('publicKey', 'base64'))).toBe(true);
+    expect(privateKey.equals(Buffer.from('privateKey', 'base64'))).toBe(true);
   });
 
   test('config', async () => {

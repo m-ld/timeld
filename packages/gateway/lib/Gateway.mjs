@@ -2,7 +2,7 @@ import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
 import { propertyValue, Reference, uuid } from '@m-ld/m-ld';
-import { AuthKey, BaseGateway, Env, timeldContext, UserKey } from 'timeld-common';
+import { BaseGateway, Env, timeldContext, TimeldPrincipal } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
@@ -35,8 +35,7 @@ export default class Gateway extends BaseGateway {
     };
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
-    this.authKey = AuthKey.fromString(config.auth.key);
-    this.machineKey = UserKey.fromConfig(config);
+    this.me = new TimeldPrincipal(this.absoluteId('/'), config);
     this.cloneFactory = cloneFactory;
     this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.auditLogger = auditLogger;
@@ -180,8 +179,7 @@ export default class Gateway extends BaseGateway {
       '@id': uuid(), '@domain': tsId.toDomain()
     }), { genesis });
     LOG.info(tsId, 'ID is', config['@id']);
-    const principal = { '@id': this.absoluteId('/') };
-    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId), principal);
+    const ts = await this.cloneFactory.clone(config, await this.getDataPath(tsId), this.me);
     // Attach change listener
     // Note we have not waited for up to date, so this picks up rev-ups
     const tsIri = tsId.toRelativeIri();
@@ -200,7 +198,7 @@ export default class Gateway extends BaseGateway {
     });
     if (genesis) {
       // Add our machine identity and key to the timesheet for signing
-      await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.machineKey);
+      await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.me.userKey);
     }
     return this.timesheetDomains[tsId.toDomain()] = ts;
   }
@@ -294,7 +292,7 @@ export default class Gateway extends BaseGateway {
       throw new UnauthorizedError(
         'Email %s not registered to account %s', email, account);
     // Construct a JWT with the email, using our authorisation key
-    const { secret, keyid } = this.authKey;
+    const { secret, keyid } = this.me.authKey;
     // noinspection JSCheckFunctionSignatures
     const jwt = jsonwebtoken.sign({ email }, secret, {
       keyid, expiresIn: '10m'
@@ -312,7 +310,7 @@ export default class Gateway extends BaseGateway {
   verify(jwt) {
     // Verify the JWT was created by us
     // noinspection JSCheckFunctionSignatures
-    return jsonwebtoken.verify(jwt, this.authKey.secret);
+    return jsonwebtoken.verify(jwt, this.me.authKey.secret);
   }
 
   /**

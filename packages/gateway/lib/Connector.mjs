@@ -4,11 +4,26 @@ import { Readable } from 'stream';
 import { Subscription } from 'rxjs';
 import LOG from 'loglevel';
 import { Env } from 'timeld-common';
+import { httpis, createSigner } from 'http-message-signatures';
+import * as httpDigest from '@digitalbazaar/http-digest-header';
 
 /**
  * @interface Connector
- * @static {string} configKey used to provide the configuration
- * @static {string} contentType used to negotiate content types
+ * @typedef {
+ * new (config: Object, ext: GraphSubject, ctx: ConnectorContext) => Connector
+ * } ConnectorConstructor
+ * @property {string} configKey used to provide the configuration
+ * @property {string} contentType used to negotiate content types
+ */
+
+/**
+ * @typedef {import('http-message-signatures').RequestLike} RequestLike
+ * @typedef {(req: RequestLike) => Promise<RequestLike>} SignHttp
+ */
+
+/**
+ * @typedef {object} ConnectorContext
+ * @property {SignHttp} signHttp
  */
 
 /**
@@ -22,6 +37,7 @@ import { Env } from 'timeld-common';
  * @name Connector#syncTimesheet
  * @param {AccountOwnedId} tsId
  * @param {MeldState} [state] the local timesheet state
+ * @param {number} [tick] the local timesheet tick (for correlation)
  * @returns {Promise<import('rxjs').Observable<Update> | null>}
  */
 
@@ -96,19 +112,52 @@ export default class ConnectorExtension {
    */
   async initialise(gateway) {
     this.gateway = gateway;
-    const Impl = (await import(this.module)).default;
+    const Impl = /**@type ConnectorConstructor*/(await import(this.module)).default;
+    // noinspection JSValidateTypes Method expression is not of Function type?
     this.connector = /**@type {Connector}*/new Impl(
-      Env.mergeConfig(gateway.config[Impl.configKey], this.config), this.src);
+      Env.mergeConfig(gateway.config[Impl.configKey], this.config),
+      this.src,
+      { signHttp: req => this.signHttp(gateway, req) }
+    );
     this.contentType = Impl.contentType;
     return this;
+  }
+
+  /**
+   * @param {Gateway} gateway
+   * @param {RequestLike} req
+   * @param {number} [created] override, for tests
+   * @returns {Promise<RequestLike>}
+   */
+  async signHttp(gateway, req, { created } = {}) {
+    if (req.headers?.['X-State-ID'] == null)
+      throw new RangeError('Signed request must specify a state ID');
+    // Note: cannot use @authority
+    // https://github.com/dhensby/node-http-message-signatures/issues/54
+    const components = ['@method', '@request-target', 'content-type'];
+    if (req.body) {
+      if (typeof req.body == 'string') {
+        req.headers['Content-Digest'] = await httpDigest
+          .createHeaderValue({ data: req.body, useMultihash: true });
+        components.push('content-digest');
+      } else {
+        throw new RangeError('Non-string request bodies are not supported for signatures');
+      }
+    }
+    return httpis.sign(req, {
+      format: 'httpbis', components,
+      parameters: { created: created ?? Math.floor(Date.now() / 1000) },
+      keyId: gateway.me.authKey.keyid,
+      signer: createSigner(...gateway.me.getSignHttpArgs())
+    });
   }
 
   get name() {
     return this.connector.constructor.name;
   }
 
-  async syncTimesheet(tsId, state) {
-    const updates = await this.connector.syncTimesheet?.(tsId, state);
+  async syncTimesheet(tsId, state, tick) {
+    const updates = await this.connector.syncTimesheet?.(tsId, state, tick);
     // Do not subscribe to updates if the state has been passed
     if (updates && state == null) {
       this.subs.add(updates.subscribe(update =>

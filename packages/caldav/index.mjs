@@ -31,7 +31,7 @@ export default class CalDavConnector {
   constructor(
     config,
     ext,
-    Calendar = ScrapeGoat
+    { Calendar = ScrapeGoat }
   ) {
     const missingConfig = ['uri'].filter(k => !config[k]);
     if (missingConfig.length)
