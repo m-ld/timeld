@@ -2,7 +2,7 @@
   "name": "timeld-gateway",
   "version": "0.3.1-connector-http-signing.0",
   "description": "Timeld Gateway server",
-  "main": "server.mjs",
+  "main": "index.mjs",
   "scripts": {
     "start": "node server.mjs",
     "ver": "echo $npm_package_version"

@@ -1,13 +1,10 @@
-import Gateway from './lib/Gateway.mjs';
-import Notifier from './lib/Notifier.mjs';
 import LOG from 'loglevel';
 import rest from './rest/index.mjs';
 import gracefulShutdown from 'http-graceful-shutdown';
 import DomainKeyStore from 'timeld-common/ext/m-ld/DomainKeyStore.mjs';
 import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
 import socketIo from './rest/socket-io.mjs';
-import AuditLogger from './lib/AuditLogger.mjs';
-import GatewayEnv from './lib/GatewayEnv.mjs';
+import { Gateway, Notifier, AuditLogger, GatewayEnv } from './index.mjs';
 
 /**
  * @typedef {object} process.env required for Gateway node startup

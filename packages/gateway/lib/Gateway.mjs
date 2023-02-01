@@ -47,7 +47,7 @@ export default class Gateway extends BaseGateway {
   async initialise() {
     // Load the gateway domain
     const dataDir = await this.env.readyPath('data', 'gw');
-    this.domain = await this.cloneFactory.clone(this.config, dataDir);
+    this.domain = await this.cloneFactory.clone(this.config, dataDir, this.me);
     await this.domain.status.becomes({ outdated: false });
     // Enliven all timesheets and connectors already in the domain
     await new Promise(resolve => {

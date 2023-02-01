@@ -41,7 +41,7 @@ describe('Gateway', () => {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn()
     };
-    const authKey = AuthKey.fromString('app.id:secret')
+    const authKey = AuthKey.fromString('app.id:secret');
     config = {
       '@domain': 'ex.org',
       ...UserKey.generate(authKey).toConfig(authKey)
@@ -99,7 +99,7 @@ describe('Gateway', () => {
     });
 
     test('has cloned the gateway domain', () => {
-      expect(cloneFactory.clone.mock.calls).toMatchObject([[
+      expect(cloneFactory.clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ex.org',
@@ -107,8 +107,9 @@ describe('Gateway', () => {
           genesis: true, // has to be true because dead remotes
           auth: { key: 'app.id:secret' }
         },
-        join(tmpDir.name, 'data', 'gw')
-      ]]);
+        join(tmpDir.name, 'data', 'gw'),
+        { '@id': 'http://ex.org/' }
+      ]);
     });
 
     test('has registered account', async () => {
@@ -200,7 +201,7 @@ describe('Gateway', () => {
             '@context': timeldContext,
             genesis: true,
             auth: { key: 'app.id:secret' },
-          tls: true
+            tls: true
           },
           join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
           { '@id': 'http://ex.org/' }
@@ -233,7 +234,7 @@ describe('Gateway', () => {
             '@context': timeldContext,
             genesis: false,
             auth: { key: 'app.id:secret' },
-          tls: true
+            tls: true
           },
           join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
           { '@id': 'http://ex.org/' }

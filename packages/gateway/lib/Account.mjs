@@ -66,8 +66,7 @@ export default class Account {
   }
 
   /**
-   * Activation of a gateway account requires an initial timesheet.
-   * (This is because Ably cannot create a key without at least one capability.)
+   * Activation of a gateway account with a user email
    *
    * @param {string} email
    * @returns {UserKeyConfig} keys for the account
