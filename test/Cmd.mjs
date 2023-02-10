@@ -4,14 +4,15 @@ import { once } from 'events';
 import { configure, render } from 'cli-testing-library';
 
 // TODO https://github.com/m-ld/timeld/issues/13
-configure({ asyncUtilTimeout: 10000 });
+configure({ asyncUtilTimeout: 5000 });
+
+/** @typedef {import('cli-testing-library').RenderOptions} RenderOptions */
 
 export class Cmd {
   /**@type import('cli-testing-library').RenderResult*/running;
   /**@type import('tmp').DirSyncObject[]*/dirs = [];
   /**@type string*/root;
   /**@type boolean*/debug = false;
-
 
   constructor(...root) {
     this.root = path.join(process.cwd(), 'test', ...root);
@@ -28,31 +29,35 @@ export class Cmd {
   }
 
   /**
-   * @param {string[]} args
-   * @param {Partial<import('cli-testing-library').RenderOptions>} [opts]
+   * @param {string | (Partial<RenderOptions> & Record<string, any>)} args
    */
-  async run(args, opts) {
-    this.running = await render(process.argv[0], args, {
-      cwd: this.root, ...opts
-    });
+  async run(...args) {
+    if (this.running)
+      throw new RangeError('Already running');
+    const opts = Object.assign({ cwd: this.root },
+      ...args.filter(a => typeof a == 'object'));
+    this.running = await render(
+      process.argv[0], args.filter(a => typeof a == 'string'), opts);
     this.running.process.on('exit', (...args) => {
       if (this.debug) {
         console.log(this.root, 'exited with', ...args);
         this.running.debug();
       }
     });
+    return opts;
   }
 
-  keyboard(text) {
+  type(text) {
+    this.running.clear(); // We always want following output
     this.running.userEvent.keyboard(text, { keyboardMap });
   }
 
   async waitForExit() {
-    let exitCode = this.running.process.exitCode;
-    if (exitCode == null)
-      [exitCode] = await once(this.running.process, 'exit');
-    delete this.running;
-    return { exitCode };
+    if (this.running) {
+      if (this.running.process.exitCode == null)
+        await once(this.running.process, 'exit');
+      delete this.running;
+    }
   }
 
   async cleanup() {
@@ -66,34 +71,13 @@ export class Cmd {
   }
 }
 
-export class CliCmd extends Cmd {
-  /** @param {CliCmd} [prevCmd] */
-  constructor({ dataDir, configDir } = {}) {
-    super('cli');
-    this.dataDir = dataDir || this.createDir();
-    this.configDir = configDir || this.createDir();
-  }
-
-  async run(args, opts) {
-    return super.run([
-      path.join(process.cwd(), 'packages', 'cli', 'index.mjs')
-    ].concat(args), {
-      spawnOpts: {
-        env: {
-          TIMELD_CLI_CONFIG_PATH: this.configDir,
-          TIMELD_CLI_DATA_PATH: this.dataDir
-        }
-      }
-    });
-  }
-}
-
 /**
  * cli-testing-library/dist/user-event/keyboard/keyMap.js
  */
 export const keyboardMap = [
   // alphanumeric keys
   { code: 'Digit!', hex: '\x21' },
+  { code: 'Digit"', hex: '\x22' },
   { code: 'Digit#', hex: '\x23' },
   { code: 'Digit$', hex: '\x24' },
   { code: 'Digit%', hex: '\x25' },

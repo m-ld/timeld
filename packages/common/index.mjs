@@ -1,9 +1,10 @@
 import Env from './lib/Env.mjs';
-import { CloneFactory, TimeldPrincipal } from './lib/CloneFactory.mjs';
+import CloneFactory from './lib/CloneFactory.mjs';
 import AccountOwnedId from './lib/AccountOwnedId.mjs';
 import AuthKey from './lib/AuthKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
 import BaseGateway from './lib/BaseGateway.mjs';
+import TimeldPrincipal from './lib/TimeldPrincipal.mjs';
 
 // Useful m-ld types
 /** @typedef {import('@m-ld/m-ld').MeldClone} MeldClone */

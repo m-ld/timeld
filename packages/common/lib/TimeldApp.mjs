@@ -1,10 +1,12 @@
 import { timeldVocab, UserKey } from '../data/index.mjs';
-import { asSubjectUpdates, propertyValue, updateSubject } from '@m-ld/m-ld';
+import {
+  asSubjectUpdates, MeldError, Optional, propertyValue, Reference, updateSubject
+} from '@m-ld/m-ld';
 
 /**
  * @implements {InitialApp}
  */
-export class TimeldApp {
+export default class TimeldApp {
   /**
    * @param {string} domain
    * @param {TimeldPrincipal} principal
@@ -25,7 +27,7 @@ export class TimeldApp {
    * @returns {{sig: Buffer, pid: string}}
    */
   sign = data => ({
-    sig: this.principal.signData(data),
+    sig: this.principal.sign(data),
     pid: this.principal['@id']
   });
 
@@ -60,19 +62,27 @@ export class TimeldApp {
    * @param {InterimUpdate} interim
    */
   checkEditOwnEntries = async (state, interim) => {
-    const subjectUpdates = asSubjectUpdates(await interim.update);
+    const update = await interim.update;
+    const subjectUpdates = asSubjectUpdates(update);
     return Promise.all(Object.keys(subjectUpdates).map(async id => {
       // Load the existing type and provider
       const before =
         await state.get(id, '@type', timeldVocab.providerProp) ?? { '@id': id };
-      const after = updateSubject(before, subjectUpdates);
+      const after = updateSubject({ ...before }, subjectUpdates);
       if (before['@type'] === timeldVocab.entryType ||
         after['@type'] === timeldVocab.entryType) {
-        if (after[timeldVocab.providerProp] !== this.principal['@id'])
-          throw 'Unauthorised';
+        this.checkProvider(before, update['@principal']);
+        this.checkProvider(after, update['@principal']);
       }
     }));
   };
+
+  checkProvider(entry, principal) {
+    const provider = propertyValue(entry, timeldVocab.providerProp, Optional, Reference);
+    if (provider && provider['@id'] !== principal['@id'])
+      throw new MeldError('Unauthorised',
+        `${principal['@id']} cannot edit entry from ${provider['@id']}`);
+  }
 
   // noinspection JSUnusedGlobalSymbols
   /** @type {[MeldConstraint]} */
