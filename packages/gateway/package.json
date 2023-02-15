@@ -27,7 +27,7 @@
   "dependencies": {
     "@digitalbazaar/http-digest-header": "^2.0.0",
     "@m-ld/io-web-runtime": "^0.2.2",
-    "@m-ld/m-ld": "^0.9.2-edge.1",
+    "@m-ld/m-ld": "^0.9.2-edge.2",
     "cryptr": "^6.1.0",
     "http-graceful-shutdown": "^3.1.12",
     "http-message-signatures": "^0.1.2",

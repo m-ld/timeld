@@ -5,6 +5,7 @@ import AuthKey from './lib/AuthKey.mjs';
 import ResultsReadable from './lib/ResultsReadable.mjs';
 import BaseGateway from './lib/BaseGateway.mjs';
 import TimeldPrincipal from './lib/TimeldPrincipal.mjs';
+import TimeldApp from './lib/TimeldApp.mjs';
 
 // Useful m-ld types
 /** @typedef {import('@m-ld/m-ld').MeldClone} MeldClone */
@@ -34,6 +35,7 @@ import TimeldPrincipal from './lib/TimeldPrincipal.mjs';
 export {
   CloneFactory,
   TimeldPrincipal,
+  TimeldApp,
   Env,
   AccountOwnedId,
   AuthKey,
@@ -48,7 +50,8 @@ export {
   Project,
   Timesheet,
   Session,
-  UserKey
+  UserKey,
+  Principal
 } from './data/index.mjs';
 
 export {

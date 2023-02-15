@@ -48,6 +48,8 @@ export class Cmd {
   }
 
   type(text) {
+    if (this.debug)
+      this.running.debug();
     this.running.clear(); // We always want following output
     this.running.userEvent.keyboard(text, { keyboardMap });
   }

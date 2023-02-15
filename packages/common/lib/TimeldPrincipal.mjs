@@ -1,17 +1,26 @@
-import { AuthKey, UserKey } from '../index.mjs';
+import Principal from '../data/Principal.mjs';
+import UserKey from '../data/UserKey.mjs';
+import AuthKey from './AuthKey.mjs';
 
 /**
  * @implements AppPrincipal
  */
-export default class TimeldPrincipal {
+export default class TimeldPrincipal extends Principal {
   /**
    * @param {string} id absolute principal IRI
    * @param {UserKeyConfig} config
+   * @param {boolean} [isGateway] default `false` for Account
    */
-  constructor(id, config) {
-    this['@id'] = id;
+  constructor(id, config, isGateway = false) {
+    super({
+      id, type: isGateway ? 'Gateway' : 'Account', key: UserKey.fromConfig(config)
+    });
     this.authKey = AuthKey.fromString(config.auth.key);
-    this.userKey = UserKey.fromConfig(config);
+  }
+
+  /** Disambiguation from auth key */
+  get userKey() {
+    return this.key;
   }
 
   toConfig() {

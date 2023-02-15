@@ -2,7 +2,7 @@ import Account from './Account.mjs';
 import { randomInt } from 'crypto';
 import Cryptr from 'cryptr';
 import { propertyValue, Reference, uuid } from '@m-ld/m-ld';
-import { BaseGateway, Env, timeldContext, TimeldPrincipal } from 'timeld-common';
+import { BaseGateway, Env, Principal, timeldContext, TimeldPrincipal } from 'timeld-common';
 import jsonwebtoken from 'jsonwebtoken';
 import LOG from 'loglevel';
 import { access, rm, writeFile } from 'fs/promises';
@@ -11,6 +11,10 @@ import { concat, finalize, Subscription } from 'rxjs';
 import { consume } from 'rx-flowable/consume';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../rest/errors.mjs';
 import ConnectorExtension from './Connector.mjs';
+import { Statutory } from '@m-ld/m-ld/ext/statutes';
+import { NodeShape } from '@m-ld/m-ld/ext/shacl';
+import { M_LD } from '@m-ld/m-ld/ext/ns';
+import { timeldVocab } from 'timeld-common/data/index.mjs';
 
 export default class Gateway extends BaseGateway {
   /**
@@ -35,7 +39,7 @@ export default class Gateway extends BaseGateway {
     };
     LOG.info('Gateway ID is', this.config['@id']);
     LOG.debug('Gateway domain is', this.domainName);
-    this.me = new TimeldPrincipal(this.absoluteId('/'), config);
+    this.me = new TimeldPrincipal(this.absoluteId('/'), config, true);
     this.cloneFactory = cloneFactory;
     this.keyStore = /**@type {AuthKeyStore}*/keyStore;
     this.auditLogger = auditLogger;
@@ -187,43 +191,32 @@ export default class Gateway extends BaseGateway {
       this.auditLogger.log(tsId, update);
       for (let connector of Object.values(this.connectors)) {
         if (connector.appliesTo.includes(tsIri)) {
-          try {
-            // TODO: connectors should be guaranteed fast and async any heavy stuff
-            await connector.entryUpdate(tsId, update, state);
-          } catch (e) {
-            LOG.warn(connector.module, 'update failed', tsIri, e);
-          }
+          // TODO: connectors should be guaranteed fast and async any heavy stuff
+          await connector.entryUpdate(tsId, update, state).catch(e =>
+            LOG.warn(connector.module, 'update failed', tsIri, e));
         }
       }
     });
     if (genesis) {
-      // Add our machine identity and key to the timesheet for signing
-      await this.writePrincipalToTimesheet(ts, '/', 'Gateway', this.me.userKey);
+      const principalShapeRef = { '@id': timeldVocab('principalShape') };
+      await ts.write({
+        '@graph': [
+          // Add our machine identity and key to the timesheet for signing
+          this.me.toJSON(),
+          // Declare that all principals are statutory
+          Statutory.declare(0),
+          NodeShape.declare({ src: principalShapeRef, targetClass: ['Account', 'Gateway'] }),
+          Statutory.declareStatute({
+            statutoryShapes: principalShapeRef,
+            sufficientConditions: { '@id': M_LD.hasAuthority }
+          }),
+          // The gateway has authority over principals
+          Statutory.declareAuthority(this.me['@id'], principalShapeRef)
+        ]
+      });
     }
     return this.timesheetDomains[tsId.toDomain()] = ts;
   }
-
-  /**
-   *
-   * @param {MeldClone} ts
-   * @param {string} iri gateway-relative or absolute IRI
-   * @param {'Account'|'Gateway'} type note vocabulary is common between gw and ts
-   * @param {UserKey} key
-   * @returns {Promise<void>}
-   */
-  async writePrincipalToTimesheet(
-    ts,
-    iri,
-    type,
-    key
-  ) {
-    await ts.write({
-      '@id': this.absoluteId(iri),
-      '@type': type,
-      key: key.toJSON(true)
-    });
-  }
-
   getDataPath(tsId) {
     return this.env.readyPath('data', 'tsh', tsId.account, tsId.name);
   }
@@ -337,8 +330,11 @@ export default class Gateway extends BaseGateway {
         state = await state.write(accountHasTimesheet(tsId));
       }
       // Ensure that the account is in the timesheet for signing
-      await this.writePrincipalToTimesheet(
-        ts, user.name, 'Account', await user.key(state, keyid));
+      await ts.write(new Principal({
+        id: this.absoluteId(user.name),
+        type: 'Account',
+        key: await user.key(state, keyid)
+      }).toJSON());
     });
     // Return the config required for a new clone, using some of our config
     return Object.assign({

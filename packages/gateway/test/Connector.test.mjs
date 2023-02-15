@@ -58,7 +58,7 @@ describe('Connector extension', () => {
       initTimesheet: jest.fn().mockResolvedValue(mockTimesheet),
       config: { mock: { testing: 'config', syncTimesheet, entryUpdate, reportTimesheet } },
       domain: { write: jest.fn().mockResolvedValue({}) },
-      me: new TimeldPrincipal('http://ex.org/', keyConfig)
+      me: new TimeldPrincipal('http://ex.org/', keyConfig, true)
     };
     await ext.initialise(gateway);
   });

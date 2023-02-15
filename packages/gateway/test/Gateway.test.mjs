@@ -27,9 +27,8 @@ describe('Gateway', () => {
     tmpDir = dirSync({ unsafeCleanup: true });
     env = new Env({ data: join(tmpDir.name, 'data') });
     cloneFactory = new class extends CloneFactory {
-      clone = jest.fn((config) => {
-        return meldClone(new MemoryLevel(), DeadRemotes, config);
-      });
+      clone = jest.fn((config, dataDir, principal) =>
+        meldClone(new MemoryLevel(), DeadRemotes, config, { principal }));
       reusableConfig(config) {
         // Random key for testing of reusable config
         const { tls } = config;
