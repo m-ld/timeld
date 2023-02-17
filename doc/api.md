@@ -42,6 +42,14 @@ This end-point allows you to import any number of projects, timesheets and times
   {"@type":"Entry","session":{"@id":"org1/ts1"},"activity":"orging","duration":60,"start":{"@value":"2022-06-22T16:40:55.946Z","@type":"http://www.w3.org/2001/XMLSchema#dateTime"},"vf:provider":{"@id":"test"},"external":{"@id":"http://ex.org/timesheet/1/entry/1"}}
   ```
 
+To try this with curl, you can:
+```sh
+timeld config
+# from there, note your user and auth.key 
+export CREDENTIALS=user:auth.key
+curl -X POST --data-binary @./example.ndjson  -u $CREDENTIALS -H 'Content-Type: appon/x-ndjson' https://timeld.org/api/import
+```
+
 - **Response**
   ```
   Status: 200
