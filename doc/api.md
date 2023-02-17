@@ -47,6 +47,7 @@ To try this with curl, you can:
 timeld config
 # from there, note your user and auth.key 
 export CREDENTIALS=user:auth.key
+# replace "org1/pr1" with e.g. "fedb/fedt" and "org1/ts1" with e.g. "fedb/from-ponder-source-testing" (FIXME: where to find these?)
 curl -X POST --data-binary @./example.ndjson  -u $CREDENTIALS -H 'Content-Type: appon/x-ndjson' https://timeld.org/api/import
 ```
 
