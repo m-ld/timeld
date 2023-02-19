@@ -26,8 +26,8 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
     "@types/jest": "^28.1.8",
-    "cli-testing-library": "^2.0.0",
     "dotenv": "^16.0.3",
     "jest": "^28.1.3",
     "tmp": "^0.2.1"

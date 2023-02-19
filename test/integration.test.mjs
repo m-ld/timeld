@@ -1,88 +1,15 @@
 // noinspection NpmUsedModulesInstalled
 import { describe, expect, jest, test } from '@jest/globals';
-import { Cmd } from './Cmd.mjs';
-import { findByText, queryByText } from 'cli-testing-library';
-import path from 'path';
-import { readFileSync } from 'fs';
 import { MalwareCloneFactory } from './MalwareCloneFactory.mjs';
 import { setTimeout } from 'timers/promises';
 import { timeldContext, TimeldPrincipal } from 'timeld-common';
+import CliCmd from './CliCmd.mjs';
+import GwCmd from './GwCmd.mjs';
 
 jest.setTimeout(10000);
 
-export class CliCmd extends Cmd {
-  /**
-   * @param {string} name
-   */
-  constructor(name) {
-    super(name);
-    this.name = name;
-    this.dataDir = this.createDir();
-    this.configDir = this.createDir();
-  }
-
-  run(...args) {
-    return super.run(
-      path.join(process.cwd(), 'packages', 'cli', 'index.mjs'),
-      ...args, {
-        spawnOpts: {
-          env: {
-            TIMELD_CLI_CONFIG_PATH: this.configDir,
-            TIMELD_CLI_DATA_PATH: this.dataDir,
-            LOG_LEVEL: 'debug'
-          }
-        }
-      });
-  }
-
-  async configure() {
-    await this.run('config',
-      '--gateway', 'http://timeld.ex.org@localhost:8080',
-      '--user', this.name);
-    await this.waitForExit();
-  }
-
-  /**
-   * Wait for next prompt and optionally type a command
-   * @param [command] to type at the prompt
-   */
-  async nextPrompt(command) {
-    await findByText(this.running, /\w+>[\s\n]*$/);
-    if (command)
-      this.type(command);
-  }
-
-  /**
-   * Convenience to activate a CLI with a new user key
-   * @param {Cmd} gw
-   */
-  async activate(gw) {
-    await this.run('admin');
-    await findByText(this.running, 'enter your email address');
-    const email = `${this.name}@ex.org`;
-    this.type(`${email}[Enter]`);
-    let code = null;
-    await findByText(gw.running, content => {
-      [, code] = content.match(`ACTIVATION ${email} (\\d{6})`) ?? [];
-      return code != null;
-    });
-    await findByText(this.running, 'enter the activation code');
-    this.type(`${code}[Enter]`);
-    await this.nextPrompt('exit[Enter]');
-    await this.waitForExit();
-  }
-
-  /**
-   * Convenience to get config
-   */
-  readConfig() {
-    const configFilePath = path.join(this.configDir, 'config.json');
-    return JSON.parse(/**@type string*/readFileSync(configFilePath, 'utf8'));
-  }
-}
-
 describe('Gateway and CLI', () => {
-  let /**@type Cmd*/gw;
+  let /**@type GwCmd*/gw;
   let /**@type CliCmd*/aliceCli; // Created before all, exited after each
 
   beforeAll(async () => {
@@ -92,15 +19,8 @@ describe('Gateway and CLI', () => {
   });
 
   beforeAll(async () => {
-    gw = new Cmd('gw');
-    const dataDir = gw.createDir();
-    await gw.run(
-      path.join(process.cwd(), 'packages', 'gateway', 'server.mjs'),
-      '--genesis', 'true', {
-        spawnOpts: { env: { TIMELD_GATEWAY_DATA_PATH: dataDir, LOG_LEVEL: 'trace' } }
-      });
-// gw.debug = true
-    await findByText(gw.running, 'Gateway initialised');
+    gw = new GwCmd();
+    await gw.start();
     // Create Alice's CLI
     aliceCli = new CliCmd('alice');
     await aliceCli.configure();
@@ -121,8 +41,7 @@ describe('Gateway and CLI', () => {
 
   test('print config', async () => {
     await aliceCli.run('config');
-    await findByText(aliceCli.running,
-      'gateway: \'http://timeld.ex.org@localhost:8080\'');
+    await aliceCli.findByText('gateway: \'http://timeld.ex.org@localhost:8080\'');
   });
 
   describe('with activated CLI', () => {
@@ -140,9 +59,9 @@ describe('Gateway and CLI', () => {
 
     test('open timesheet add entry', async () => {
       await aliceCli.run('open', 'ts1');
-      await aliceCli.nextPrompt('add testing[Enter]');
-      await findByText(aliceCli.running, /"testing" \(alice, [\d\/,\s:APM]+\)/);
-      aliceCli.type('exit[Enter]');
+      await aliceCli.nextPrompt('add testing');
+      await aliceCli.findByText(/"testing" \(alice, [\d\/,\s:APM]+\)/);
+      aliceCli.type('exit');
     });
 
     test('cannot connect without authentication', async () => {
@@ -170,29 +89,25 @@ describe('Gateway and CLI', () => {
       let /**@type TimeldConfig*/ivanTs2Config;
 
       beforeAll(async () => {
-        // Register Ivan to get keys (he won't use the CLI again)
+        // Register Ivan to get keys
         ivanCli = new CliCmd('ivan');
         await ivanCli.configure();
         await ivanCli.activate(gw);
         // Register the testers organisation
         await aliceCli.run('admin');
-        await aliceCli.nextPrompt('add org testers[Enter]');
-        await aliceCli.nextPrompt('exit[Enter]');
-        await aliceCli.waitForExit();
+        await aliceCli.nextPrompt('add org testers');
+        await aliceCli.exit();
         // Admin the testers account to add ivan
         await aliceCli.run('admin', '--account', 'testers');
-        await aliceCli.nextPrompt('add admin ivan[Enter]');
-        await aliceCli.nextPrompt('exit[Enter]');
-        await aliceCli.waitForExit();
+        await aliceCli.nextPrompt('add admin ivan');
+        await aliceCli.exit();
         // Add a new testers timesheet
         await aliceCli.run('open', 'testers/ts2');
-        await aliceCli.nextPrompt('add "alice testing"[Enter]');
-        await aliceCli.nextPrompt('exit[Enter]');
-        await aliceCli.waitForExit();
+        await aliceCli.nextPrompt('add "alice testing"');
+        await aliceCli.exit();
         // Ivan needs to join the timesheet at least once to register himself
         await ivanCli.run('open', 'testers/ts2');
-        await ivanCli.nextPrompt('exit[Enter]');
-        await ivanCli.waitForExit();
+        await ivanCli.exit();
         ivanTs2Config = {
           '@id': 'ivan', '@domain': 'ts2.testers.timeld.ex.org', genesis: false,
           '@context': timeldContext, ...ivanCli.readConfig()
@@ -225,10 +140,9 @@ describe('Gateway and CLI', () => {
             '@where': { activity: 'alice testing' }
           })).resolves.toBe(false);
           // check that Alice still has her entry
-          await aliceCli.nextPrompt('ls[Enter]');
-          await findByText(aliceCli.running, 'alice testing');
-          await aliceCli.nextPrompt('exit[Enter]');
-          await aliceCli.waitForExit();
+          await aliceCli.nextPrompt('list');
+          await aliceCli.findByText('alice testing');
+          await aliceCli.exit();
         });
 
         test('an attacker cannot change timesheet admins', async () => {
@@ -247,19 +161,18 @@ describe('Gateway and CLI', () => {
         await ivanCli.nextPrompt();
         await aliceCli.nextPrompt();
         // Admin the testers account to remove Ivan
-        aliceCli.type('remove admin ivan[Enter]');
+        aliceCli.type('remove admin ivan');
         // At the same time, add an Ivan entry
-        ivanCli.type('add "ivan testing"[Enter]');
+        ivanCli.type('add "ivan testing"');
         // Exit Alice's admin session and check
-        await aliceCli.nextPrompt('exit[Enter]');
-        await aliceCli.waitForExit();
+        await aliceCli.exit();
         await aliceCli.run('open', 'testers/ts2');
-        await aliceCli.nextPrompt('list[Enter]');
+        await aliceCli.nextPrompt('list');
         await aliceCli.nextPrompt(); // Make sure list is complete
-        await findByText(aliceCli.running, /"alice testing"/);
-        expect(queryByText(aliceCli.running, /"ivan testing"/)).toBeNull();
+        await aliceCli.findByText(/"alice testing"/);
+        expect(aliceCli.queryByText(/"ivan testing"/)).toBe(false);
         // (Ivan's session will die, so can't check there)
-        await aliceCli.nextPrompt('exit[Enter]');
+        await aliceCli.exit();
       });
     });
   });

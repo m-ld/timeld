@@ -1,184 +1,159 @@
 import path from 'path';
 import { dirSync } from 'tmp';
-import { once } from 'events';
-import { configure, render } from 'cli-testing-library';
+import { EventEmitter, once } from 'events';
+import { mkdirSync } from 'fs';
+import { fork } from 'child_process';
 
-// TODO https://github.com/m-ld/timeld/issues/13
-configure({ asyncUtilTimeout: 5000 });
+class CmdProcess extends EventEmitter {
+  /**@type number | null*/exitCode = null;
+  /**@type string*/buffer = '';
+  /**@type import('child_process').ChildProcess['kill']*/kill;
 
-/** @typedef {import('cli-testing-library').RenderOptions} RenderOptions */
+  /** @param {ChildProcess} process */
+  constructor(process) {
+    super();
+    process.on('exit', (exitCode, signal) => {
+      this.exitCode = exitCode;
+      this.emit('exit', exitCode, signal);
+    });
+    this.on('in', text => {
+      process.stdin.write(text + '\n');
+    });
+    /** @param {import('stream').Readable} readable */
+    const captureOut = readable => {
+      readable.on('readable', () => {
+        let chunk;
+        while (null !== (chunk = readable.read()))
+          this.buffer += chunk;
+        this.buffer.split('\n').forEach(
+          out => out && this.emit('out', out));
+      });
+    };
+    captureOut(process.stdout);
+    captureOut(process.stderr);
+    this.kill = process.kill.bind(process);
+  }
 
-export class Cmd {
-  /**@type import('cli-testing-library').RenderResult*/running;
+  /** @param {(out: string) => boolean} match */
+  async find(match) {
+    return this.query(match) || await new Promise(resolve => {
+      const listener = out => {
+        if (match(out)) {
+          this.off('out', listener);
+          return resolve(out);
+        }
+      };
+      this.on('out', listener);
+    });
+  }
+
+  /** @param {(out: string) => boolean} match */
+  query(match) {
+    return this.buffer.split('\n').find(match);
+  }
+
+  clear() {
+    this.buffer = '';
+  }
+}
+
+export default class Cmd {
+  /**@type CmdProcess | null*/process = null;
   /**@type import('tmp').DirSyncObject[]*/dirs = [];
-  /**@type string*/root;
+  /**@type string*/rootDir;
   /**@type boolean*/debug = false;
+  /**@type Console['log']*/log;
+  /**@type boolean*/static logging = false;
 
-  constructor(...root) {
-    this.root = path.join(process.cwd(), 'test', ...root);
+  constructor(...name) {
+    this.rootDir = path.join(process.cwd(), 'test', ...name);
+    this.name = name.join(' ');
+    this.logging = Cmd.logging;
+  }
+
+  set logging(logging) {
+    this.log = logging ? console.log.bind(console, this.name) : () => {};
   }
 
   createDir() {
+    mkdirSync(this.rootDir, { recursive: true });
     // noinspection JSCheckFunctionSignatures
     const dir = dirSync({
       unsafeCleanup: true,
-      tmpdir: this.root
+      tmpdir: this.rootDir
     });
     this.dirs.push(dir);
     return dir.name;
   }
 
   /**
-   * @param {string | (Partial<RenderOptions> & Record<string, any>)} args
+   * @param {string | Partial<ForkOptions>} args
    */
   async run(...args) {
-    if (this.running)
+    if (this.process)
       throw new RangeError('Already running');
-    const opts = Object.assign({ cwd: this.root },
-      ...args.filter(a => typeof a == 'object'));
-    this.running = await render(
-      process.argv[0], args.filter(a => typeof a == 'string'), opts);
-    this.running.process.on('exit', (...args) => {
-      if (this.debug) {
-        console.log(this.root, 'exited with', ...args);
-        this.running.debug();
-      }
-    });
+    const [modulePath, ...argv] = args.filter(a => typeof a == 'string');
+    // noinspection JSCheckFunctionSignatures
+    const opts = Object.assign({
+      cwd: this.rootDir, silent: true
+    }, ...args.filter(a => typeof a == 'object'));
+    this.process = new CmdProcess(fork(modulePath, argv, opts));
+    const logListener = (...args) => {
+      if (this.debug)
+        this.log(...args);
+    };
+    this.process.on('in', logListener);
+    this.process.on('out', logListener);
+    this.process.on('exit', logListener.bind(this, 'exited'));
     return opts;
   }
 
+  /** @param {string | RegExp | ((out: string) => boolean)} text */
+  async findByText(text) {
+    this.log('→', await this.process.find(this.matcher(text)));
+  }
+
+  /** @param {string | RegExp | ((out: string) => boolean)} text */
+  queryByText(text) {
+    return !!this.process.query(this.matcher(text));
+  }
+
+  /** @param {string | RegExp | ((out: string) => boolean)} text */
+  matcher(text) {
+    return typeof text == 'function' ? text :
+      typeof text == 'string' ? line => line.includes(text) :
+        line => text.test(line);
+  }
+
   type(text) {
-    if (this.debug)
-      this.running.debug();
-    this.running.clear(); // We always want following output
-    this.running.userEvent.keyboard(text, { keyboardMap });
+    this.clear(); // We always want following output
+    this.process.emit('in', text);
+    this.log('←', text);
+  }
+
+  getOut() {
+    return this.process.buffer;
   }
 
   async waitForExit() {
-    if (this.running) {
-      if (this.running.process.exitCode == null)
-        await once(this.running.process, 'exit');
-      delete this.running;
+    if (this.process) {
+      if (this.process.exitCode == null)
+        await once(this.process, 'exit');
+      delete this.process;
     }
   }
 
+  clear() {
+    if (this.process)
+      this.process.clear();
+  }
+
   async cleanup() {
-    if (this.running) {
-      // cli-testing-library cleanup doesn't work
-      this.running.process.kill();
+    if (this.process) {
+      this.process.kill();
       await this.waitForExit();
     }
     // automatic remove doesn't work
     this.dirs.forEach(dir => dir.removeCallback());
   }
 }
-
-/**
- * cli-testing-library/dist/user-event/keyboard/keyMap.js
- */
-export const keyboardMap = [
-  // alphanumeric keys
-  { code: 'Digit!', hex: '\x21' },
-  { code: 'Digit"', hex: '\x22' },
-  { code: 'Digit#', hex: '\x23' },
-  { code: 'Digit$', hex: '\x24' },
-  { code: 'Digit%', hex: '\x25' },
-  { code: 'Digit&', hex: '\x26' },
-  { code: 'Digit(', hex: '\x29' },
-  { code: 'Digit)', hex: '\x29' },
-  { code: 'Digit*', hex: '\x2a' },
-  { code: 'Digit-', hex: '\x2d' },
-  { code: 'Digit.', hex: '\x2e' }, // <-- added
-  { code: 'Digit@', hex: '\x40' },
-  { code: 'Digit^', hex: '\x5e' },
-  { code: 'Digit{', hex: '\x7b' },
-  { code: 'Digit|', hex: '\x7c' },
-  { code: 'Digit}', hex: '\x7d' },
-  { code: 'Digit~', hex: '\x7e' },
-  { code: 'Digit0', hex: '\x30' },
-  { code: 'Digit1', hex: '\x31' },
-  { code: 'Digit2', hex: '\x32' },
-  { code: 'Digit3', hex: '\x33' },
-  { code: 'Digit4', hex: '\x34' },
-  { code: 'Digit5', hex: '\x35' },
-  { code: 'Digit6', hex: '\x36' },
-  { code: 'Digit7', hex: '\x37' },
-  { code: 'Digit8', hex: '\x38' },
-  { code: 'Digit9', hex: '\x39' },
-  { code: 'KeyA', hex: '\x41' },
-  { code: 'KeyB', hex: '\x42' },
-  { code: 'KeyC', hex: '\x43' },
-  { code: 'KeyD', hex: '\x44' },
-  { code: 'KeyE', hex: '\x45' },
-  { code: 'KeyF', hex: '\x46' },
-  { code: 'KeyG', hex: '\x47' },
-  { code: 'KeyH', hex: '\x48' },
-  { code: 'KeyI', hex: '\x49' },
-  { code: 'KeyJ', hex: '\x4a' },
-  { code: 'KeyK', hex: '\x4b' },
-  { code: 'KeyL', hex: '\x4c' },
-  { code: 'KeyM', hex: '\x4d' },
-  { code: 'KeyN', hex: '\x4e' },
-  { code: 'KeyO', hex: '\x4f' },
-  { code: 'KeyP', hex: '\x50' },
-  { code: 'KeyQ', hex: '\x51' },
-  { code: 'KeyR', hex: '\x52' },
-  { code: 'KeyS', hex: '\x53' },
-  { code: 'KeyT', hex: '\x54' },
-  { code: 'KeyU', hex: '\x55' },
-  { code: 'KeyV', hex: '\x56' },
-  { code: 'KeyW', hex: '\x57' },
-  { code: 'KeyX', hex: '\x58' },
-  { code: 'KeyY', hex: '\x59' },
-  { code: 'KeyZ', hex: '\x5a' },
-  { code: 'Digit_', hex: '\x5f' },
-  { code: 'KeyLowerA', hex: '\x61' },
-  { code: 'KeyLowerB', hex: '\x62' },
-  { code: 'KeyLowerC', hex: '\x63' },
-  { code: 'KeyLowerD', hex: '\x64' },
-  { code: 'KeyLowerE', hex: '\x65' },
-  { code: 'KeyLowerF', hex: '\x66' },
-  { code: 'KeyLowerG', hex: '\x67' },
-  { code: 'KeyLowerH', hex: '\x68' },
-  { code: 'KeyLowerI', hex: '\x69' },
-  { code: 'KeyLowerJ', hex: '\x6a' },
-  { code: 'KeyLowerK', hex: '\x6b' },
-  { code: 'KeyLowerL', hex: '\x6c' },
-  { code: 'KeyLowerM', hex: '\x6d' },
-  { code: 'KeyLowerN', hex: '\x6e' },
-  { code: 'KeyLowerO', hex: '\x6f' },
-  { code: 'KeyLowerP', hex: '\x70' },
-  { code: 'KeyLowerQ', hex: '\x71' },
-  { code: 'KeyLowerR', hex: '\x72' },
-  { code: 'KeyLowerS', hex: '\x73' },
-  { code: 'KeyLowerT', hex: '\x74' },
-  { code: 'KeyLowerU', hex: '\x75' },
-  { code: 'KeyLowerV', hex: '\x76' },
-  { code: 'KeyLowerW', hex: '\x77' },
-  { code: 'KeyLowerX', hex: '\x78' },
-  { code: 'KeyLowerY', hex: '\x79' },
-  { code: 'KeyLowerZ', hex: '\x7a' },
-
-  // alphanumeric block - functional
-  { code: 'Space', hex: '\x20' },
-  { code: 'Backspace', hex: '\x08' },
-  { code: 'Enter', hex: '\x0D' },
-
-  // function
-  { code: 'Escape', hex: '\x1b' },
-
-  // arrows
-  { code: 'ArrowUp', hex: '\x1b\x5b\x41' },
-  { code: 'ArrowDown', hex: '\x1B\x5B\x42' },
-  { code: 'ArrowLeft', hex: '\x1b\x5b\x44' },
-  { code: 'ArrowRight', hex: '\x1b\x5b\x43' },
-
-  // control pad
-  { code: 'Home', hex: '\x1b\x4f\x48' },
-  { code: 'End', hex: '\x1b\x4f\x46' },
-  { code: 'Delete', hex: '\x1b\x5b\x33\x7e' },
-  { code: 'PageUp', hex: '\x1b\x5b\x35\x7e' },
-  { code: 'PageDown', hex: '\x1b\x5b\x36\x7e' }
-
-  // TODO: add mappings
-];

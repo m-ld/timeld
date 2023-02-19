@@ -22,7 +22,7 @@
   "homepage": "https://github.com/m-ld/timeld/tree/main/packages/cli#readme",
   "dependencies": {
     "@m-ld/m-ld": "^0.9.2-edge.2",
-    "@m-ld/m-ld-cli": "^0.2.1-edge.1",
+    "@m-ld/m-ld-cli": "^0.2.1-edge.2",
     "@zeit/fetch": "^6.0.0",
     "chrono-node": "^2.5.0",
     "cryptr": "^6.1.0",
