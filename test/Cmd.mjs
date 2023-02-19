@@ -8,6 +8,7 @@ class CmdProcess extends EventEmitter {
   /**@type number | null*/exitCode = null;
   /**@type string*/buffer = '';
   /**@type import('child_process').ChildProcess['kill']*/kill;
+  /**@type (text: string) => void*/input;
 
   /** @param {ChildProcess} process */
   constructor(process) {
@@ -16,19 +17,19 @@ class CmdProcess extends EventEmitter {
       this.exitCode = exitCode;
       this.emit('exit', exitCode, signal);
     });
-    this.on('in', text => {
+    this.input = text => {
       process.stdin.write(text + '\n');
-    });
+    };
     /** @param {import('stream').Readable} readable */
-    const captureOut = readable => {
+    const captureOut = readable =>
       readable.on('readable', () => {
+        const prevLf = this.buffer.lastIndexOf('\n');
         let chunk;
         while (null !== (chunk = readable.read()))
           this.buffer += chunk;
-        this.buffer.split('\n').forEach(
-          out => out && this.emit('out', out));
+        for (let out of this.buffer.slice(prevLf + 1).split('\n'))
+          out && this.emit('out', out);
       });
-    };
     captureOut(process.stdout);
     captureOut(process.stderr);
     this.kill = process.kill.bind(process);
@@ -98,13 +99,12 @@ export default class Cmd {
       cwd: this.rootDir, silent: true
     }, ...args.filter(a => typeof a == 'object'));
     this.process = new CmdProcess(fork(modulePath, argv, opts));
-    const logListener = (...args) => {
+    const debugListener = (...args) => {
       if (this.debug)
         this.log(...args);
     };
-    this.process.on('in', logListener);
-    this.process.on('out', logListener);
-    this.process.on('exit', logListener.bind(this, 'exited'));
+    this.process.on('out', debugListener);
+    this.process.on('exit', debugListener.bind(this, 'exited'));
     return opts;
   }
 
@@ -127,7 +127,7 @@ export default class Cmd {
 
   type(text) {
     this.clear(); // We always want following output
-    this.process.emit('in', text);
+    this.process.input(text);
     this.log('←', text);
   }
 

@@ -136,9 +136,6 @@ class TestDevice extends CliCmd {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Setup
-if (process.env.CTL_SKIP_AUTO_CLEANUP)
-  throw new Error('cli-testing-library auto-cleanup must be disabled');
-process.env.DEBUG_PRINT_LIMIT = 'Infinity';
 Cmd.logging = true;
 faker.seed(0); // Change to generate new test
 const gw = new GwCmd();
