@@ -194,7 +194,9 @@ export default class Cli {
     const logFile = await this.setUpLogging(tsId.toPath());
     const dataDir = await this.env.readyPath('data', ...tsId.toPath());
     // noinspection JSCheckFunctionSignatures
-    return { meld: await this.cloneFactory.clone(config, dataDir, principal), logFile };
+    const meld = await this.cloneFactory.clone(config, dataDir, principal);
+    // await meld.status.becomes({ outdated: false });
+    return { meld, logFile };
   }
 
   /**

@@ -221,11 +221,6 @@ export default class Account {
     });
   }
 
-  /**
-   * @param {MeldReadState} state the current domain state
-   * @param {Reference} tsRef the timesheet ref
-   * @returns {Promise<void>}
-   */
   beforeInsertTimesheet = async (state, tsRef) => {
     if (tsRef != null) {
       const tsId = this.gateway.ownedRefAsId(tsRef);
@@ -238,11 +233,18 @@ export default class Account {
     }
   };
 
-  /**
-   * @param {MeldReadState} state
-   * @param {GraphSubject} src
-   * @returns {Promise<Subject>}
-   */
+  beforeDeleteAdmin = async (state, org, admin) => {
+    const orgSrc = /**@type Subject*/await state.get(org['@id'], 'timesheet');
+    // See https://github.com/m-ld/m-ld-js/issues/131
+    const timesheets = orgSrc ?
+      propertyValue(orgSrc, 'timesheet', Array, Reference) : [];
+    return Promise.all(timesheets.map(async tsRef => {
+      const tsId = this.gateway.ownedRefAsId(tsRef);
+      const ts = await this.gateway.initTimesheet(tsId, false);
+      await ts.write({ '@delete': { '@id': this.gateway.absoluteId(admin['@id']) } });
+    }));
+  };
+
   beforeInsertConnector = async (state, src) => {
     try { // Create a temporary connector (the real one will be loaded later)
       const ext = await ConnectorExtension.fromJSON(src).initialise(this.gateway);

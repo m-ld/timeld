@@ -27,6 +27,10 @@ export default class TimeldPrincipal extends Principal {
     return this.userKey.toConfig(this.authKey);
   }
 
+  /**
+   * @param {Buffer} data
+   * @returns {Buffer}
+   */
   sign(data) {
     return this.userKey.sign(data, this.authKey);
   }

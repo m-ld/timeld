@@ -14,7 +14,7 @@ export default class TimeldApp {
   constructor(domain, principal) {
     this.principal = principal;
     // noinspection JSUnusedGlobalSymbols
-    this.transportSecurity = {
+    this.transportSecurity = /**@type MeldTransportSecurity*/{
       wire: data => data, // We don't apply wire encryption, yet
       sign: this.sign,
       verify: TimeldApp.verify(domain)
@@ -63,25 +63,33 @@ export default class TimeldApp {
    */
   checkEditOwnEntries = async (state, interim) => {
     const update = await interim.update;
-    const subjectUpdates = asSubjectUpdates(update);
-    return Promise.all(Object.keys(subjectUpdates).map(async id => {
-      // Load the existing type and provider
-      const before =
-        await state.get(id, '@type', timeldVocab.providerProp) ?? { '@id': id };
-      const after = updateSubject({ ...before }, subjectUpdates);
-      if (before['@type'] === timeldVocab.entryType ||
-        after['@type'] === timeldVocab.entryType) {
-        this.checkProvider(before, update['@principal']);
-        this.checkProvider(after, update['@principal']);
-      }
-    }));
+    if (!update['@agree']) {
+      const pid = update['@principal']?.['@id'];
+      let principalExists = null;
+      const subjectUpdates = asSubjectUpdates(update);
+      return Promise.all(Object.keys(subjectUpdates).map(async id => {
+        // Load the existing type and provider
+        const before =
+          await state.get(id, '@type', timeldVocab.providerProp) ?? { '@id': id };
+        const after = updateSubject({ ...before }, subjectUpdates);
+        if (before['@type'] === timeldVocab.entryType ||
+          after['@type'] === timeldVocab.entryType) {
+          if (principalExists == null)
+            principalExists = pid && await state.ask({ '@where': { '@id': pid } });
+          if (!principalExists)
+            throw new MeldError('Unauthorised', `${pid} cannot edit entries`);
+          this.checkProvider(before, pid);
+          this.checkProvider(after, pid);
+        }
+      }));
+    }
   };
 
-  checkProvider(entry, principal) {
+  checkProvider(entry, pid) {
     const provider = propertyValue(entry, timeldVocab.providerProp, Optional, Reference);
-    if (provider && provider['@id'] !== principal['@id'])
+    if (provider && provider['@id'] !== pid)
       throw new MeldError('Unauthorised',
-        `${principal['@id']} cannot edit entry from ${provider['@id']}`);
+        `${pid} cannot edit entry from ${provider['@id']}`);
   }
 
   // noinspection JSUnusedGlobalSymbols

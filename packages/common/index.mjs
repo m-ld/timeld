@@ -12,6 +12,8 @@ import TimeldApp from './lib/TimeldApp.mjs';
 /** @typedef {import('@m-ld/m-ld').ConstructRemotes} ConstructRemotes */
 /** @typedef {import('@m-ld/m-ld').MeldConfig} MeldConfig */
 /** @typedef {import('@m-ld/m-ld').MeldConstraint} MeldConstraint */
+/** @typedef {import('@m-ld/m-ld').MeldTransportSecurity} MeldTransportSecurity */
+/** @typedef {import('@m-ld/m-ld').Attribution} Attribution */
 /** @typedef {import('@m-ld/m-ld').InitialApp} InitialApp */
 /** @typedef {import('@m-ld/m-ld').AppPrincipal} AppPrincipal */
 /** @typedef {import('@m-ld/m-ld').GraphSubject} GraphSubject */

@@ -13,12 +13,6 @@ describe('Gateway and CLI', () => {
   let /**@type CliCmd*/aliceCli; // Created before all, exited after each
 
   beforeAll(async () => {
-    // Necessary for tests
-    expect(process.env.CTL_SKIP_AUTO_CLEANUP).toBeTruthy();
-    process.env.DEBUG_PRINT_LIMIT = 'Infinity';
-  });
-
-  beforeAll(async () => {
     gw = new GwCmd();
     await gw.start();
     // Create Alice's CLI
@@ -97,17 +91,10 @@ describe('Gateway and CLI', () => {
         await aliceCli.run('admin');
         await aliceCli.nextPrompt('add org testers');
         await aliceCli.exit();
-        // Admin the testers account to add ivan
-        await aliceCli.run('admin', '--account', 'testers');
-        await aliceCli.nextPrompt('add admin ivan');
-        await aliceCli.exit();
         // Add a new testers timesheet
         await aliceCli.run('open', 'testers/ts2');
         await aliceCli.nextPrompt('add "alice testing"');
         await aliceCli.exit();
-        // Ivan needs to join the timesheet at least once to register himself
-        await ivanCli.run('open', 'testers/ts2');
-        await ivanCli.exit();
         ivanTs2Config = {
           '@id': 'ivan', '@domain': 'ts2.testers.timeld.ex.org', genesis: false,
           '@context': timeldContext, ...ivanCli.readConfig()
@@ -116,8 +103,56 @@ describe('Gateway and CLI', () => {
 
       afterAll(() => ivanCli.cleanup());
 
+      beforeEach(async () => {
+        // Admin the testers account to add ivan
+        await aliceCli.run('admin', '--account', 'testers');
+        await aliceCli.nextPrompt('add admin ivan');
+        await aliceCli.exit();
+      });
+
+      afterEach(async () => {
+        await aliceCli.exit();
+        await ivanCli.exit();
+      });
+
+      test('cannot add an entry after being revoked', async () => {
+        await ivanCli.run('open', 'testers/ts2');
+        await ivanCli.nextPrompt('add "ivan test ok"');
+        await aliceCli.run('admin', '--account', 'testers');
+        await aliceCli.nextPrompt('remove admin ivan');
+        await aliceCli.exit(); // Provides a pause for the removal to propagate
+        await ivanCli.nextPrompt('add "ivan test unauthorised"');
+        await expect(ivanCli.findByText(/Unauthorised/)).resolves.not.toThrow();
+      });
+
+      test('voids an entry concurrent with user revocation', async () => {
+        await ivanCli.run('open', 'testers/ts2');
+        await aliceCli.run('admin', '--account', 'testers');
+        // Ensure that the prompts are ready, to ensure concurrency
+        await ivanCli.nextPrompt();
+        await aliceCli.nextPrompt();
+        // Admin the testers account to remove Ivan
+        aliceCli.type('remove admin ivan');
+        // At the same time, add an Ivan entry
+        ivanCli.type('add "ivan testing"');
+        // Exit Alice's admin session and check
+        await aliceCli.exit();
+        await aliceCli.run('open', 'testers/ts2');
+        await aliceCli.nextPrompt('list');
+        await aliceCli.nextPrompt(); // Make sure list is complete
+        await aliceCli.findByText(/"alice testing"/);
+        expect(aliceCli.queryByText(/"ivan testing"/)).toBe(false);
+        // (Ivan's session will die, so can't check there)
+      });
+
       describe('using malware clone', () => {
         let /**@type MeldClone*/ivanClone;
+
+        beforeEach(async () => {
+          // Ivan needs to join the timesheet at least once to register himself
+          await ivanCli.run('open', 'testers/ts2');
+          await ivanCli.exit();
+        });
 
         afterEach(() => ivanClone?.close());
 
@@ -142,7 +177,6 @@ describe('Gateway and CLI', () => {
           // check that Alice still has her entry
           await aliceCli.nextPrompt('list');
           await aliceCli.findByText('alice testing');
-          await aliceCli.exit();
         });
 
         test('an attacker cannot change timesheet admins', async () => {
@@ -152,27 +186,6 @@ describe('Gateway and CLI', () => {
             '@id': 'http://timeld.ex.org/alice', key: 'Bobby Tables'
           })).rejects.toMatch(/Agreement not provable/);
         });
-      });
-
-      test('voids an entry concurrent with user revocation', async () => {
-        await ivanCli.run('open', 'testers/ts2');
-        await aliceCli.run('admin', '--account', 'testers');
-        // Ensure that the prompts are ready, to ensure concurrency
-        await ivanCli.nextPrompt();
-        await aliceCli.nextPrompt();
-        // Admin the testers account to remove Ivan
-        aliceCli.type('remove admin ivan');
-        // At the same time, add an Ivan entry
-        ivanCli.type('add "ivan testing"');
-        // Exit Alice's admin session and check
-        await aliceCli.exit();
-        await aliceCli.run('open', 'testers/ts2');
-        await aliceCli.nextPrompt('list');
-        await aliceCli.nextPrompt(); // Make sure list is complete
-        await aliceCli.findByText(/"alice testing"/);
-        expect(aliceCli.queryByText(/"ivan testing"/)).toBe(false);
-        // (Ivan's session will die, so can't check there)
-        await aliceCli.exit();
       });
     });
   });

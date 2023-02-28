@@ -15,6 +15,7 @@ import IoCloneFactory from 'timeld-common/ext/socket.io/IoCloneFactory.mjs';
 
 // Support override of config and data paths for testing
 const env = new Env({
+  log: process.env.TIMELD_CLI_LOG_PATH,
   config: process.env.TIMELD_CLI_CONFIG_PATH,
   data: process.env.TIMELD_CLI_DATA_PATH
 });

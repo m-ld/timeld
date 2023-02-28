@@ -10,18 +10,21 @@ export default class CliCmd extends Cmd {
   constructor(username, ...device) {
     super(username, ...device);
     this.username = username;
-    this.dataDir = this.createDir();
-    this.configDir = this.createDir();
+    this.dataDir = this.createDir('data');
+    this.configDir = this.createDir('config');
+    this.logDir = this.createDir('log');
   }
 
   run(...args) {
     this.log('⇐', 'timeld', ...args);
+    this.repl = args[0] === 'admin' || args[0] === 'open';
     return super.run(
       path.join(process.cwd(), 'packages', 'cli', 'index.mjs'),
       ...args, {
         env: {
           TIMELD_CLI_CONFIG_PATH: this.configDir,
           TIMELD_CLI_DATA_PATH: this.dataDir,
+          TIMELD_CLI_LOG_PATH: this.logDir,
           LOG_LEVEL: 'debug'
         }
       });
@@ -39,14 +42,15 @@ export default class CliCmd extends Cmd {
    * @param [command] to type at the prompt
    */
   async nextPrompt(command) {
-    await this.findByText(/\w+>[\s\n]*$/);
+    await this.findByText(/^\w+>[\s\n]*$/);
     if (command)
       this.type(`${command}`);
   }
 
   /** Convenience to exit a CLI normally */
   async exit() {
-    await this.nextPrompt('exit');
+    if (this.repl && this.process && this.process.exitCode == null)
+      await this.nextPrompt('exit');
     await this.waitForExit();
   }
 

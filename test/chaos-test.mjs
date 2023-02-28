@@ -7,6 +7,7 @@ import GwCmd from './GwCmd.mjs';
 import Cmd from './Cmd.mjs';
 import { faker } from '@faker-js/faker/locale/en';
 import { EventEmitter, once } from 'events';
+import { setTimeout } from 'timers/promises';
 
 /**
  * ## Dramatis Personae
@@ -33,13 +34,13 @@ import { EventEmitter, once } from 'events';
  * Periodically during the test, we confirm that the timesheet has the same
  * content on all user 'devices'.
  */
-const USERS = [];
-const clock = new EventEmitter;
+const /**@type TestUser[]*/USERS = [];
 const ROUNDS = {
-  count: 1,
+  sessionsPerRound: 5,
   adminProbability: 0.2,
   entriesPerSession: 3
 };
+const clock = new EventEmitter;
 
 class TestUser {
   /**
@@ -49,7 +50,8 @@ class TestUser {
   constructor(name, isAdmin = false) {
     this.name = name;
     this.devices = /**@type TestDevice[]*/[];
-    this.isAdmin = isAdmin;
+    this.isProvider = isAdmin;
+    this.isPlaying = false;
     USERS.push(this);
   }
 
@@ -67,22 +69,39 @@ class TestUser {
   }
 
   async round() {
-    for (let i = 0; i < ROUNDS.count; i++) {
+    this.isPlaying = true;
+    for (let i = 0; i < ROUNDS.sessionsPerRound; i++) {
       const device = this.chooseDevice();
-      await maybeOr(ROUNDS.adminProbability, async () => {
-        await device.toggleAdmin(this.chooseOtherUser());
-      }, async () => {
-        await device.timesheetSession(async () => {
-          for (let i = 0; i < ROUNDS.entriesPerSession; i++) {
-            await device.addEntry();
-          }
+      try {
+        await maybeOr(ROUNDS.adminProbability, async () => {
+          await device.toggleAdmin(this.chooseOtherUser());
+        }, async () => {
+          await device.timesheetSession(async session => {
+            for (let i = 0; i < ROUNDS.entriesPerSession; i++) {
+              await session.addEntry();
+            }
+          });
         });
-      }).catch(async e => {
-        console.log(e);
-        await once(clock, 'tick');
-      });
-      clock.emit('tick');
+        clock.emit('tick');
+      } catch (e) {
+        device.log(`${e}`);
+        await device.exit(); // Tidy the running process
+        if (USERS.some(u => u !== this && u.isPlaying))
+          await once(clock, 'tick');
+      }
     }
+    this.isPlaying = false;
+  }
+
+  /** @param {Object} entries */
+  async report(entries) {
+    if (!this.isProvider)
+      await this.chooseOtherUser().chooseDevice().toggleAdmin(this);
+    for (let device of this.devices)
+      await device.timesheetSession(async session => {
+        await setTimeout(1000);
+        return entries[device.name] = await session.getEntries();
+      });
   }
 
   chooseDevice() {
@@ -90,7 +109,8 @@ class TestUser {
   }
 
   chooseOtherUser() {
-    return faker.helpers.arrayElement(USERS.filter(u => u !== this));
+    const notThis = USERS.filter(u => u !== this);
+    return faker.helpers.arrayElement(notThis);
   }
 
   cleanup() {
@@ -102,40 +122,38 @@ class TestDevice extends CliCmd {
   /** @param {TestUser} user */
   async toggleAdmin(user) {
     await this.run('admin', '--account', 'testers');
-    const verb = user.isAdmin ? 'remove' : 'add';
+    const verb = user.isProvider ? 'remove' : 'add';
     await this.nextPrompt(`${verb} admin ${user.name}`);
     await this.nextPrompt();
-    user.isAdmin = verb === 'add';
+    user.isProvider = verb === 'add';
     await this.exit();
   }
 
-  /** @param {() => any} proc */
+  /** @param {(session: {addEntry, getEntries}) => any} proc */
   async timesheetSession(proc) {
     await this.run('open', 'testers/testing');
     await this.nextPrompt();
-    await proc();
+    await proc({
+      addEntry: async () => {
+        const activity = `${faker.word.verb()} ${faker.word.noun()}`;
+        await this.nextPrompt(`add "${activity}"`);
+        await this.findByText(`"${activity}"`);
+        return activity;
+      },
+      getEntries: async () => {
+        await this.nextPrompt('list');
+        await this.nextPrompt();
+        return new Set((this.getOut().match(/#\d+:\sEntry\s.*/g) ?? [])
+          .map(e => e.replace(/^#\d+:\sEntry\s/, ''))
+        );
+      }
+    });
     await this.exit();
-  }
-
-  async addEntry() {
-    const activity = `${faker.word.verb()} ${faker.word.noun()}`;
-    await this.nextPrompt(`add "${activity}"`);
-    await this.findByText(`"${activity}"`);
-    return activity;
-  }
-
-  async getEntries() {
-    await this.nextPrompt('list');
-    await this.nextPrompt();
-    return new Set(this.getOut()
-      .match(/#\d+:\sEntry\s.*/g)
-      .map(e => e.replace(/^#\d+:\sEntry\s/, ''))
-    );
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Setup
+console.log('--- Setup ---');
 Cmd.logging = true;
 faker.seed(0); // Change to generate new test
 const gw = new GwCmd();
@@ -152,18 +170,21 @@ try {
   // Register the testers organisation and add Bob
   await aliceLaptop.run('admin');
   await aliceLaptop.nextPrompt('add org testers');
-  await aliceLaptop.exit();
+  await aliceLaptop.exit(); // Alice is implicitly an admin
   await aliceLaptop.toggleAdmin(bob);
 
   //////////////////////////////////////////////////////////////////////////////
-  await alice.round();
+  console.log('--- Chaos round ---');
+  await Promise.all([
+    alice.round(),
+    bob.round()
+  ]);
 
   //////////////////////////////////////////////////////////////////////////////
-  const entries = [];
+  console.log('--- Round report ---');
+  const entries = {};
   for (let user of USERS)
-    for (let device of user.devices)
-      await device.timesheetSession(async () =>
-        entries.push(await device.getEntries()));
+    await user.report(entries);
   console.log(entries);
 
 } finally {
