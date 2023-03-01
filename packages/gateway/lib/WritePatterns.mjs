@@ -5,15 +5,33 @@ import { EmptyError, firstValueFrom } from 'rxjs';
 import { ConflictError, ForbiddenError, NotFoundError } from '../rest/errors.mjs';
 
 /**
- * @typedef {object} BeforeWriteTriggers
- * @property {(
- * state: MeldReadState,
- * tsRef: Reference
- * ) => Promise<*>} beforeInsertTimesheet
- * @property {(
- * state: MeldReadState,
- * src: GraphSubject
- * ) => Promise<Subject>} beforeInsertConnector
+ * Side effects that are triggered before writing to the gateway domain
+ * @interface BeforeWriteTriggers
+ */
+
+/**
+ * @function
+ * @name BeforeWriteTriggers#beforeInsertTimesheet
+ * @param {MeldReadState} state
+ * @param {Reference} tsRef
+ * @returns Promise<*>
+ */
+
+/**
+ * @function
+ * @name BeforeWriteTriggers#beforeDeleteAdmin
+ * @param {MeldReadState} state
+ * @param {Reference} org
+ * @param {Reference} admin
+ * @returns Promise<*>
+ */
+
+/**
+ * @function
+ * @name BeforeWriteTriggers#beforeInsertConnector
+ * @param {MeldReadState} state
+ * @param {GraphSubject} src
+ * @returns Promise<Subject>
  */
 
 export default class WritePatterns {
@@ -223,32 +241,41 @@ export default class WritePatterns {
             deletesOwnedProperties(query);
         }
         async check(state, query) {
-          if (Object.keys(query['@delete']).length === 1) {
-            const orgId = query['@delete']['@id'];
-            // The whole org is being deleted. Cascade delete the organisation
-            // timesheets and projects
-            // TODO: Can this be done nicely without a query?
-            try {
-              const org = await firstValueFrom(state.read({
-                '@describe': orgId, '@where': query['@where']
-              }));
-              // noinspection JSValidateTypes
-              return {
-                '@delete': [
-                  { '@id': orgId },
-                  ...array(org['name']),
-                  ...array(org['project'])
-                ]
-              };
-            } catch (e) {
-              if (e instanceof EmptyError)
-                throw new NotFoundError(`${orgId} not found`);
-              throw e;
+          if (await state.ask({ '@where': query['@where'] })) {
+            if (Object.keys(query['@delete']).length === 1) {
+              const orgId = query['@delete']['@id'];
+              // The whole org is being deleted. Cascade delete the organisation
+              // timesheets and projects
+              // TODO: Can this be done nicely without a query?
+              try {
+                const org = await firstValueFrom(state.read({
+                  '@describe': orgId, '@where': query['@where']
+                }));
+                // noinspection JSValidateTypes
+                return {
+                  '@delete': [
+                    { '@id': orgId },
+                    ...array(org['name']),
+                    ...array(org['project'])
+                  ]
+                };
+              } catch (e) {
+                if (e instanceof EmptyError)
+                  throw new NotFoundError(`${orgId} not found`);
+                throw e;
+              }
+            } else {
+              const org = query['@delete'], admin = org['vf:primaryAccountable'];
+              if (admin) {
+                if (admin['@id'] === accountName)
+                  throw new ForbiddenError('Cannot remove yourself as an admin');
+                // Removing an admin must remove all timesheet principals
+                await triggers.beforeDeleteAdmin(state, org, admin);
+              }
+              return query;
             }
           } else {
-            if (query['@delete']['vf:primaryAccountable']?.['@id'] === accountName)
-              throw new ForbiddenError('Cannot remove yourself as an admin');
-            return query;
+            throw new ForbiddenError();
           }
         }
       }({

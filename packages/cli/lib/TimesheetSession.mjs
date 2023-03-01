@@ -361,6 +361,7 @@ export default class TimesheetSession extends Repl {
     } else if (status) {
       const proc = new PromiseProc(Promise.resolve().then(() => {
         proc.emit('message', 'Status:', this.meld.status.value);
+        proc.emit('message', 'Log file:', this.logFile);
       }));
       return proc;
     } else {

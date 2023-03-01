@@ -59,26 +59,38 @@ export function lastPathComponent(pathname) {
 }
 
 /**
+ * @param {string} hostname
+ * @returns {Promise<string>}
+ */
+export async function lookupHostName(hostname) {
+  const lookup = await dns.lookup(hostname);
+  return lookup.address;
+}
+
+/**
  * @param {string} address
+ * @param {(hostname: string) => Promise<string>} [lookupLocal]
  * @returns {{ root: URL | Promise<URL>, domainName: string }}
  */
-export function resolveGateway(address) {
+export function resolveGateway(address, lookupLocal = lookupHostName) {
   if (isFQDN(address)) {
     return { root: new URL(`https://${address}/`), domainName: address };
   } else {
     const url = new URL('/', address);
-    const domainName = url.hostname;
-    if (domainName.endsWith('.local')) {
-      return {
-        root: dns.lookup(domainName).then(a => {
-          url.hostname = a.address;
-          return url;
-        }),
-        domainName
-      };
+    let domainName;
+    if (url.username) {
+      domainName = url.username;
+      url.username = '';
     } else {
-      return { root: url, domainName };
+      domainName = url.hostname;
     }
+    return {
+      root: url.hostname.endsWith('.local') ? lookupLocal(url.hostname).then(address => {
+        url.hostname = address;
+        return url;
+      }) : url,
+      domainName
+    };
   }
 }
 

@@ -1,8 +1,8 @@
 // noinspection NpmUsedModulesInstalled
 import { describe, expect, test } from '@jest/globals';
 import { UserKey } from '../data/index.mjs';
-import { TimeldApp, TimeldPrincipal } from '../lib/CloneFactory.mjs';
-import AuthKey from '../lib/AuthKey.mjs';
+import { TimeldPrincipal, AuthKey } from '..';
+import TimeldApp from '../lib/TimeldApp.mjs';
 
 describe('Timeld App', () => {
   test('construct', () => {

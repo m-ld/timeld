@@ -36,6 +36,11 @@ export const exampleTimesheetJson = {
   project: [{ '@id': 'test/pr1' }]
 };
 
+/**
+ * @param {string} received
+ * @param {number} [approxTime]
+ * @param {number} [delta]
+ */
 export function toBeISODateString(received, approxTime, delta = 1000) {
   if (typeof received != 'string') {
     return {

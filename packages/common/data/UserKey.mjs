@@ -127,7 +127,7 @@ export default class UserKey {
     this.name = name;
     this.publicKey = Buffer.from(publicKey);
     /**@private*/
-    this.privateKey = privateKey ? Buffer.from(privateKey) : undefined;
+    this.privateKey = privateKey && Buffer.from(privateKey);
     this.revoked = revoked;
   }
 

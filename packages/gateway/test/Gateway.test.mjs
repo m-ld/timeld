@@ -27,9 +27,8 @@ describe('Gateway', () => {
     tmpDir = dirSync({ unsafeCleanup: true });
     env = new Env({ data: join(tmpDir.name, 'data') });
     cloneFactory = new class extends CloneFactory {
-      clone = jest.fn((config) => {
-        return meldClone(new MemoryLevel(), DeadRemotes, config);
-      });
+      clone = jest.fn((config, dataDir, principal) =>
+        meldClone(new MemoryLevel(), DeadRemotes, config, { principal }));
       reusableConfig(config) {
         // Random key for testing of reusable config
         const { tls } = config;
@@ -41,7 +40,7 @@ describe('Gateway', () => {
       createAppKey: jest.fn(),
       updateAppKey: jest.fn()
     };
-    const authKey = AuthKey.fromString('app.id:secret')
+    const authKey = AuthKey.fromString('app.id:secret');
     config = {
       '@domain': 'ex.org',
       ...UserKey.generate(authKey).toConfig(authKey)
@@ -99,7 +98,7 @@ describe('Gateway', () => {
     });
 
     test('has cloned the gateway domain', () => {
-      expect(cloneFactory.clone.mock.calls).toMatchObject([[
+      expect(cloneFactory.clone.mock.lastCall).toMatchObject([
         {
           '@id': expect.stringMatching(/\w+/),
           '@domain': 'ex.org',
@@ -107,8 +106,9 @@ describe('Gateway', () => {
           genesis: true, // has to be true because dead remotes
           auth: { key: 'app.id:secret' }
         },
-        join(tmpDir.name, 'data', 'gw')
-      ]]);
+        join(tmpDir.name, 'data', 'gw'),
+        { '@id': 'http://ex.org/' }
+      ]);
     });
 
     test('has registered account', async () => {
@@ -200,7 +200,7 @@ describe('Gateway', () => {
             '@context': timeldContext,
             genesis: true,
             auth: { key: 'app.id:secret' },
-          tls: true
+            tls: true
           },
           join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
           { '@id': 'http://ex.org/' }
@@ -233,7 +233,7 @@ describe('Gateway', () => {
             '@context': timeldContext,
             genesis: false,
             auth: { key: 'app.id:secret' },
-          tls: true
+            tls: true
           },
           join(tmpDir.name, 'data', 'tsh', 'test', 'ts1'),
           { '@id': 'http://ex.org/' }
@@ -405,23 +405,86 @@ describe('Gateway', () => {
 
         test('inserts an organisation detail', async () => {
           await acc.write({
-            '@id': 'org1',
-            '@type': 'Account',
-            'vf:primaryAccountable': { '@id': 'test' }
+            '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
           });
           await acc.write({
-            '@insert': {
-              '@id': 'org1',
-              'vf:primaryAccountable': { '@id': 'other' }
-            },
+            '@insert': { '@id': 'org1', 'vf:primaryAccountable': { '@id': 'other' } },
             '@where': {
-              '@id': 'org1',
-              '@type': 'Account',
-              'vf:primaryAccountable': { '@id': 'test' }
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
             }
           });
           expect((await gateway.account('org1')).admins)
             .toEqual(new Set(['test', 'other']));
+          await acc.write({
+            '@delete': { '@id': 'org1', 'vf:primaryAccountable': { '@id': 'other' } },
+            '@where': {
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          expect((await gateway.account('org1')).admins)
+            .toEqual(new Set(['test']));
+        });
+
+        test('cannot remove an organisation detail if not admin', async () => {
+          await acc.write({
+            '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+          });
+          await gateway.domain.write({
+            '@id': 'other',
+            '@type': 'Account',
+            email: 'other@ex.org',
+            key: UserKey.generate('appid.keyid2:secret2').toJSON()
+          });
+          const other = await gateway.account('other');
+          await expect(other.write({
+            '@delete': { '@id': 'org1', 'vf:primaryAccountable': { '@id': 'test' } },
+            '@where': {
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'other' }
+            }
+          })).rejects.toThrow(errors.ForbiddenError);
+        });
+
+        test('removing an organisation admin removes principal', async () => {
+          await acc.write({
+            '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+          });
+          // Add another admin
+          await gateway.domain.write({
+            '@id': 'other',
+            '@type': 'Account',
+            email: 'other@ex.org',
+            key: UserKey.generate('appid.keyid2:secret2').toJSON()
+          });
+          const other = await gateway.account('other');
+          await acc.write({
+            '@insert': { '@id': 'org1', 'vf:primaryAccountable': { '@id': 'other' } },
+            '@where': {
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          await acc.write({
+            '@insert': { '@id': 'org1', timesheet: { '@id': 'org1/ts1', '@type': 'Timesheet' } },
+            '@where': {
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          const tsId = gateway.ownedId('org1', 'ts1');
+          expect((await gateway.account('org1')).timesheets)
+            .toEqual([{ '@id': tsId.toRelativeIri() }]);
+          // Ensure that the test principal is in the timesheet
+          await gateway.timesheetConfig(tsId, { acc: other, keyid: 'keyid2' });
+          const ts = gateway.timesheetDomains[tsId.toDomain()];
+          await expect(ts.get(gateway.absoluteId('other')))
+            .resolves.toMatchObject({ '@type': 'Account' });
+          // Remove the 'other' admin
+          await acc.write({
+            '@delete': { '@id': 'org1', 'vf:primaryAccountable': { '@id': 'other' } },
+            '@where': {
+              '@id': 'org1', '@type': 'Account', 'vf:primaryAccountable': { '@id': 'test' }
+            }
+          });
+          await expect(ts.ask({ '@where': { '@id': gateway.absoluteId('other') } }))
+            .resolves.toBe(false);
         });
 
         test('cannot insert project if not exists', async () => {
@@ -432,7 +495,7 @@ describe('Gateway', () => {
           await expect(acc.write({
             '@insert': { '@id': 'test/ts1', project: { '@id': 'test/pr1' } },
             '@where': { '@id': 'test', '@type': 'Account', timesheet: { '@id': 'test/ts1' } }
-          })).rejects.toThrow();
+          })).rejects.toThrow(errors.NotFoundError);
         });
 
         test('writes timesheet projects', async () => {
