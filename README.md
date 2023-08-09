@@ -1,22 +1,6 @@
-<pre></pre>
-<!--suppress HtmlDeprecatedAttribute -->
-<p align="center">
-  <a href="https://m-ld.org/">
-    <picture>
-      <!--suppress HtmlUnknownTarget -->
-      <source media="(prefers-color-scheme: light)" srcset="https://m-ld.org/m-ld.svg"/>
-      <!--suppress HtmlUnknownTarget -->
-      <source media="(prefers-color-scheme: dark)" srcset="https://m-ld.org/m-ld.inverse.svg"/>
-      <img alt="m-ld" src="https://m-ld.org/m-ld.svg" width="300em" />
-    </picture>
-  </a>
-</p>
-<pre></pre>
-
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Suspended – Initial development has started, but there has not yet been a stable, usable release; work has been stopped for the time being but the author(s) intend on resuming work.](https://www.repostatus.org/badges/latest/suspended.svg)](https://www.repostatus.org/#suspended)
 [![actions](https://github.com/m-ld/timeld/actions/workflows/node.js.yml/badge.svg)](https://github.com/m-ld/timeld/actions)
 [![Gitter](https://img.shields.io/gitter/room/federatedbookkeeping/timesheets)](https://gitter.im/federatedbookkeeping/timesheets)
-[![Project](https://img.shields.io/badge/project-in%20progress-blueviolet?logo=github)](https://github.com/m-ld/timeld/projects/1)
 
 # live shared timesheets
 
